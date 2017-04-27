@@ -1765,3 +1765,6 @@ source crypto/asymmetric_keys/Kconfig
 source certs/Kconfig
 
 endif	# if CRYPTO
+
+source "crypto/ocf/Kconfig"
+

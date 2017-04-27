@@ -33,6 +33,7 @@ struct da8xx_lcdc_platform_data {
 	void *controller_data;
 	const char type[25];
 	void (*panel_power_ctrl)(int);
+	int  (*get_context_loss_count)(struct device *);
 };
 
 struct lcd_ctrl_config {

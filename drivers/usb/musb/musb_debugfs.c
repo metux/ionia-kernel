@@ -252,6 +252,10 @@ static ssize_t musb_test_mode_write(struct file *file,
 		test = MUSB_TEST_SE0_NAK;
 
 	musb_writeb(musb->mregs, MUSB_TESTMODE, test);
+	if (test == MUSB_TEST_PACKET)
+		musb_writew(musb->endpoints[0].regs,
+			MUSB_CSR0, MUSB_CSR0_TXPKTRDY);
+	pr_info("%smusb%d: test-mode value %x\n", buf, musb->id, test);
 
 ret:
 	pm_runtime_mark_last_busy(musb->controller);
@@ -403,7 +407,7 @@ err0:
 	return ret;
 }
 
-void /* __init_or_exit */ musb_exit_debugfs(struct musb *musb)
+void /* __devinit_or_exit */ musb_exit_debugfs(struct musb *musb)
 {
 	debugfs_remove_recursive(musb->debugfs_root);
 }

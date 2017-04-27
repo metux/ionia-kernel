@@ -57,6 +57,8 @@
 #include "control.h"
 #include "powerdomain.h"
 #include "omap-secure.h"
+#include "cm2xxx_3xxx.h"
+#include "cminst44xx.h"
 
 #define REALTIME_COUNTER_BASE				0x48243200
 #define INCREMENTER_NUMERATOR_OFFSET			0x10

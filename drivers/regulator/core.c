@@ -244,6 +244,9 @@ static int regulator_check_consumers(struct regulator_dev *rdev,
 {
 	struct regulator *regulator;
 
+        if (rdev->ignore_check_consumers)
+                return 0;
+
 	list_for_each_entry(regulator, &rdev->consumer_list, list) {
 		/*
 		 * Assume consumers that didn't say anything are OK

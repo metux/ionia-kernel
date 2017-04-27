@@ -547,6 +547,7 @@ static struct clk_lookup da850_clks[] = {
 	CLK("serial8250.0",	NULL,		&uart0_clk),
 	CLK("serial8250.1",	NULL,		&uart1_clk),
 	CLK("serial8250.2",	NULL,		&uart2_clk),
+	CLK("pruss",		NULL,		&pruss_clk),
 	CLK(NULL,		"aintc",	&aintc_clk),
 	CLK(NULL,		"gpio",		&gpio_clk),
 	CLK("i2c_davinci.2",	NULL,		&i2c1_clk),
@@ -954,6 +955,12 @@ static struct map_desc da850_io_desc[] = {
 		.virtual	= DA8XX_CP_INTC_VIRT,
 		.pfn		= __phys_to_pfn(DA8XX_CP_INTC_BASE),
 		.length		= DA8XX_CP_INTC_SIZE,
+		.type		= MT_DEVICE
+	},
+	{
+		.virtual	= SRAM_VIRT,
+		.pfn		= __phys_to_pfn(DA8XX_SHARED_RAM_BASE),
+		.length		= SZ_8K,
 		.type		= MT_DEVICE
 	},
 };

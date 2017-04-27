@@ -18,6 +18,7 @@
 #include <asm/cacheflush.h>
 #include <asm/delay.h>
 #include <asm/io.h>
+#include <asm/fncpy.h>
 
 #include <mach/common.h>
 #include <mach/da8xx.h>
@@ -37,12 +38,6 @@ static struct davinci_pm_config pm_config = {
 	.sleepcount = DEEPSLEEP_SLEEPCOUNT,
 	.ddrpsc_num = DA8XX_LPSC1_EMIF3C,
 };
-
-static void davinci_sram_push(void *dest, void *src, unsigned int size)
-{
-	memcpy(dest, src, size);
-	flush_icache_range((unsigned long)dest, (unsigned long)(dest + size));
-}
 
 static void davinci_pm_suspend(void)
 {
@@ -155,9 +150,8 @@ int __init davinci_pm_init(void)
 		pr_err("PM: cannot allocate SRAM memory\n");
 		return -ENOMEM;
 	}
-
-	davinci_sram_push(davinci_sram_suspend, davinci_cpu_suspend,
-						davinci_cpu_suspend_sz);
+	davinci_sram_suspend = fncpy(davinci_sram_suspend_mem,
+				&davinci_cpu_suspend, davinci_cpu_suspend_sz);
 
 	suspend_set_ops(&davinci_pm_ops);
 

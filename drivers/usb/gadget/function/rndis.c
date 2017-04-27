@@ -437,7 +437,7 @@ static int gen_ndis_query_resp(struct rndis_params *params, u32 OID, u8 *buf,
 	case RNDIS_OID_802_3_MAXIMUM_LIST_SIZE:
 		pr_debug("%s: RNDIS_OID_802_3_MAXIMUM_LIST_SIZE\n", __func__);
 		/* Multicast base address only */
-		*outbuf = cpu_to_le32(1);
+		*outbuf = __constant_cpu_to_le32(32);
 		retval = 0;
 		break;
 
@@ -820,6 +820,8 @@ int rndis_msg_parser(struct rndis_params *params, u8 *buf)
 			__func__);
 		params->state = RNDIS_UNINITIALIZED;
 		if (params->dev) {
+			memcpy((void *)rndis_per_dev_params[configNr].host_mac,
+			(void *)rndis_per_dev_params[configNr].perm_mac, 6);
 			netif_carrier_off(params->dev);
 			netif_stop_queue(params->dev);
 		}

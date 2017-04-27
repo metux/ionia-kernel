@@ -22,6 +22,11 @@
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/rtc.h>
+#include <linux/bcd.h>
+#include <linux/rtc/rtc-omap.h>
+#include <linux/platform_device.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/pinctrl/pinctrl.h>
@@ -515,6 +520,9 @@ static const struct platform_device_id omap_rtc_id_table[] = {
 	}, {
 		.name	= "da830-rtc",
 		.driver_data = (kernel_ulong_t)&omap_rtc_da830_type,
+	}, {
+		.name	= "am33xx-rtc",
+		.driver_data = OMAP_RTC_HAS_IRQWAKEEN,
 	}, {
 		/* sentinel */
 	}

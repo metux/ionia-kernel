@@ -12,7 +12,7 @@ musb_hdrc-y := musb_core.o musb_trace.o
 musb_hdrc-$(CONFIG_USB_MUSB_HOST)$(CONFIG_USB_MUSB_DUAL_ROLE) += musb_virthub.o musb_host.o
 musb_hdrc-$(CONFIG_USB_MUSB_GADGET)$(CONFIG_USB_MUSB_DUAL_ROLE) += musb_gadget_ep0.o musb_gadget.o
 musb_hdrc-$(CONFIG_DEBUG_FS)			+= musb_debugfs.o
-
+musb_hdrc-$(CONFIG_PROC_FS)			+= musb_procfs.o
 # Hardware Glue Layer
 obj-$(CONFIG_USB_MUSB_OMAP2PLUS)		+= omap2430.o
 obj-$(CONFIG_USB_MUSB_AM35X)			+= am35x.o
@@ -24,6 +24,7 @@ obj-$(CONFIG_USB_MUSB_BLACKFIN)			+= blackfin.o
 obj-$(CONFIG_USB_MUSB_UX500)			+= ux500.o
 obj-$(CONFIG_USB_MUSB_JZ4740)			+= jz4740.o
 obj-$(CONFIG_USB_MUSB_SUNXI)			+= sunxi.o
+obj-$(CONFIG_USB_MUSB_TI81XX)			+= ti81xx.o
 
 
 obj-$(CONFIG_USB_MUSB_AM335X_CHILD)		+= musb_am335x.o

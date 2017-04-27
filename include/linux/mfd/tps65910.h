@@ -19,10 +19,15 @@
 
 #include <linux/gpio.h>
 #include <linux/regmap.h>
+#include <linux/regulator/machine.h>
 
 /* TPS chip id list */
 #define TPS65910			0
 #define TPS65911			1
+
+/* I2C Slave Address 7-bit */
+#define TPS65910_I2C_ID0 0x12 /* Smart Reflex */
+#define TPS65910_I2C_ID1 0x2D /* general-purpose control */
 
 /* TPS regulator type list */
 #define REGULATOR_LDO			0
@@ -52,7 +57,7 @@
 #define TPS65910_RTC_COMP_LSB				0x13
 #define TPS65910_RTC_COMP_MSB				0x14
 #define TPS65910_RTC_RES_PROG				0x15
-#define TPS65910_RTC_RESET_STATUS			0x16
+#define TPS65910_RTC_RESET_STATUS			0x16RT
 #define TPS65910_BCK1					0x17
 #define TPS65910_BCK2					0x18
 #define TPS65910_BCK3					0x19
@@ -131,6 +136,12 @@
  * List of register bitfields for component TPS65910
  *
  */
+/* RTC_CTRL_REG bitfields */
+#define TPS65910_RTC_CTRL_STOP_RTC 0x01 /*0=stop, 1=run*/
+#define TPS65910_RTC_CTRL_GET_TIME 0x40
+
+/* RTC_STATUS_REG bitfields */
+#define TPS65910_RTC_STATUS_ALARM 0x40
 
 /* RTC_CTRL_REG bitfields */
 #define TPS65910_RTC_CTRL_STOP_RTC			0x01 /*0=stop, 1=run */
@@ -895,6 +906,7 @@ struct tps65910 {
 	struct regmap *regmap;
 	unsigned long id;
 
+	struct regmap *regmap;
 	/* Client devices */
 	struct tps65910_pmic *pmic;
 	struct tps65910_rtc *rtc;

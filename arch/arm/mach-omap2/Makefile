@@ -63,6 +63,11 @@ obj-$(CONFIG_ARCH_OMAP4)		+= omap4-restart.o
 obj-$(CONFIG_SOC_OMAP5)			+= omap4-restart.o
 obj-$(CONFIG_SOC_DRA7XX)		+= omap4-restart.o
 
+# Pin multiplexing
+obj-$(CONFIG_ARCH_OMAP3)		+= mux34xx.o
+obj-$(CONFIG_ARCH_OMAP4)		+= mux44xx.o
+obj-$(CONFIG_SOC_OMAPAM33XX)		+= mux33xx.o
+
 # SMS/SDRC
 obj-$(CONFIG_ARCH_OMAP2)		+= sdrc2xxx.o
 # obj-$(CONFIG_ARCH_OMAP3)		+= sdrc3xxx.o
@@ -95,6 +100,7 @@ obj-$(CONFIG_POWER_AVS_OMAP_CLASS3)    += smartreflex-class3.o
 
 AFLAGS_sleep24xx.o			:=-Wa,-march=armv6
 AFLAGS_sleep34xx.o			:=-Wa,-march=armv7-a$(plus_sec)
+AFLAGS_sleep33xx.o			:=-Wa,-march=armv7-a$(plus_sec)
 
 endif
 
@@ -229,6 +235,18 @@ obj-$(CONFIG_SOC_OMAP2420)		+= msdi.o
 # Specific board support
 obj-$(CONFIG_MACH_OMAP_GENERIC)		+= board-generic.o pdata-quirks.o
 obj-$(CONFIG_MACH_NOKIA_N8X0)		+= board-n8x0.o
+obj-$(CONFIG_MACH_NOKIA_RX51)		+= board-rx51.o sdram-nokia.o
+obj-$(CONFIG_MACH_NOKIA_RX51)		+= board-rx51-peripherals.o
+obj-$(CONFIG_MACH_NOKIA_RX51)		+= board-rx51-video.o
+obj-$(CONFIG_MACH_CM_T35)		+= board-cm-t35.o
+obj-$(CONFIG_MACH_TOUCHBOOK)		+= board-omap3touchbook.o
+
+obj-$(CONFIG_MACH_SBC3530)		+= board-omap3stalker.o
+obj-$(CONFIG_MACH_TI8168EVM)		+= board-ti8168evm.o
+obj-$(CONFIG_MACH_TI8148EVM)		+= board-ti8168evm.o
+obj-$(CONFIG_MACH_AM335XEVM)		+= board-am335xevm.o
+obj-$(CONFIG_MACH_DUAGON_I10X)		+= board-duagon-i10x.o
+obj-$(CONFIG_MACH_AM335XIAEVM)		+= board-am335xevm.o
 
 # Platform specific device init code
 

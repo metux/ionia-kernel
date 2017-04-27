@@ -63,7 +63,7 @@ MODULE_PARM_DESC(extram_pool_sz, "external ram pool size to allocate");
 struct uio_pruss_dev {
 	struct uio_info *info;
 	struct clk *pruss_clk;
-	dma_addr_t sram_paddr;
+	phys_addr_t sram_paddr;
 	dma_addr_t ddr_paddr;
 	void __iomem *prussio_vaddr;
 	unsigned long sram_vaddr;
@@ -106,6 +106,7 @@ static void pruss_cleanup(struct device *dev, struct uio_pruss_dev *gdev)
 		dma_free_coherent(dev, extram_pool_sz, gdev->ddr_vaddr,
 			gdev->ddr_paddr);
 	}
+#ifdef ENABLE_SRAM_SUPPORT
 	if (gdev->sram_vaddr)
 		gen_pool_free(gdev->sram_pool,
 			      gdev->sram_vaddr,
@@ -197,8 +198,6 @@ static int pruss_probe(struct platform_device *pdev)
 		p->mem[0].addr = regs_prussio->start;
 		p->mem[0].size = resource_size(regs_prussio);
 		p->mem[0].memtype = UIO_MEM_PHYS;
-
-		p->mem[1].addr = gdev->sram_paddr;
 		p->mem[1].size = sram_pool_sz;
 		p->mem[1].memtype = UIO_MEM_PHYS;
 

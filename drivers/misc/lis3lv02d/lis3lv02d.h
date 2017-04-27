@@ -95,6 +95,12 @@ enum lis3lv02d_reg {
 	DD_THSE_H	= 0x3F,
 };
 
+enum lis331dlh_reg {
+	CTRL_REG5	= 0x24,
+	HP_FILTER_RESET_3DLH	= 0x25,
+	REFERENCE	= 0x26,
+};
+
 enum lis3_who_am_i {
 	WAI_3DLH	= 0x32,	/* 16 bits: LIS331DLH */
 	WAI_3DC		= 0x33,	/* 8 bits: LIS3DC, HP3DC */
@@ -179,6 +185,13 @@ enum lis3lv02d_ctrl4_3dc {
 	CTRL4_FS1	= 0x20,
 };
 
+/* Measurement Range */
+enum lis3lv02d_fs {
+	FS_2G_REGVAL = 0x00,
+	FS_4G_REGVAL = 0x10,
+	FS_8G_REGVAL = 0x30,
+};
+
 enum lis302d_ctrl2 {
 	HP_FF_WU2	= 0x08,
 	HP_FF_WU1	= 0x04,
@@ -216,6 +229,10 @@ enum lis3lv02d_ff_wu_cfg {
 	FF_WU_CFG_AOI	= 0x80,
 };
 
+enum lis331dlh_ff_wu_cfg {
+	FF_WU_CFG_6D	= 0x40,
+};
+
 enum lis3lv02d_ff_wu_src {
 	FF_WU_SRC_XL	= 0x01,
 	FF_WU_SRC_XH	= 0x02,
@@ -235,6 +252,10 @@ enum lis3lv02d_dd_cfg {
 	DD_CFG_ZHIE	= 0x20,
 	DD_CFG_LIR	= 0x40,
 	DD_CFG_IEND	= 0x80,
+};
+
+enum lis331dlh_dd_cfg {
+	DD_CFG_6D	= 0x40,
 };
 
 enum lis3lv02d_dd_src {

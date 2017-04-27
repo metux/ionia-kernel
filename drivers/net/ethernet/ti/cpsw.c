@@ -42,6 +42,7 @@
 #include "cpsw_ale.h"
 #include "cpts.h"
 #include "davinci_cpdma.h"
+#include "cpts.h"
 
 #define CPSW_DEBUG	(NETIF_MSG_HW		| NETIF_MSG_WOL		| \
 			 NETIF_MSG_DRV		| NETIF_MSG_LINK	| \

@@ -107,6 +107,7 @@ struct omap2_mcspi_dma {
 
 	char dma_rx_ch_name[14];
 	char dma_tx_ch_name[14];
+	int dummy_param_slot;
 };
 
 /* use PIO for small transfers, avoiding DMA setup/teardown overhead and
@@ -1018,6 +1019,18 @@ static int omap2_mcspi_request_dma(struct spi_device *spi)
 		dma_release_channel(mcspi_dma->dma_rx);
 		mcspi_dma->dma_rx = NULL;
 	}
+	ret = edma_alloc_slot(EDMA_CTLR(mcspi_dma->dma_tx_channel),
+			EDMA_SLOT_ANY);
+
+	if (ret < 0) {
+		pr_err("Unable to request SPI TX DMA param slot\n");
+		ret = -EAGAIN;
+		return ret;
+	}
+
+	mcspi_dma->dummy_param_slot = ret;
+	edma_link(mcspi_dma->dummy_param_slot,
+			mcspi_dma->dummy_param_slot);
 
 no_dma:
 	return ret;

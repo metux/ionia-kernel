@@ -30,6 +30,7 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
+#include <linux/suspend.h>
 
 #include <asm/smp_plat.h>
 #include <asm/cpu.h>

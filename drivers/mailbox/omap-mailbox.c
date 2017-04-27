@@ -172,6 +172,14 @@ static int mbox_fifo_full(struct omap_mbox *mbox)
 
 	return mbox_read_reg(mbox->parent, fifo->fifo_stat);
 }
+static inline int mbox_fifo_needs_flush(struct omap_mbox *mbox)
+{
+	return mbox->ops->fifo_needs_flush(mbox);
+}
+static inline mbox_msg_t mbox_fifo_readback(struct omap_mbox *mbox)
+{
+	return mbox->ops->fifo_readback(mbox);
+}
 
 /* Mailbox IRQ handle functions */
 static void ack_mbox_irq(struct omap_mbox *mbox, omap_mbox_irq_t irq)

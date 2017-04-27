@@ -17,6 +17,8 @@ obj-y				+= spi/
 obj-y				+= usb/
 obj-y				+= softing/
 
+obj-$(CONFIG_CAN_SJA1000)	+= sja1000/
+obj-$(CONFIG_CAN_D_CAN)		+= d_can/
 obj-$(CONFIG_CAN_AT91)		+= at91_can.o
 obj-$(CONFIG_CAN_BFIN)		+= bfin_can.o
 obj-$(CONFIG_CAN_CC770)		+= cc770/

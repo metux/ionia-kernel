@@ -353,6 +353,20 @@ static struct omap_hwmod_ocp_if am33xx_wkup_m3__l4_wkup = {
 	.user		= OCP_USER_MPU | OCP_USER_SDMA,
 };
 
+/* dcan1 */
+static struct omap_hwmod am33xx_dcan1_hwmod = {
+	.name		= "d_can1",
+	.class		= &am33xx_dcan_hwmod_class,
+	.clkdm_name	= "l4ls_clkdm",
+	.main_clk	= "dcan1_fck",
+	.prcm		= {
+		.omap4	= {
+			.clkctrl_offs	= AM33XX_CM_PER_DCAN1_CLKCTRL_OFFSET,
+			.modulemode	= MODULEMODE_SWCTRL,
+		},
+	},
+};
+
 /* l4 wkup -> wkup m3 */
 static struct omap_hwmod_ocp_if am33xx_l4_wkup__wkup_m3 = {
 	.master		= &am33xx_l4_wkup_hwmod,

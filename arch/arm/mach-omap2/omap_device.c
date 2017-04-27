@@ -543,7 +543,10 @@ struct platform_device __init *omap_device_build(const char *pdev_name,
 	struct omap_hwmod *ohs[] = { oh };
 
 	if (!oh)
+    {
+        pr_err("omap_device_build: oh == NULL");
 		return ERR_PTR(-EINVAL);
+    }
 
 	return omap_device_build_ss(pdev_name, pdev_id, ohs, 1, pdata,
 				    pdata_len);
@@ -574,13 +577,20 @@ struct platform_device __init *omap_device_build_ss(const char *pdev_name,
 	struct omap_device *od;
 
 	if (!ohs || oh_cnt == 0 || !pdev_name)
+    {
+        pr_err("(e) omap_device_build_ss: !ohs || oh_cnt == 0 || !pdev_name");
 		return ERR_PTR(-EINVAL);
+    }
 
 	if (!pdata && pdata_len > 0)
+    {
+        pr_err("(e) omap_device_build_ss: !pdata && pdata_len > 0");
 		return ERR_PTR(-EINVAL);
+    }
 
 	pdev = platform_device_alloc(pdev_name, pdev_id);
 	if (!pdev) {
+        pr_err("(e) omap_device_build_ss: !pdev");
 		ret = -ENOMEM;
 		goto odbs_exit;
 	}
@@ -606,8 +616,10 @@ struct platform_device __init *omap_device_build_ss(const char *pdev_name,
 	return pdev;
 
 odbs_exit2:
+	pr_err("(i) omap_device_build_ss: odbs_exit2 jump");
 	omap_device_delete(od);
 odbs_exit1:
+	pr_err("(i) omap_device_build_ss: odbs_exit1 jump");
 	platform_device_put(pdev);
 odbs_exit:
 

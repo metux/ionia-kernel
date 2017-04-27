@@ -203,6 +203,13 @@ config USB_EHSET_TEST_FIXTURE
 	  See <http://www.usb.org/developers/onthego/EHSET_v1.01.pdf> for more
 	  information.
 
+config USB_OTG_EH_TEST
+	tristate "USB OTG & EH Test Mode Support driver"
+	depends on USB && USB_SUSPEND
+	help
+	  This driver is for running tests define on OTG & Embedded Host
+	  Specification.
+
 config USB_ISIGHTFW
 	tristate "iSight firmware loading support"
 	select FW_LOADER

@@ -20,6 +20,7 @@
 #define APOLLO_MOUSE_MINOR	7	/* unused */
 #define PC110PAD_MINOR		9	/* unused */
 /*#define ADB_MOUSE_MINOR	10	FIXME OBSOLETE */
+#define CRYPTODEV_MINOR		70	/* /dev/crypto */
 #define WATCHDOG_MINOR		130	/* Watchdog timer     */
 #define TEMP_MINOR		131	/* Temperature Sensor */
 #define APM_MINOR_DEV		134

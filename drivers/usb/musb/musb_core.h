@@ -63,6 +63,9 @@ struct musb_ep;
 #define MUSB_HWVERS_1900	0x784
 #define MUSB_HWVERS_2000	0x800
 
+extern u8 (*musb_readb)(const void __iomem *addr, unsigned offset);
+extern void (*musb_writeb)(void __iomem *addr, unsigned offset, u8 data);
+
 #include "musb_debug.h"
 #include "musb_dma.h"
 
@@ -114,10 +117,7 @@ enum musb_g_ep0_state {
 	MUSB_EP0_STAGE_ACKWAIT,		/* after zlp, before statusin */
 } __attribute__ ((packed));
 
-/*
- * OTG protocol constants.  See USB OTG 1.3 spec,
- * sections 5.5 "Device Timings" and 6.6.5 "Timers".
- */
+/* OTG protocol constants */
 #define OTG_TIME_A_WAIT_VRISE	100		/* msec (max) */
 #define OTG_TIME_A_WAIT_BCON	1100		/* min 1 second */
 #define OTG_TIME_A_AIDL_BDIS	200		/* min 200 msec */
@@ -160,6 +160,8 @@ struct musb_io;
  * @dma_exit:	platform specific dma exit function
  * @init:	turns on clocks, sets up platform-specific registers, etc
  * @exit:	undoes @init
+ * @read_fifo: read data from musb fifo in PIO
+ * @write_fifo: write data into musb fifo in PIO
  * @set_mode:	forcefully changes operating mode
  * @try_idle:	tries to idle the IP
  * @recover:	platform-specific babble recovery
@@ -209,6 +211,8 @@ struct musb_platform_ops {
 	void	(*try_idle)(struct musb *musb, unsigned long timeout);
 	int	(*recover)(struct musb *musb);
 
+	u16  (*get_hw_revision)(struct musb *musb);
+
 	int	(*vbus_status)(struct musb *musb);
 	void	(*set_vbus)(struct musb *musb, int on);
 
@@ -233,7 +237,6 @@ struct musb_hw_ep {
 
 #if IS_ENABLED(CONFIG_USB_MUSB_TUSB6010)
 	void __iomem		*conf;
-#endif
 
 	/* index in musb->endpoints[]  */
 	u8			epnum;
@@ -253,7 +256,6 @@ struct musb_hw_ep {
 	dma_addr_t		fifo_async;
 	dma_addr_t		fifo_sync;
 	void __iomem		*fifo_sync_va;
-#endif
 
 	/* currently scheduled peripheral endpoint */
 	struct musb_qh		*in_qh;
@@ -265,6 +267,9 @@ struct musb_hw_ep {
 	/* peripheral side */
 	struct musb_ep		ep_in;			/* TX */
 	struct musb_ep		ep_out;			/* RX */
+
+	u8			prev_toggle;		/* Rx */
+	u8			xfer_type;
 };
 
 static inline struct musb_request *next_in_request(struct musb_hw_ep *hw_ep)
@@ -343,7 +348,11 @@ struct musb {
 	struct list_head	out_bulk;	/* of musb_qh */
 	struct list_head	pending_list;	/* pending work list */
 
-	struct timer_list	otg_timer;
+	struct workqueue_struct *gb_queue;
+	struct work_struct      gb_work;
+	spinlock_t              gb_lock;
+	struct list_head        gb_list;        /* of urbs */
+
 	struct notifier_block	nb;
 
 	struct dma_controller	*dma_controller;

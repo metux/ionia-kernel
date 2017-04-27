@@ -24,6 +24,16 @@
 #include <asm/dma.h>
 #include <asm/mach-types.h>
 
+#include <linux/edma.h>
+#include <asm/hardware/asp.h>
+#include <mach/edma.h>
+#ifdef CONFIG_MACH_AM335XEVM
+#include <mach/board-am335xevm.h>
+#endif
+
+#include "davinci-pcm.h"
+#include "davinci-i2s.h"
+
 struct snd_soc_card_drvdata_davinci {
 	struct clk *mclk;
 	unsigned sysclk;
@@ -240,6 +250,28 @@ static struct snd_soc_dai_link da850_evm_dai = {
 	.ops = &evm_ops,
 	.dai_fmt = SND_SOC_DAIFMT_DSP_B | SND_SOC_DAIFMT_CBM_CFM |
 		   SND_SOC_DAIFMT_IB_NF,
+};
+
+static struct snd_soc_dai_link am335x_evm_dai = {
+	.name = "TLV320AIC3X",
+	.stream_name = "AIC3X",
+	.cpu_dai_name = "davinci-mcasp.1",
+	.codec_dai_name = "tlv320aic3x-hifi",
+	.codec_name = "tlv320aic3x-codec.2-001b",
+	.platform_name = "davinci-pcm-audio",
+	.init = evm_aic3x_init,
+	.ops = &evm_ops,
+};
+
+static struct snd_soc_dai_link am335x_evm_sk_dai = {
+	.name = "TLV320AIC3X",
+	.stream_name = "AIC3X",
+	.cpu_dai_name = "davinci-mcasp.1",
+	.codec_dai_name = "tlv320aic3x-hifi",
+	.codec_name = "tlv320aic3x-codec.1-001b",
+	.platform_name = "davinci-pcm-audio",
+	.init = evm_aic3x_init,
+	.ops = &evm_ops,
 };
 
 /* davinci dm6446 evm audio machine driver */
@@ -475,6 +507,13 @@ static int __init evm_init(void)
 		index = 1;
 	} else if (machine_is_davinci_da850_evm()) {
 		evm_snd_dev_data = &da850_snd_soc_card;
+		index = 0;
+	} else if (machine_is_am335xevm()) {
+		evm_snd_dev_data = &am335x_snd_soc_card;
+#ifdef CONFIG_MACH_AM335XEVM
+		if (am335x_evm_get_id() == EVM_SK)
+			evm_snd_dev_data = &am335x_evm_sk_snd_soc_card;
+#endif
 		index = 0;
 	} else
 		return -EINVAL;

@@ -20,7 +20,8 @@
 #include "ndis.h"
 
 #define RNDIS_MAXIMUM_FRAME_SIZE	1518
-#define RNDIS_MAX_TOTAL_SIZE		1558
+#define RNDIS_MAX_TOTAL_SIZE		1514
+#define RNDIS_MAX_MULTICAST_SIZE        32
 
 typedef struct rndis_init_msg_type {
 	__le32	MessageType;
@@ -168,7 +169,8 @@ typedef struct rndis_params {
 	u32			speed;
 	u32			media_state;
 
-	const u8		*host_mac;
+	u8                      perm_mac[6];
+	u8                      *host_mac;
 	u16			*filter;
 	struct net_device	*dev;
 
@@ -177,6 +179,7 @@ typedef struct rndis_params {
 	void			(*resp_avail)(void *v);
 	void			*v;
 	struct list_head	resp_queue;
+	u8			mcast_addr[RNDIS_MAX_MULTICAST_SIZE][6];
 } rndis_params;
 
 /* RNDIS Message parser and other useless functions */

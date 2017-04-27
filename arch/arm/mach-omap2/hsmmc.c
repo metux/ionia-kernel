@@ -158,6 +158,9 @@ static int __init omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 		return -ENOMEM;
 	}
 
+	if (cpu_is_am33xx())
+		mmc->version = MMC_CTRL_VERSION_2;
+
 	if (c->name)
 		strncpy(hc_name, c->name, HSMMC_NAME_LEN);
 	else
@@ -229,6 +232,9 @@ static int __init omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 	case 2:
 		if (soc_is_am35xx())
 			mmc->set_power = am35x_hsmmc2_set_power;
+
+		if (cpu_is_am33xx())
+			mmc->slots[0].set_power = nop_mmc_set_power;
 
 		if (c->ext_clock)
 			c->transceiver = 1;

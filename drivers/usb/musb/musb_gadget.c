@@ -353,7 +353,24 @@ static void txstate(struct musb *musb, struct musb_request *req)
 
 				musb_writew(epio, MUSB_TXCSR, csr);
 			}
-		}
+		} else if (is_cppi_enabled(musb) || is_cppi41_enabled(musb)) {
+			/* program endpoint CSR first, then setup DMA */
+			csr &= ~(MUSB_TXCSR_P_UNDERRUN | MUSB_TXCSR_TXPKTRDY);
+
+			if (request_size == 0)
+				csr &= ~(MUSB_TXCSR_DMAENAB |
+					MUSB_TXCSR_DMAMODE);
+			else {
+				csr &= ~(MUSB_TXCSR_DMAENAB |
+					MUSB_TXCSR_DMAMODE);
+				if (!musb->tx_isoc_sched_enable ||
+					musb_ep->type !=
+					USB_ENDPOINT_XFER_ISOC) {
+					csr |= MUSB_TXCSR_DMAENAB |
+						MUSB_TXCSR_DMAMODE |
+						MUSB_TXCSR_MODE;
+				}
+			}
 
 		if (is_cppi_enabled(musb)) {
 			/* program endpoint CSR first, then setup DMA */
@@ -407,7 +424,7 @@ static void txstate(struct musb *musb, struct musb_request *req)
 		 */
 		unmap_dma_buffer(req, musb);
 
-		musb_write_fifo(musb_ep->hw_ep, fifo_count,
+		musb->ops->write_fifo(musb_ep->hw_ep, fifo_count,
 				(u8 *) (request->buf + request->actual));
 		request->actual += fifo_count;
 		csr |= MUSB_TXCSR_TXPKTRDY;
@@ -438,7 +455,7 @@ void musb_g_tx(struct musb *musb, u8 epnum)
 	void __iomem		*epio = musb->endpoints[epnum].regs;
 	struct dma_channel	*dma;
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 	req = next_request(musb_ep);
 	request = &req->request;
 
@@ -835,7 +852,7 @@ void musb_g_rx(struct musb *musb, u8 epnum)
 	else
 		musb_ep = &hw_ep->ep_out;
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 
 	req = next_request(musb_ep);
 	if (!req)
@@ -898,20 +915,20 @@ void musb_g_rx(struct musb *musb, u8 epnum)
 			musb_writew(epio, MUSB_RXCSR, csr);
 		}
 
-		/* incomplete, and not short? wait for next IN packet */
-		if ((request->actual < request->length)
-				&& (musb_ep->dma->actual_len
-					== musb_ep->packet_sz)) {
-			/* In double buffer case, continue to unload fifo if
- 			 * there is Rx packet in FIFO.
- 			 **/
-			csr = musb_readw(epio, MUSB_RXCSR);
-			if ((csr & MUSB_RXCSR_RXPKTRDY) &&
-				hw_ep->rx_double_buffered)
-				goto exit;
-			return;
+			/* incomplete, and not short? wait for next IN packet */
+			if ((request->actual < request->length)
+					&& (musb_ep->dma->actual_len
+						== musb_ep->packet_sz)) {
+				/* In double buffer case, continue to unload
+				 * fifo if there is Rx packet in FIFO.
+				 **/
+				csr = musb_readw(epio, MUSB_RXCSR);
+				if ((csr & MUSB_RXCSR_RXPKTRDY) &&
+					hw_ep->rx_double_buffered)
+					rxstate(musb, to_musb_request(request));
+				return;
+			}
 		}
-#endif
 		musb_g_giveback(musb_ep, request, 0);
 		/*
 		 * In the giveback function the MUSB lock is
@@ -927,10 +944,6 @@ void musb_g_rx(struct musb *musb, u8 epnum)
 		if (!req)
 			return;
 	}
-#if defined(CONFIG_USB_INVENTRA_DMA) || defined(CONFIG_USB_TUSB_OMAP_DMA) || \
-	defined(CONFIG_USB_UX500_DMA)
-exit:
-#endif
 	/* Analyze request */
 	rxstate(musb, req);
 }
@@ -968,6 +981,7 @@ static int musb_gadget_enable(struct usb_ep *ep,
 		goto fail;
 	}
 	musb_ep->type = usb_endpoint_type(desc);
+	hw_ep->xfer_type = musb_ep->type;
 
 	/* check direction and (later) maxpacket size against endpoint */
 	if (usb_endpoint_num(desc) != epnum)
@@ -998,7 +1012,7 @@ static int musb_gadget_enable(struct usb_ep *ep,
 	/* enable the interrupts for the endpoint, set the endpoint
 	 * packet size (or fail), set the mode, clear the fifo
 	 */
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 	if (usb_endpoint_dir_in(desc)) {
 
 		if (hw_ep->is_shared_fifo)
@@ -1139,7 +1153,7 @@ static int musb_gadget_disable(struct usb_ep *ep)
 	epio = musb->endpoints[epnum].regs;
 
 	spin_lock_irqsave(&musb->lock, flags);
-	musb_ep_select(musb->mregs, epnum);
+	musb_ep_select(musb, musb->mregs, epnum);
 
 	/* zero the endpoint sizes */
 	if (musb_ep->is_in) {
@@ -1342,7 +1356,7 @@ static int musb_gadget_dequeue(struct usb_ep *ep, struct usb_request *request)
 	else if (is_dma_capable() && musb_ep->dma) {
 		struct dma_controller	*c = musb->dma_controller;
 
-		musb_ep_select(musb->mregs, musb_ep->current_epnum);
+		musb_ep_select(musb, musb->mregs, musb_ep->current_epnum);
 		if (c->channel_abort)
 			status = c->channel_abort(musb_ep->dma);
 		else
@@ -1390,7 +1404,7 @@ static int musb_gadget_set_halt(struct usb_ep *ep, int value)
 		goto done;
 	}
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 
 	request = next_request(musb_ep);
 	if (value) {
@@ -1479,7 +1493,7 @@ static int musb_gadget_fifo_status(struct usb_ep *ep)
 
 		spin_lock_irqsave(&musb->lock, flags);
 
-		musb_ep_select(mbase, epnum);
+		musb_ep_select(musb, mbase, epnum);
 		/* FIXME return zero unless RXPKTRDY is set */
 		retval = musb_readw(epio, MUSB_RXCOUNT);
 
@@ -1501,7 +1515,7 @@ static void musb_gadget_fifo_flush(struct usb_ep *ep)
 	mbase = musb->mregs;
 
 	spin_lock_irqsave(&musb->lock, flags);
-	musb_ep_select(mbase, (u8) epnum);
+	musb_ep_select(musb, mbase, (u8) epnum);
 
 	/* disable interrupts */
 	musb_writew(mbase, MUSB_INTRTXE, musb->intrtxe & ~(1 << epnum));
@@ -1974,7 +1988,8 @@ static int musb_gadget_stop(struct usb_gadget *g)
 
 	spin_lock_irqsave(&musb->lock, flags);
 
-	musb_hnp_stop(musb);
+	if (is_otg_enabled(musb))
+		musb_hnp_stop(musb);
 
 	(void) musb_gadget_vbus_draw(&musb->g, 0);
 
@@ -2097,6 +2112,8 @@ void musb_g_disconnect(struct musb *musb)
 		break;
 	case OTG_STATE_B_WAIT_ACON:
 	case OTG_STATE_B_HOST:
+		if (!is_otg_enabled(musb))
+			break;
 	case OTG_STATE_B_PERIPHERAL:
 	case OTG_STATE_B_IDLE:
 		musb->xceiv->otg->state = OTG_STATE_B_IDLE;

@@ -30,6 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <linux/module.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
@@ -335,7 +336,7 @@ static irqreturn_t dma_controller_irq(int irq, void *private_data)
 					 * The programming guide says that we
 					 * must clear DMAENAB before DMAMODE.
 					 */
-					musb_ep_select(mbase, epnum);
+					musb_ep_select(musb, mbase, epnum);
 					txcsr = musb_readw(mbase, offset);
 					txcsr &= ~(MUSB_TXCSR_DMAENAB
 							| MUSB_TXCSR_AUTOSET);

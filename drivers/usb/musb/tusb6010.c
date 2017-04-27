@@ -48,7 +48,7 @@ static u8 tusb_get_revision(struct musb *musb)
 {
 	void __iomem	*tbase = musb->ctrl_base;
 	u32		die_id;
-	u8		rev;
+	u16		rev;
 
 	rev = musb_readl(tbase, TUSB_DMA_CTRL_REV) & 0xff;
 	if (TUSB_REV_MAJOR(rev) == 3) {
@@ -64,7 +64,7 @@ static u8 tusb_get_revision(struct musb *musb)
 static void tusb_print_revision(struct musb *musb)
 {
 	void __iomem	*tbase = musb->ctrl_base;
-	u8		rev;
+	u16		rev;
 
 	rev = musb->tusb_revision;
 
@@ -1202,8 +1202,15 @@ static const struct musb_platform_ops tusb_ops = {
 	.set_mode	= tusb_musb_set_mode,
 	.try_idle	= tusb_musb_try_idle,
 
+	.get_hw_revision	= tusb_get_revision,
+
 	.vbus_status	= tusb_musb_vbus_status,
 	.set_vbus	= tusb_musb_set_vbus,
+	.read_fifo	= tusb_musb_read_fifo,
+	.write_fifo	= tusb_musb_write_fifo,
+
+	.dma_controller_create = tusb_dma_controller_create,
+	.dma_controller_destroy = tusb_dma_controller_destroy,
 };
 
 static const struct platform_device_info tusb_dev_info = {

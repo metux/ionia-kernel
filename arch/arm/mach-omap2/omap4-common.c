@@ -51,6 +51,7 @@ static void __iomem *twd_base;
 
 #define IRQ_LOCALTIMER		29
 
+<<<<<<< HEAD
 #ifdef CONFIG_OMAP_INTERCONNECT_BARRIER
 
 /* Used to implement memory barrier on DRAM path */

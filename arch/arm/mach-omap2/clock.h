@@ -60,9 +60,6 @@
 
 /* OMAP4xxx CM_CLKMODE_DPLL*.EN_*_DPLL bits - for omap2_get_dpll_rate() */
 #define OMAP4XXX_EN_DPLL_MNBYPASS		0x4
-#define OMAP4XXX_EN_DPLL_LPBYPASS		0x5
-#define OMAP4XXX_EN_DPLL_FRBYPASS		0x6
-#define OMAP4XXX_EN_DPLL_LOCKED			0x7
 
 extern struct ti_clk_ll_ops omap_clk_ll_ops;
 

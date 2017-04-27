@@ -22,6 +22,7 @@
 #include "prm44xx.h"
 #include "prm54xx.h"
 #include "prm7xx.h"
+#include "prm33xx.h"
 #include "prminst44xx.h"
 #include "prm-regbits-44xx.h"
 #include "prcm44xx.h"
@@ -58,7 +59,7 @@ void omap4_prminst_set_prm_dev_inst(s32 dev_inst)
 /* Read a register in a PRM instance */
 u32 omap4_prminst_read_inst_reg(u8 part, s16 inst, u16 idx)
 {
-	BUG_ON(part >= OMAP4_MAX_PRCM_PARTITIONS ||
+	BUG_ON(part >= max_prm_partitions ||
 	       part == OMAP4430_INVALID_PRCM_PARTITION ||
 	       !_prm_bases[part]);
 	return readl_relaxed(_prm_bases[part] + inst + idx);
@@ -67,7 +68,7 @@ u32 omap4_prminst_read_inst_reg(u8 part, s16 inst, u16 idx)
 /* Write into a register in a PRM instance */
 void omap4_prminst_write_inst_reg(u32 val, u8 part, s16 inst, u16 idx)
 {
-	BUG_ON(part >= OMAP4_MAX_PRCM_PARTITIONS ||
+	BUG_ON(part >= max_prm_partitions ||
 	       part == OMAP4430_INVALID_PRCM_PARTITION ||
 	       !_prm_bases[part]);
 	writel_relaxed(val, _prm_bases[part] + inst + idx);
@@ -166,7 +167,7 @@ int omap4_prminst_deassert_hardreset(u8 shift, u8 st_shift, u8 part, s16 inst,
 	omap4_prminst_rmw_inst_reg_bits(0xffffffff, st_mask, part, inst,
 					rstst_offs);
 	/* de-assert the reset control line */
-	omap4_prminst_rmw_inst_reg_bits(mask, 0, part, inst, rstctrl_offs);
+	omap4_prminst_rmw_inst_reg_bits((1 << shift), 0, part, inst, rstctrl_offs);
 	/* wait the status to be set */
 	omap_test_timeout(omap4_prminst_is_hardreset_asserted(st_shift, part,
 							      inst, rstst_offs),
@@ -193,4 +194,15 @@ void omap4_prminst_global_warm_sw_reset(void)
 	/* OCP barrier */
 	v = omap4_prminst_read_inst_reg(OMAP4430_PRM_PARTITION,
 				    inst, OMAP4_PRM_RSTCTRL_OFFSET);
+}
+
+void __init omap44xx_prminst_init(void)
+{
+	if (cpu_is_omap44xx()) {
+		_prm_bases = omap44xx_prm_bases;
+		max_prm_partitions = ARRAY_SIZE(omap44xx_prm_bases);
+	} else if (cpu_is_am33xx()) {
+		_prm_bases = am33xx_prm_bases;
+		max_prm_partitions = ARRAY_SIZE(am33xx_prm_bases);
+	}
 }

@@ -18,6 +18,7 @@
 #include <linux/init.h>
 #include <linux/err.h>
 #include <linux/slab.h>
+#include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
@@ -53,6 +54,32 @@ static const struct mfd_cell tps65910s[] = {
 	},
 };
 
+static bool is_volatile_reg(struct device *dev, unsigned int reg)
+{
+    struct tps65910 *tps65910 = dev_get_drvdata(dev);
+    /*
+    * Caching all regulator registers.
+    * All regualator register address range is same for
+    * TPS65910 and TPS65911
+    */
+    if ((reg >= TPS65910_VIO) && (reg <= TPS65910_VDAC)) {
+        /* Check for non-existing register */
+        if (tps65910_chip_id(tps65910) == TPS65910)
+            if ((reg == TPS65911_VDDCTRL_OP) ||
+                (reg == TPS65911_VDDCTRL_SR))
+                return true;
+        return false;
+    }
+    return true;
+}
+
+static const struct regmap_config tps65910_regmap_config = {
+    .reg_bits = 8,
+    .val_bits = 8,
+    .volatile_reg = is_volatile_reg,
+    .max_register = TPS65910_MAX_REGISTER - 1,
+    .cache_type = REGCACHE_RBTREE,
+};
 
 static const struct regmap_irq tps65911_irqs[] = {
 	/* INT_STS */

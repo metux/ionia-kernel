@@ -1039,6 +1039,7 @@ int cpdma_chan_submit(struct cpdma_chan *chan, void *token, void *data,
 	unsigned long			flags;
 	u32				mode;
 	int				ret = 0;
+	bool                            is_rx;
 
 	spin_lock_irqsave(&chan->lock, flags);
 
@@ -1143,9 +1144,6 @@ static int __cpdma_chan_process(struct cpdma_chan *chan)
 	int				cb_status = 0;
 	struct cpdma_desc_pool		*pool = ctlr->pool;
 	dma_addr_t			desc_dma;
-	unsigned long			flags;
-
-	spin_lock_irqsave(&chan->lock, flags);
 
 	desc = chan->head;
 	if (!desc) {
@@ -1189,7 +1187,6 @@ static int __cpdma_chan_process(struct cpdma_chan *chan)
 	return status;
 
 unlock_ret:
-	spin_unlock_irqrestore(&chan->lock, flags);
 	return status;
 }
 
@@ -1321,6 +1318,7 @@ int cpdma_control_get(struct cpdma_ctlr *ctlr, int control)
 
 	return ret;
 }
+EXPORT_SYMBOL_GPL(cpdma_control_get);
 
 int cpdma_control_set(struct cpdma_ctlr *ctlr, int control, int value)
 {

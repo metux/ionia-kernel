@@ -33,7 +33,6 @@
 static void __iomem *omap_sram_base;
 static unsigned long omap_sram_skip;
 static unsigned long omap_sram_size;
-static void __iomem *omap_sram_ceil;
 
 /*
  * Memory allocator for SRAM: calculates the new ceiling address
@@ -52,12 +51,6 @@ void *omap_sram_push_address(unsigned long size)
 		pr_err("Not enough space in SRAM\n");
 		return NULL;
 	}
-
-	new_ceil -= size;
-	new_ceil = ROUND_DOWN(new_ceil, FNCPY_ALIGN);
-	omap_sram_ceil = IOMEM(new_ceil);
-
-	return (void *)omap_sram_ceil;
 }
 
 /*

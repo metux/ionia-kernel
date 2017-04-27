@@ -1024,6 +1024,8 @@ static struct davinci_soc_info davinci_soc_info_dm355 = {
 	.intc_irq_num		= DAVINCI_N_AINTC_IRQ,
 	.timer_info		= &dm355_timer_info,
 	.sram_dma		= 0x00010000,
+	.serial_dev		= &dm355_serial_device,
+	.sram_phys		= 0x00010000,
 	.sram_len		= SZ_32K,
 };
 

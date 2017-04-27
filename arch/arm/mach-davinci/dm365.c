@@ -1126,7 +1126,7 @@ static struct davinci_soc_info davinci_soc_info_dm365 = {
 	.intc_irq_num		= DAVINCI_N_AINTC_IRQ,
 	.timer_info		= &dm365_timer_info,
 	.emac_pdata		= &dm365_emac_pdata,
-	.sram_dma		= 0x00010000,
+	.sram_phys		= 0x00010000,
 	.sram_len		= SZ_32K,
 };
 
