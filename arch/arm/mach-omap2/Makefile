@@ -63,6 +63,11 @@ obj-$(CONFIG_ARCH_OMAP4)		+= omap4-restart.o
 obj-$(CONFIG_SOC_OMAP5)			+= omap4-restart.o
 obj-$(CONFIG_SOC_DRA7XX)		+= omap4-restart.o
 
+# Pin multiplexing
+#obj-$(CONFIG_ARCH_OMAP3)		+= mux34xx.o
+#obj-$(CONFIG_ARCH_OMAP4)		+= mux44xx.o
+#obj-$(CONFIG_SOC_AM33XX)		+= mux33xx.o
+
 # SMS/SDRC
 obj-$(CONFIG_ARCH_OMAP2)		+= sdrc2xxx.o
 # obj-$(CONFIG_ARCH_OMAP3)		+= sdrc3xxx.o
@@ -229,6 +234,11 @@ obj-$(CONFIG_SOC_OMAP2420)		+= msdi.o
 # Specific board support
 obj-$(CONFIG_MACH_OMAP_GENERIC)		+= board-generic.o pdata-quirks.o
 obj-$(CONFIG_MACH_NOKIA_N8X0)		+= board-n8x0.o
+
+obj-$(CONFIG_MACH_AM335XEVM)		+= board-am335xevm.o
+obj-$(CONFIG_MACH_DUAGON_I101)		+= board-duagon-i101.o
+obj-$(CONFIG_MACH_DUAGON_I101_RMII)	+= board-duagon-i101-rmii.o
+obj-$(CONFIG_MACH_AM335XIAEVM)		+= board-am335xevm.o
 
 # Platform specific device init code
 

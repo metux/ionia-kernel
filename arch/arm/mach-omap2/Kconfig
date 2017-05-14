@@ -217,6 +217,26 @@ config MACH_NOKIA_N8X0
 	select MACH_NOKIA_N810
 	select MACH_NOKIA_N810_WIMAX
 
+config MACH_AM335XEVM
+	bool "AM335X Evaluation Module"
+	depends on SOC_AM33XX
+	default y
+
+config MACH_AM335XIAEVM
+	bool "AM335X IA Evaluation Module"
+	depends on SOC_AM33XX
+	default y
+
+config MACH_DUAGON_I101
+	bool "duagon i10x MII"
+	depends on SOC_AM33XX
+	default n
+
+config MACH_DUAGON_I101_RMII
+	bool "duagon i10x RMII"
+	depends on SOC_AM33XX
+	default n
+
 config OMAP3_SDRC_AC_TIMING
 	bool "Enable SDRC AC timing register changes"
 	depends on ARCH_OMAP3
@@ -228,6 +248,13 @@ config OMAP3_SDRC_AC_TIMING
 	  users who will wish to say yes at this point - almost everyone will
 	  wish to say no.  Selecting yes without understanding what is
 	  going on could result in system crashes;
+
+config OMAP3_EDMA
+	bool "OMAP3 EDMA support"
+	default n
+	depends on ARCH_OMAP3
+	help
+	  Select this option if EDMA is used
 
 endmenu
 

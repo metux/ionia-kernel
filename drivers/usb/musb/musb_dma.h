@@ -101,8 +101,10 @@ struct musb_hw_ep;
 #if defined(CONFIG_USB_TI_CPPI_DMA) || defined(CONFIG_USB_TI_CPPI41_DMA)
 #define	is_cppi_enabled(musb)		\
 	(musb_dma_cppi(musb) || musb_dma_cppi41(musb))
+#define is_cppi41_enabled(musb)     1
 #else
 #define	is_cppi_enabled(musb)	0
+#define is_cppi41_enabled(musb)     0
 #endif
 
 /* Anomaly 05000456 - USB Receive Interrupt Is Not Generated in DMA Mode 1

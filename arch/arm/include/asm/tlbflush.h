@@ -339,13 +339,13 @@ static inline void local_flush_tlb_all(void)
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
 
 	if (tlb_flag(TLB_WB))
-		dsb(nshst);
+		dsb();
 
 	__local_flush_tlb_all();
 	tlb_op(TLB_V7_UIS_FULL, "c8, c7, 0", zero);
 
 	if (tlb_flag(TLB_BARRIER)) {
-		dsb(nsh);
+		dsb();
 		isb();
 	}
 }
@@ -356,13 +356,13 @@ static inline void __flush_tlb_all(void)
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
 
 	if (tlb_flag(TLB_WB))
-		dsb(ishst);
+		dsb();
 
 	__local_flush_tlb_all();
 	tlb_op(TLB_V7_UIS_FULL, "c8, c3, 0", zero);
 
 	if (tlb_flag(TLB_BARRIER)) {
-		dsb(ish);
+		dsb();
 		isb();
 	}
 }
@@ -392,13 +392,13 @@ static inline void local_flush_tlb_mm(struct mm_struct *mm)
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
 
 	if (tlb_flag(TLB_WB))
-		dsb(nshst);
+		dsb();
 
 	__local_flush_tlb_mm(mm);
 	tlb_op(TLB_V7_UIS_ASID, "c8, c7, 2", asid);
 
 	if (tlb_flag(TLB_BARRIER))
-		dsb(nsh);
+		dsb();
 }
 
 static inline void __flush_tlb_mm(struct mm_struct *mm)
@@ -406,7 +406,7 @@ static inline void __flush_tlb_mm(struct mm_struct *mm)
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
 
 	if (tlb_flag(TLB_WB))
-		dsb(ishst);
+		dsb();
 
 	__local_flush_tlb_mm(mm);
 #ifdef CONFIG_ARM_ERRATA_720789
@@ -416,7 +416,7 @@ static inline void __flush_tlb_mm(struct mm_struct *mm)
 #endif
 
 	if (tlb_flag(TLB_BARRIER))
-		dsb(ish);
+		dsb();
 }
 
 static inline void
@@ -449,13 +449,13 @@ local_flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
 	uaddr = (uaddr & PAGE_MASK) | ASID(vma->vm_mm);
 
 	if (tlb_flag(TLB_WB))
-		dsb(nshst);
+		dsb();
 
 	__local_flush_tlb_page(vma, uaddr);
 	tlb_op(TLB_V7_UIS_PAGE, "c8, c7, 1", uaddr);
 
 	if (tlb_flag(TLB_BARRIER))
-		dsb(nsh);
+		dsb();
 }
 
 static inline void
@@ -466,7 +466,7 @@ __flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
 	uaddr = (uaddr & PAGE_MASK) | ASID(vma->vm_mm);
 
 	if (tlb_flag(TLB_WB))
-		dsb(ishst);
+		dsb();
 
 	__local_flush_tlb_page(vma, uaddr);
 #ifdef CONFIG_ARM_ERRATA_720789
@@ -476,7 +476,7 @@ __flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
 #endif
 
 	if (tlb_flag(TLB_BARRIER))
-		dsb(ish);
+		dsb();
 }
 
 static inline void __local_flush_tlb_kernel_page(unsigned long kaddr)
@@ -502,13 +502,13 @@ static inline void local_flush_tlb_kernel_page(unsigned long kaddr)
 	kaddr &= PAGE_MASK;
 
 	if (tlb_flag(TLB_WB))
-		dsb(nshst);
+		dsb();
 
 	__local_flush_tlb_kernel_page(kaddr);
 	tlb_op(TLB_V7_UIS_PAGE, "c8, c7, 1", kaddr);
 
 	if (tlb_flag(TLB_BARRIER)) {
-		dsb(nsh);
+		dsb();
 		isb();
 	}
 }
@@ -520,13 +520,13 @@ static inline void __flush_tlb_kernel_page(unsigned long kaddr)
 	kaddr &= PAGE_MASK;
 
 	if (tlb_flag(TLB_WB))
-		dsb(ishst);
+		dsb();
 
 	__local_flush_tlb_kernel_page(kaddr);
 	tlb_op(TLB_V7_UIS_PAGE, "c8, c3, 1", kaddr);
 
 	if (tlb_flag(TLB_BARRIER)) {
-		dsb(ish);
+		dsb();
 		isb();
 	}
 }
@@ -585,7 +585,7 @@ static inline void flush_pmd_entry(void *pmd)
 	tlb_l2_op(TLB_L2CLEAN_FR, "c15, c9, 1  @ L2 flush_pmd", pmd);
 
 	if (tlb_flag(TLB_WB))
-		dsb(ishst);
+		dsb();
 }
 
 static inline void clean_pmd_entry(void *pmd)
