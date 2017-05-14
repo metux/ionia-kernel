@@ -17,6 +17,7 @@
 #ifndef __ARCH_ARM_MACH_OMAP2_CM_33XX_H
 #define __ARCH_ARM_MACH_OMAP2_CM_33XX_H
 
+#ifndef __ASSEMBLER__
 #include <linux/delay.h>
 #include <linux/errno.h>
 #include <linux/err.h>
@@ -27,12 +28,18 @@
 #include "cm.h"
 #include "cm-regbits-33xx.h"
 #include "cm33xx.h"
+#endif
 
 /* CM base address */
 #define AM33XX_CM_BASE		0x44e00000
 
+#ifdef __ASSEMBLY__
+#define AM33XX_CM_REGADDR(inst, reg)				\
+	(AM33XX_CM_BASE + AM33XX_L4_WK_IO_OFFSET  + (inst) + (reg))
+#else
 #define AM33XX_CM_REGADDR(inst, reg)				\
 	AM33XX_L4_WK_IO_ADDRESS(AM33XX_CM_BASE + (inst) + (reg))
+#endif
 
 /* CM instances */
 #define AM33XX_CM_PER_MOD		0x0000
@@ -380,7 +387,7 @@
 #define AM33XX_CM_CEFUSE_CEFUSE_CLKCTRL_OFFSET		0x0020
 #define AM33XX_CM_CEFUSE_CEFUSE_CLKCTRL			AM33XX_CM_REGADDR(AM33XX_CM_CEFUSE_MOD, 0x0020)
 
-
+#ifndef __ASSEMBLER__
 extern bool am33xx_cm_is_clkdm_in_hwsup(s16 inst, u16 cdoffs);
 extern void am33xx_cm_clkdm_enable_hwsup(s16 inst, u16 cdoffs);
 extern void am33xx_cm_clkdm_disable_hwsup(s16 inst, u16 cdoffs);
@@ -416,5 +423,7 @@ static inline int am33xx_cm_wait_module_ready(u16 inst, s16 cdoffs,
 	return 0;
 }
 #endif
+
+#endif /* __ASSEMBLER__ */
 
 #endif

@@ -74,6 +74,8 @@ omap_uart_lsr:	.word	0
 		beq	83f			@ configure UART3
 		cmp	\rp, #AM33XXUART1	@ AM33XX UART offsets different
 		beq	84f			@ configure UART1
+		cmp	\rp, #AM33XXUART4	@ AM33XX UART offsets different
+		beq	85f			@ configure UART1
 		cmp	\rp, #ZOOM_UART		@ only on zoom2/3
 		beq	95f			@ configure ZOOM_UART
 

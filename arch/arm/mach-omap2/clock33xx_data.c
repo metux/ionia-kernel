@@ -18,6 +18,7 @@
 #include <linux/list.h>
 #include <linux/clk.h>
 #include <plat/clkdev_omap.h>
+#include <asm/io.h>
 
 #include "am33xx.h"
 #include "iomap.h"
@@ -492,6 +493,8 @@ static struct clk l4ls_gclk = {
 	.name		= "l4ls_gclk",
 	.clkdm_name	= "l4ls_clkdm",
 	.parent		= &dpll_core_m4_div2_ck,
+	.enable_reg	= AM33XX_CM_PER_L4LS_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.ops		= &clkops_null,
 	.recalc		= &followparent_recalc,
 };
@@ -520,6 +523,8 @@ static struct clk dcan0_fck = {
 	.name		= "dcan0_fck",
 	.clkdm_name	= "l4ls_clkdm",
 	.parent		= &sys_clkin_ck,
+	.enable_reg	= AM33XX_CM_PER_DCAN0_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.ops		= &clkops_null,
 	.recalc		= &followparent_recalc,
 };
@@ -528,6 +533,8 @@ static struct clk dcan1_fck = {
 	.name		= "dcan1_fck",
 	.clkdm_name	= "l4ls_clkdm",
 	.parent		= &sys_clkin_ck,
+	.enable_reg	= AM33XX_CM_PER_DCAN1_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.ops		= &clkops_null,
 	.recalc		= &followparent_recalc,
 };
@@ -536,6 +543,8 @@ static struct clk mcasp0_fck = {
 	.name		= "mcasp0_fck",
 	.clkdm_name	= "l3s_clkdm",
 	.parent		= &sys_clkin_ck,
+	.enable_reg	= AM33XX_CM_PER_MCASP0_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.ops		= &clkops_null,
 	.recalc		= &followparent_recalc,
 };
@@ -544,6 +553,8 @@ static struct clk mcasp1_fck = {
 	.name		= "mcasp1_fck",
 	.clkdm_name	= "l3s_clkdm",
 	.parent		= &sys_clkin_ck,
+	.enable_reg	= AM33XX_CM_PER_MCASP1_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.ops		= &clkops_null,
 	.recalc		= &followparent_recalc,
 };
@@ -552,6 +563,8 @@ static struct clk smartreflex0_fck = {
 	.name		= "smartreflex0_fck",
 	.clkdm_name	= "l4_wkup_clkdm",
 	.parent		= &sys_clkin_ck,
+	.enable_reg	= AM33XX_CM_WKUP_SMARTREFLEX0_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.ops		= &clkops_null,
 	.recalc		= &followparent_recalc,
 };
@@ -561,6 +574,8 @@ static struct clk smartreflex1_fck = {
 	.clkdm_name	= "l4_wkup_clkdm",
 	.parent		= &sys_clkin_ck,
 	.ops		= &clkops_null,
+	.enable_reg	= AM33XX_CM_WKUP_SMARTREFLEX1_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.recalc		= &followparent_recalc,
 };
 
@@ -659,9 +674,11 @@ static struct clk timer1_fck = {
 	.parent		= &sys_clkin_ck,
 	.init		= &omap2_init_clksel_parent,
 	.clksel		= timer1_clkmux_sel,
+	.enable_reg	= AM33XX_CM_WKUP_TIMER1_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clksel_reg	= AM33XX_CLKSEL_TIMER1MS_CLK,
 	.clksel_mask	= AM33XX_CLKSEL_0_2_MASK,
-	.ops		= &clkops_null,
+	.ops		= &clkops_omap2_dflt,
 	.recalc		= &omap2_clksel_recalc,
 };
 
@@ -678,9 +695,11 @@ static struct clk timer2_fck = {
 	.parent		= &sys_clkin_ck,
 	.init		= &omap2_init_clksel_parent,
 	.clksel		= timer2_to_7_clk_sel,
+	.enable_reg	= AM33XX_CM_PER_TIMER2_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clksel_reg	= AM33XX_CLKSEL_TIMER2_CLK,
 	.clksel_mask	= AM33XX_CLKSEL_0_1_MASK,
-	.ops		= &clkops_null,
+	.ops		= &clkops_omap2_dflt,
 	.recalc		= &omap2_clksel_recalc,
 };
 
@@ -690,6 +709,8 @@ static struct clk timer3_fck = {
 	.parent		= &sys_clkin_ck,
 	.init		= &am33xx_init_timer_parent,
 	.clksel		= timer2_to_7_clk_sel,
+	.enable_reg	= AM33XX_CM_PER_TIMER3_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clksel_reg	= AM33XX_CLKSEL_TIMER3_CLK,
 	.clksel_mask	= AM33XX_CLKSEL_0_1_MASK,
 	.ops		= &clkops_null,
@@ -702,6 +723,8 @@ static struct clk timer4_fck = {
 	.parent		= &sys_clkin_ck,
 	.init		= &omap2_init_clksel_parent,
 	.clksel		= timer2_to_7_clk_sel,
+	.enable_reg	= AM33XX_CM_PER_TIMER4_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clksel_reg	= AM33XX_CLKSEL_TIMER4_CLK,
 	.clksel_mask	= AM33XX_CLKSEL_0_1_MASK,
 	.ops		= &clkops_null,
@@ -714,6 +737,8 @@ static struct clk timer5_fck = {
 	.parent		= &sys_clkin_ck,
 	.init		= &omap2_init_clksel_parent,
 	.clksel		= timer2_to_7_clk_sel,
+	.enable_reg	= AM33XX_CM_PER_TIMER5_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clksel_reg	= AM33XX_CLKSEL_TIMER5_CLK,
 	.clksel_mask	= AM33XX_CLKSEL_0_1_MASK,
 	.ops		= &clkops_null,
@@ -726,6 +751,8 @@ static struct clk timer6_fck = {
 	.parent		= &sys_clkin_ck,
 	.init		= &am33xx_init_timer_parent,
 	.clksel		= timer2_to_7_clk_sel,
+	.enable_reg	= AM33XX_CM_PER_TIMER6_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clksel_reg	= AM33XX_CLKSEL_TIMER6_CLK,
 	.clksel_mask	= AM33XX_CLKSEL_0_1_MASK,
 	.ops		= &clkops_null,
@@ -738,6 +765,8 @@ static struct clk timer7_fck = {
 	.parent		= &sys_clkin_ck,
 	.init		= &omap2_init_clksel_parent,
 	.clksel		= timer2_to_7_clk_sel,
+	.enable_reg	= AM33XX_CM_PER_TIMER7_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clksel_reg	= AM33XX_CLKSEL_TIMER7_CLK,
 	.clksel_mask	= AM33XX_CLKSEL_0_1_MASK,
 	.ops		= &clkops_null,
@@ -880,7 +909,9 @@ static struct clk mmc2_fck = {
 	.name		= "mmc2_fck",
 	.clkdm_name	= "l3s_clkdm",
 	.parent		= &mmc_clk,
-	.ops		= &clkops_null,
+	.enable_reg	= AM33XX_CM_PER_MMC2_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
+	.ops		= &clkops_omap2_dflt,
 	.recalc		= &followparent_recalc,
 };
 
@@ -894,7 +925,9 @@ static struct clk gfx_fclk_clksel_ck = {
 	.name		= "gfx_fclk_clksel_ck",
 	.parent		= &dpll_core_m4_ck,
 	.clksel		= gfx_clksel_sel,
-	.ops		= &clkops_null,
+	.ops		= &clkops_omap2_dflt,
+	.enable_reg	= AM33XX_CM_GFX_GFX_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clksel_reg	= AM33XX_CLKSEL_GFX_FCLK,
 	.clksel_mask	= AM33XX_CLKSEL_GFX_FCLK_MASK,
 	.recalc		= &omap2_clksel_recalc,
@@ -989,9 +1022,11 @@ static struct clk wdt1_fck = {
 	.parent		= &clk_rc32k_ck,
 	.init		= &omap2_init_clksel_parent,
 	.clksel		= wdt_clkmux_sel,
+	.enable_reg	= AM33XX_CM_WKUP_WDT1_CLKCTRL,
+	.enable_bit	= AM33XX_MODULEMODE_SWCTRL,
 	.clksel_reg	= AM33XX_CLKSEL_WDT1_CLK,
 	.clksel_mask	= AM33XX_CLKSEL_0_1_MASK,
-	.ops		= &clkops_null,
+	.ops		= &clkops_omap2_dflt,
 	.recalc		= &omap2_clksel_recalc,
 };
 

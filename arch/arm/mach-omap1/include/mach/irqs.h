@@ -28,6 +28,8 @@
 #ifndef __ASM_ARCH_OMAP15XX_IRQS_H
 #define __ASM_ARCH_OMAP15XX_IRQS_H
 
+/* All OMAP4 specific defines are moved to irqs-44xx.h */
+
 /*
  * IRQ numbers for interrupt handler 1
  *

@@ -103,6 +103,8 @@ static struct omap_id omap_ids[] __initdata = {
 static void __iomem *tap_base;
 static u16 tap_prod_id;
 
+static void __init omap3_cpuinfo(void);
+
 void omap_get_die_id(struct omap_die_id *odi)
 {
 	if (cpu_is_omap44xx() || soc_is_omap54xx()) {
@@ -297,6 +299,17 @@ void __init omap4xxx_check_features(void)
 void __init ti81xx_check_features(void)
 {
 	omap_features = OMAP3_HAS_NEON;
+	omap3_cpuinfo();
+}
+
+void __init omap3_check_revision(void)
+{
+	u32 status;
+
+	status = omap_ctrl_readl(AM33XX_DEV_FEATURE);
+	if (status & AM33XX_SGX_MASK)
+		omap_features |= OMAP3_HAS_SGX;
+
 	omap3_cpuinfo();
 }
 

@@ -47,10 +47,14 @@
 #include <plat/omap_device.h>
 #include <plat/dmtimer.h>
 #include <plat/omap-pm.h>
+#include <plat/clock.h>
 
 #include "soc.h"
 #include "common.h"
+#include "clockdomain.h"
 #include "powerdomain.h"
+#include "cm2xxx_3xxx.h"
+#include "cminst44xx.h"
 
 /* Parent clocks, eventually these will come from the clock framework */
 
@@ -144,6 +148,67 @@ static struct clock_event_device clockevent_gpt = {
 	.set_mode	= omap2_gp_timer_set_mode,
 };
 
+static int _is_timer_idle(struct omap_hwmod *oh)
+{
+	int ret;
+
+	if (cpu_is_omap44xx() || soc_is_am33xx()) {
+		if (!oh->clkdm)
+			return -EINVAL;
+		ret = omap4_cminst_wait_module_ready(oh->clkdm->prcm_partition,
+				oh->clkdm->cm_inst,
+				oh->clkdm->clkdm_offs,
+				oh->prcm.omap4.clkctrl_offs);
+	} else if (cpu_is_omap24xx() || cpu_is_omap34xx()) {
+		ret = omap2_cm_wait_module_ready(
+				oh->prcm.omap2.module_offs,
+				oh->prcm.omap2.idlest_reg_id,
+				oh->prcm.omap2.idlest_idle_bit);
+	} else {
+		BUG();
+	}
+
+	return ret;
+}
+
+static int omap_dm_timer_switch_src(struct omap_hwmod *oh,
+		struct omap_dm_timer *timer, const char *fck_source)
+{
+	struct clk *src, *cur_parent;
+	int res;
+
+	src = clk_get(NULL, fck_source);
+	if (IS_ERR(src))
+		return -EINVAL;
+
+	/* Reserve HW/clock-tree default source for fallback */
+	cur_parent = clk_get_parent(timer->fclk);
+
+	/* Switch to configured source */
+	res = __omap_dm_timer_set_source(timer->fclk, src);
+	if (IS_ERR_VALUE(res))
+		pr_warning("%s: timer%i cannot set source\n",
+				__func__, timer->id);
+
+	/* Check whether timer module is went into idle state */
+	res = _is_timer_idle(oh);
+	if (res && cur_parent) {
+		/* Fallback to default timer source */
+		pr_warning("%s: Switching to HW default clocksource(%s) for "
+				"timer%i, this may impact timekeeping in low "
+				"power state\n",
+				__func__, cur_parent->name, timer->id);
+
+		res = __omap_dm_timer_set_source(timer->fclk, cur_parent);
+		if (IS_ERR_VALUE(res))
+			pr_warning("%s: timer%i cannot set source\n",
+					__func__, timer->id);
+	}
+	clk_put(src);
+
+	return res;
+}
+
 static int __init omap_dm_timer_init_one(struct omap_dm_timer *timer,
 						int gptimer_id,
 						const char *fck_source)
@@ -188,18 +253,7 @@ static int __init omap_dm_timer_init_one(struct omap_dm_timer *timer,
 		return -ENODEV;
 
 	if (gptimer_id != 12) {
-		struct clk *src;
-
-		src = clk_get(NULL, fck_source);
-		if (IS_ERR(src)) {
-			res = -EINVAL;
-		} else {
-			res = __omap_dm_timer_set_source(timer->fclk, src);
-			if (IS_ERR_VALUE(res))
-				pr_warning("%s: timer%i cannot set source\n",
-						__func__, gptimer_id);
-			clk_put(src);
-		}
+		res = omap_dm_timer_switch_src(oh, timer, fck_source);
 	}
 	__omap_dm_timer_init_regs(timer);
 	__omap_dm_timer_reset(timer, 1, 1);
@@ -433,6 +487,35 @@ static inline void __init realtime_counter_init(void)
 {}
 #endif
 
+static void omap_dmtimer_resume(void)
+{
+	char name[10];
+	struct omap_hwmod *oh;
+
+	sprintf(name, "timer%d", clkev.id);
+	oh = omap_hwmod_lookup(name);
+	if (!oh)
+		return;
+
+	omap_hwmod_enable(oh);
+	__omap_dm_timer_load_start(&clkev,
+			OMAP_TIMER_CTRL_ST | OMAP_TIMER_CTRL_AR, 0, 1);
+	__omap_dm_timer_int_enable(&clkev, OMAP_TIMER_INT_OVERFLOW);
+}
+
+static void omap_dmtimer_suspend(void)
+{
+	char name[10];
+	struct omap_hwmod *oh;
+
+	sprintf(name, "timer%d", clkev.id);
+	oh = omap_hwmod_lookup(name);
+	if (!oh)
+		return;
+
+	omap_hwmod_idle(oh);
+}
+
 #define OMAP_SYS_TIMER_INIT(name, clkev_nr, clkev_src,			\
 				clksrc_nr, clksrc_src)			\
 static void __init omap##name##_timer_init(void)			\
@@ -443,7 +526,9 @@ static void __init omap##name##_timer_init(void)			\
 
 #define OMAP_SYS_TIMER(name)						\
 struct sys_timer omap##name##_timer = {					\
-	.init	= omap##name##_timer_init,				\
+	.init		= omap##name##_timer_init,			\
+	.suspend	= omap_dmtimer_suspend,				\
+	.resume		= omap_dmtimer_resume,				\
 };
 
 #ifdef CONFIG_ARCH_OMAP2

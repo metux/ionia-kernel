@@ -17,6 +17,11 @@
 
 #include <linux/if_ether.h>
 
+enum {
+	CPSW_VERSION_1 = 0,    /* TI8148 */
+	CPSW_VERSION_2,        /* AM33XX */
+};
+
 struct cpsw_slave_data {
 	u32		slave_reg_ofs;
 	u32		sliver_reg_ofs;
@@ -49,7 +54,16 @@ struct cpsw_platform_data {
 
 	u32	rx_descs;	/* Number of Rx Descriptios */
 
+	u8	mac_addr[ETH_ALEN];
+
+	void	(*phy_control)(bool enabled);
+
 	u32	mac_control;	/* Mac control register */
+
+	u32	gigabit_en; /* Is gigabit capable AND enabled */
+	u32	rmii_en; /* Is RMII mode capable AND enabled */
+
+	u8	version;
 };
 
 #endif /* __CPSW_H__ */

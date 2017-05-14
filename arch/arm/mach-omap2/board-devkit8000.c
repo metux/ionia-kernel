@@ -55,6 +55,7 @@
 #include "sdram-micron-mt46h32m32lf-6.h"
 #include "mux.h"
 #include "hsmmc.h"
+#include "board-flash.h"
 #include "common-board-devices.h"
 
 #define OMAP_DM9000_GPIO_IRQ	25

@@ -28,6 +28,9 @@ struct omap_nand_platform_data {
 	int			devsize;
 	enum omap_ecc           ecc_opt;
 	struct gpmc_nand_regs	reg;
+	bool			elm_used;
+	int (*ctrlr_suspend) (void);
+	int (*ctrlr_resume) (void);
 };
 
 /* minimum size for IO mapping */

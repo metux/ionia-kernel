@@ -418,7 +418,7 @@ static int da8xx_musb_init(struct musb *musb)
 	if (!rev)
 		goto fail;
 
-	usb_nop_xceiv_register();
+	usb_nop_xceiv_register(musb->id);
 	musb->xceiv = usb_get_phy(USB_PHY_TYPE_USB2);
 	if (IS_ERR_OR_NULL(musb->xceiv))
 		goto fail;
@@ -457,6 +457,8 @@ static int da8xx_musb_exit(struct musb *musb)
 }
 
 static const struct musb_platform_ops da8xx_ops = {
+	.fifo_mode	= 2,
+	.flags		= MUSB_GLUE_EP_ADDR_FLAT_MAPPING,
 	.init		= da8xx_musb_init,
 	.exit		= da8xx_musb_exit,
 
@@ -467,6 +469,9 @@ static const struct musb_platform_ops da8xx_ops = {
 	.try_idle	= da8xx_musb_try_idle,
 
 	.set_vbus	= da8xx_musb_set_vbus,
+
+	.read_fifo	= musb_read_fifo,
+	.write_fifo	= musb_write_fifo,
 };
 
 static u64 da8xx_dmamask = DMA_BIT_MASK(32);

@@ -28,11 +28,11 @@
 #include <mach/common.h>
 #include <linux/platform_data/spi-davinci.h>
 #include <mach/gpio-davinci.h>
+#include <asm/hardware/davinci_asp.h>
 
 #include "davinci.h"
 #include "clock.h"
 #include "mux.h"
-#include "asp.h"
 
 #define DM355_UART2_BASE	(IO_PHYS + 0x206000)
 
@@ -851,7 +851,7 @@ static struct davinci_soc_info davinci_soc_info_dm355 = {
 	.gpio_num		= 104,
 	.gpio_irq		= IRQ_DM355_GPIOBNK0,
 	.serial_dev		= &dm355_serial_device,
-	.sram_dma		= 0x00010000,
+	.sram_phys		= 0x00010000,
 	.sram_len		= SZ_32K,
 };
 

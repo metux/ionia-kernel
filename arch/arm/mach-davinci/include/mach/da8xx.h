@@ -17,10 +17,14 @@
 #include <linux/davinci_emac.h>
 #include <linux/spi/spi.h>
 #include <linux/platform_data/davinci_asp.h>
+#include <linux/platform_data/uio_pruss.h>
 #include <linux/videodev2.h>
 
 #include <mach/serial.h>
 #include <mach/edma.h>
+#include <mach/i2c.h>
+#include <mach/mmc.h>
+#include <mach/usb.h>
 #include <mach/pm.h>
 #include <linux/platform_data/i2c-davinci.h>
 #include <linux/platform_data/mmc-davinci.h>
@@ -73,6 +77,7 @@ extern unsigned int da850_max_speed;
 #define DA8XX_AEMIF_CS3_BASE	0x62000000
 #define DA8XX_AEMIF_CTL_BASE	0x68000000
 #define DA8XX_ARM_RAM_BASE	0xffff0000
+#define DA8XX_SHARED_RAM_BASE	0x80000000
 
 void __init da830_init(void);
 void __init da850_init(void);
@@ -86,6 +91,7 @@ int da8xx_register_watchdog(void);
 int da8xx_register_usb20(unsigned mA, unsigned potpgt);
 int da8xx_register_usb11(struct da8xx_ohci_root_hub *pdata);
 int da8xx_register_emac(void);
+int da8xx_register_pruss_uio(struct uio_pruss_pdata *config);
 int da8xx_register_lcdc(struct da8xx_lcdc_platform_data *pdata);
 int da8xx_register_mmcsd0(struct davinci_mmc_config *config);
 int da850_register_mmcsd1(struct davinci_mmc_config *config);

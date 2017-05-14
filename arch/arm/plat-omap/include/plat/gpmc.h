@@ -152,6 +152,20 @@ struct gpmc_nand_regs {
 extern void gpmc_update_nand_reg(struct gpmc_nand_regs *reg, int cs);
 extern int gpmc_get_client_irq(unsigned irq_config);
 
+struct gpmc_devices_info {
+	void	*pdata;
+	int	flag;
+};
+
+#define	GPMC_DEVICE_NAND	(1 << 0)
+#define	GPMC_DEVICE_ONENAND	(1 << 1)
+#define	GPMC_DEVICE_NOR		(1 << 2)
+#define	GPMC_DEVICE_SMC91X	(1 << 3)
+#define	GPMC_DEVICE_SMS911X	(1 << 4)
+#define	GPMC_DEVICE_TUSB6010	(1 << 5)
+
+extern int omap_init_gpmc(struct gpmc_devices_info *pdata, int pdata_len);
+
 extern unsigned int gpmc_ns_to_ticks(unsigned int time_ns);
 extern unsigned int gpmc_ps_to_ticks(unsigned int time_ps);
 extern unsigned int gpmc_ticks_to_ns(unsigned int ticks);

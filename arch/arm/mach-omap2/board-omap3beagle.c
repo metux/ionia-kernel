@@ -50,6 +50,7 @@
 #include "mux.h"
 #include "hsmmc.h"
 #include "pm.h"
+#include "board-flash.h"
 #include "common-board-devices.h"
 
 /*

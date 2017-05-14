@@ -38,24 +38,24 @@ struct nop_usb_xceiv {
 	struct device		*dev;
 };
 
-static struct platform_device *pd;
+static struct platform_device *pd[2] = {NULL, NULL};
 
-void usb_nop_xceiv_register(void)
+void usb_nop_xceiv_register(int id)
 {
-	if (pd)
+	if (pd[id])
 		return;
-	pd = platform_device_register_simple("nop_usb_xceiv", -1, NULL, 0);
-	if (!pd) {
+	pd[id] = platform_device_register_simple("nop_usb_xceiv", id, NULL, 0);
+	if (!pd[id]) {
 		printk(KERN_ERR "Unable to register usb nop transceiver\n");
 		return;
 	}
 }
 EXPORT_SYMBOL(usb_nop_xceiv_register);
 
-void usb_nop_xceiv_unregister(void)
+void usb_nop_xceiv_unregister(int id)
 {
-	platform_device_unregister(pd);
-	pd = NULL;
+	platform_device_unregister(pd[id]);
+	pd[id] = NULL;
 }
 EXPORT_SYMBOL(usb_nop_xceiv_unregister);
 

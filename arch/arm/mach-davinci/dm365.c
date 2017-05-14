@@ -32,11 +32,11 @@
 #include <linux/platform_data/keyscan-davinci.h>
 #include <linux/platform_data/spi-davinci.h>
 #include <mach/gpio-davinci.h>
+#include <asm/hardware/davinci_asp.h>
 
 #include "davinci.h"
 #include "clock.h"
 #include "mux.h"
-#include "asp.h"
 
 #define DM365_REF_FREQ		24000000	/* 24 MHz on the DM365 EVM */
 
@@ -1097,7 +1097,7 @@ static struct davinci_soc_info davinci_soc_info_dm365 = {
 	.gpio_unbanked		= 8,	/* really 16 ... skip muxed GPIOs */
 	.serial_dev		= &dm365_serial_device,
 	.emac_pdata		= &dm365_emac_pdata,
-	.sram_dma		= 0x00010000,
+	.sram_phys		= 0x00010000,
 	.sram_len		= SZ_32K,
 };
 

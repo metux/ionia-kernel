@@ -30,6 +30,7 @@
 #include <plat/dma.h>
 #include <plat/gpmc.h>
 #include <linux/platform_data/mtd-nand-omap2.h>
+#include <plat/elm.h>
 
 #define	DRIVER_NAME	"omap2-nand"
 #define	OMAP_NAND_TIMEOUT_MS	5000
@@ -111,6 +112,13 @@
 #define	ECCCLEAR			0x100
 #define	ECC1				0x1
 
+#define MAX_HWECC_BYTES_OOB_224     48
+#define JFFS2_CLEAN_MARKER_OFFSET  0x2
+
+#define BCH_ECC_POS			0x2
+#define BCH_JFFS2_CLEAN_MARKER_OFFSET	0x3a
+#define OMAP_BCH8_ECC_SECT_BYTES	14
+
 /* oob info generated runtime depending on ecc algorithm and layout selected */
 static struct nand_ecclayout omap_oobinfo;
 /* Define some generic bad / good block scan pattern which are used
@@ -151,6 +159,7 @@ struct omap_nand_info {
 	struct bch_control             *bch;
 	struct nand_ecclayout           ecclayout;
 #endif
+	int				ecc_opt;
 };
 
 /**
@@ -866,25 +875,74 @@ static int omap_correct_data(struct mtd_info *mtd, u_char *dat,
 							mtd);
 	int blockCnt = 0, i = 0, ret = 0;
 	int stat = 0;
+	int j, eccsize, eccflag, count;
+	unsigned int err_loc[8];
 
-	/* Ex NAND_ECC_HW12_2048 */
+	/* Ex NAND_ECC_HW12_4096 */
 	if ((info->nand.ecc.mode == NAND_ECC_HW) &&
-			(info->nand.ecc.size  == 2048))
-		blockCnt = 4;
+			(info->nand.ecc.size  == 4096))
+		blockCnt = 8;
 	else
 		blockCnt = 1;
 
-	for (i = 0; i < blockCnt; i++) {
-		if (memcmp(read_ecc, calc_ecc, 3) != 0) {
-			ret = omap_compare_ecc(read_ecc, calc_ecc, dat);
-			if (ret < 0)
-				return ret;
-			/* keep track of the number of corrected errors */
-			stat += ret;
+	switch (info->ecc_opt) {
+	case OMAP_ECC_HAMMING_CODE_HW:
+	case OMAP_ECC_HAMMING_CODE_HW_ROMCODE:
+		for (i = 0; i < blockCnt; i++) {
+			if (memcmp(read_ecc, calc_ecc, 3) != 0) {
+				ret = omap_compare_ecc(read_ecc, calc_ecc, dat);
+				if (ret < 0)
+					return ret;
+
+				/* keep track of number of corrected errors */
+				stat += ret;
+			}
+			read_ecc += 3;
+			calc_ecc += 3;
+			dat      += 512;
 		}
-		read_ecc += 3;
-		calc_ecc += 3;
-		dat      += 512;
+		break;
+	case OMAP_ECC_BCH8_CODE_HW:
+		eccsize = BCH8_ECC_OOB_BYTES;
+
+		for (i = 0; i < blockCnt; i++) {
+			eccflag = 0;
+			/* check if area is flashed */
+			for (j = 0; (j < eccsize) && (eccflag == 0); j++)
+				if (read_ecc[j] != 0xFF)
+					eccflag = 1;
+
+			if (eccflag == 1) {
+				eccflag = 0;
+				/* check if any ecc error */
+				for (j = 0; (j < eccsize) && (eccflag == 0);
+						j++)
+					if (calc_ecc[j] != 0)
+						eccflag = 1;
+			}
+
+			count = 0;
+			if (eccflag == 1)
+				count  = omap_elm_decode_bch_error(0, calc_ecc,
+						err_loc);
+
+			for (j = 0; j < count; j++) {
+				u32 bit_pos, byte_pos;
+
+				bit_pos   = err_loc[j] % 8;
+				byte_pos  = (BCH8_ECC_MAX - err_loc[j] - 1) / 8;
+				if (err_loc[j] < BCH8_ECC_MAX)
+					dat[byte_pos] ^=
+							1 << bit_pos;
+				/* else, not interested to correct ecc */
+			}
+
+			stat     += count;
+			calc_ecc  = calc_ecc + OMAP_BCH8_ECC_SECT_BYTES;
+			read_ecc  = read_ecc + OMAP_BCH8_ECC_SECT_BYTES;
+			dat      += BCH8_ECC_BYTES;
+		}
+		break;
 	}
 	return stat;
 }
@@ -1272,6 +1330,7 @@ static int __devinit omap_nand_probe(struct platform_device *pdev)
 	info->mtd.priv		= &info->nand;
 	info->mtd.name		= dev_name(&pdev->dev);
 	info->mtd.owner		= THIS_MODULE;
+	info->ecc_opt		= pdata->ecc_opt;
 
 	info->nand.options	= pdata->devsize;
 	info->nand.options	|= NAND_SKIP_BBTSCAN;
@@ -1285,6 +1344,17 @@ static int __devinit omap_nand_probe(struct platform_device *pdev)
 
 	info->phys_base = res->start;
 	info->mem_size = resource_size(res);
+
+	/*
+	 * If ELM feature is used in OMAP NAND driver, then configure it
+	 */
+	if (pdata->elm_used) {
+		if (pdata->ecc_opt == OMAP_ECC_BCH8_CODE_HW)
+			omap_configure_elm(&info->mtd, OMAP_BCH8_ECC);
+	}
+
+	/* NAND write protect off */
+	gpmc_cs_configure(info->gpmc_cs, GPMC_CONFIG_WP, 0);
 
 	if (!request_mem_region(info->phys_base, info->mem_size,
 				pdev->dev.driver->name)) {
@@ -1439,22 +1509,47 @@ static int __devinit omap_nand_probe(struct platform_device *pdev)
 		}
 	}
 
-	/* rom code layout */
-	if (pdata->ecc_opt == OMAP_ECC_HAMMING_CODE_HW_ROMCODE) {
+	/* select ecc lyout */
+	if (info->nand.ecc.mode != NAND_ECC_SOFT) {
 
-		if (info->nand.options & NAND_BUSWIDTH_16)
-			offset = 2;
-		else {
-			offset = 1;
+		if (!(info->nand.options & NAND_BUSWIDTH_16))
 			info->nand.badblock_pattern = &bb_descrip_flashbased;
+
+		offset = JFFS2_CLEAN_MARKER_OFFSET;
+
+		if (info->mtd.oobsize == 224)
+			omap_oobinfo.eccbytes = info->nand.ecc.bytes *
+						4096/info->nand.ecc.size;
+		else
+			omap_oobinfo.eccbytes = info->nand.ecc.bytes;
+
+		if (pdata->ecc_opt == OMAP_ECC_HAMMING_CODE_HW_ROMCODE) {
+			omap_oobinfo.oobfree->offset =
+						offset + omap_oobinfo.eccbytes;
+			omap_oobinfo.oobfree->length = info->mtd.oobsize -
+				(offset + omap_oobinfo.eccbytes);
+		} else if (pdata->ecc_opt == OMAP_ECC_BCH8_CODE_HW) {
+			offset = BCH_ECC_POS; /* Synchronize with U-boot */
+			omap_oobinfo.oobfree->offset =
+				BCH_JFFS2_CLEAN_MARKER_OFFSET;
+			omap_oobinfo.oobfree->length = info->mtd.oobsize -
+						offset - omap_oobinfo.eccbytes;
+		} else {
+			omap_oobinfo.oobfree->offset = offset;
+			omap_oobinfo.oobfree->length = info->mtd.oobsize -
+						offset - omap_oobinfo.eccbytes;
+			/*
+			offset is calculated considering the following :
+			1) 12 bytes ECC for 512 byte access and 24 bytes ECC for
+			256 byte access in OOB_64 can be supported
+			2)Ecc bytes lie to the end of OOB area.
+			3)Ecc layout must match with u-boot's ECC layout.
+			*/
+			offset = info->mtd.oobsize - MAX_HWECC_BYTES_OOB_224;
 		}
-		omap_oobinfo.eccbytes = 3 * (info->mtd.oobsize/16);
+
 		for (i = 0; i < omap_oobinfo.eccbytes; i++)
 			omap_oobinfo.eccpos[i] = i+offset;
-
-		omap_oobinfo.oobfree->offset = offset + omap_oobinfo.eccbytes;
-		omap_oobinfo.oobfree->length = info->mtd.oobsize -
-					(offset + omap_oobinfo.eccbytes);
 
 		info->nand.ecc.layout = &omap_oobinfo;
 	} else if ((pdata->ecc_opt == OMAP_ECC_BCH4_CODE_HW) ||
@@ -1514,6 +1609,7 @@ static int omap_nand_remove(struct platform_device *pdev)
 	nand_release(&info->mtd);
 	iounmap(info->nand.IO_ADDR_R);
 	release_mem_region(info->phys_base, NAND_IO_SIZE);
+	kfree(&info->mtd);
 	kfree(info);
 	return 0;
 }

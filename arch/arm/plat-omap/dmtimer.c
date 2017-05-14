@@ -570,6 +570,40 @@ int omap_dm_timer_set_pwm(struct omap_dm_timer *timer, int def_on,
 }
 EXPORT_SYMBOL_GPL(omap_dm_timer_set_pwm);
 
+int omap_dm_timer_set_capture(struct omap_dm_timer *timer, bool lht,
+				bool hlt, bool cm)
+{
+	u32 l;
+
+	if (unlikely(!timer))
+		return -EINVAL;
+
+	omap_dm_timer_enable(timer);
+	l = omap_dm_timer_read_reg(timer, OMAP_TIMER_CTRL_REG);
+
+	if (lht && hlt)
+		l |= OMAP_TIMER_CTRL_TCM_BOTHEDGES;
+	else if (lht)
+		l |= OMAP_TIMER_CTRL_TCM_LOWTOHIGH;
+	else if (hlt)
+		l |= OMAP_TIMER_CTRL_TCM_HIGHTOLOW;
+	else
+		l &= ~OMAP_TIMER_CTRL_TCM_BOTHEDGES;
+
+	if (cm)
+		l |= OMAP_TIMER_CTRL_CAPTMODE;
+	else
+		l &= ~OMAP_TIMER_CTRL_CAPTMODE;
+
+	omap_dm_timer_write_reg(timer, OMAP_TIMER_CTRL_REG, l);
+
+	/* Save the context */
+	timer->context.tclr = l;
+	omap_dm_timer_disable(timer);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(omap_dm_timer_set_capture);
+
 int omap_dm_timer_set_prescaler(struct omap_dm_timer *timer, int prescaler)
 {
 	u32 l;

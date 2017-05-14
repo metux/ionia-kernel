@@ -18,6 +18,7 @@
 #include "prm2xxx_3xxx.h"
 #include "cm.h"
 #include "cm2xxx_3xxx.h"
+#include "cm33xx.h"
 #include "cm-regbits-24xx.h"
 #include "cm-regbits-34xx.h"
 #include "prm-regbits-24xx.h"
@@ -147,6 +148,8 @@ static void _enable_hwsup(struct clockdomain *clkdm)
 	if (cpu_is_omap24xx())
 		omap2xxx_cm_clkdm_enable_hwsup(clkdm->pwrdm.ptr->prcm_offs,
 					       clkdm->clktrctrl_mask);
+	else if (soc_is_am33xx())
+		am33xx_cm_clkdm_enable_hwsup(clkdm->cm_inst, clkdm->clkdm_offs/*, clkdm->clktrctrl_mask*/);
 	else if (cpu_is_omap34xx())
 		omap3xxx_cm_clkdm_enable_hwsup(clkdm->pwrdm.ptr->prcm_offs,
 					       clkdm->clktrctrl_mask);
@@ -157,6 +160,8 @@ static void _disable_hwsup(struct clockdomain *clkdm)
 	if (cpu_is_omap24xx())
 		omap2xxx_cm_clkdm_disable_hwsup(clkdm->pwrdm.ptr->prcm_offs,
 						clkdm->clktrctrl_mask);
+	else if (soc_is_am33xx())
+		am33xx_cm_clkdm_disable_hwsup(clkdm->cm_inst, clkdm->clkdm_offs/*, clkdm->clktrctrl_mask*/);
 	else if (cpu_is_omap34xx())
 		omap3xxx_cm_clkdm_disable_hwsup(clkdm->pwrdm.ptr->prcm_offs,
 						clkdm->clktrctrl_mask);
@@ -164,14 +169,20 @@ static void _disable_hwsup(struct clockdomain *clkdm)
 
 static int omap3_clkdm_sleep(struct clockdomain *clkdm)
 {
-	omap3xxx_cm_clkdm_force_sleep(clkdm->pwrdm.ptr->prcm_offs,
+	if (soc_is_am33xx())
+		am33xx_cm_clkdm_force_sleep(clkdm->cm_inst, clkdm->clkdm_offs);
+	else
+		omap3xxx_cm_clkdm_force_sleep(clkdm->pwrdm.ptr->prcm_offs,
 				clkdm->clktrctrl_mask);
 	return 0;
 }
 
 static int omap3_clkdm_wakeup(struct clockdomain *clkdm)
 {
-	omap3xxx_cm_clkdm_force_wakeup(clkdm->pwrdm.ptr->prcm_offs,
+	if (soc_is_am33xx())
+		am33xx_cm_clkdm_force_wakeup(clkdm->cm_inst, clkdm->clkdm_offs);
+	else
+		omap3xxx_cm_clkdm_force_wakeup(clkdm->pwrdm.ptr->prcm_offs,
 				clkdm->clktrctrl_mask);
 	return 0;
 }
