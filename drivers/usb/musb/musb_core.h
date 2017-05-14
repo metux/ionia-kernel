@@ -119,7 +119,7 @@ enum musb_g_ep0_state {
  * sections 5.5 "Device Timings" and 6.6.5 "Timers".
  */
 #define OTG_TIME_A_WAIT_VRISE	100		/* msec (max) */
-#define OTG_TIME_A_WAIT_BCON	1100		/* min 1 second */
+#define OTG_TIME_A_WAIT_BCON	0		/* 0=infinite; min 1000 msec */
 #define OTG_TIME_A_AIDL_BDIS	200		/* min 200 msec */
 #define OTG_TIME_B_ASE0_BRST	100		/* min 3.125 ms */
 
@@ -163,6 +163,7 @@ struct musb_io;
  * @set_mode:	forcefully changes operating mode
  * @try_idle:	tries to idle the IP
  * @recover:	platform-specific babble recovery
+ * @get_hw_revision: get hardware revision
  * @vbus_status: returns vbus status if possible
  * @set_vbus:	forces vbus status
  * @adjust_channel_params: pre check for standard dma channel_program func
@@ -180,6 +181,7 @@ struct musb_platform_ops {
 #define MUSB_INDEXED_EP		BIT(0)
 	u32	quirks;
 
+	unsigned short	flags;
 	int	(*init)(struct musb *musb);
 	int	(*exit)(struct musb *musb);
 
@@ -205,6 +207,8 @@ struct musb_platform_ops {
 	int	(*set_mode)(struct musb *musb, u8 mode);
 	void	(*try_idle)(struct musb *musb, unsigned long timeout);
 	int	(*recover)(struct musb *musb);
+
+	u16	(*get_hw_revision)(struct musb *musb);
 
 	int	(*vbus_status)(struct musb *musb);
 	void	(*set_vbus)(struct musb *musb, int on);
@@ -310,6 +314,8 @@ struct musb {
 	struct work_struct	irq_work;
 	struct delayed_work	deassert_reset_work;
 	struct delayed_work	finish_resume_work;
+	struct work_struct	work;
+	u8			enable_babble_work;
 	u16			hwvers;
 
 	u16			intrrxe;
@@ -336,6 +342,9 @@ struct musb {
 	struct list_head	out_bulk;	/* of musb_qh */
 
 	struct timer_list	otg_timer;
+	u8			en_otg_timer;
+	u8			en_otgw_timer;
+
 	struct notifier_block	nb;
 
 	struct dma_controller	*dma_controller;
@@ -442,6 +451,16 @@ struct musb {
 #ifdef CONFIG_DEBUG_FS
 	struct dentry		*debugfs_root;
 #endif
+	/* id for multiple musb instances */
+	u8			id;
+	struct	timer_list	otg_workaround;
+	unsigned long		last_timer;
+	int			first;
+	int			old_state;
+#ifndef CONFIG_MUSB_PIO_ONLY
+	u64			*orig_dma_mask;
+#endif
+	short			fifo_mode;
 };
 
 /* This must be included after struct musb is defined */
@@ -611,5 +630,8 @@ static inline void musb_platform_post_root_reset_end(struct musb *musb)
 	if (musb->ops->post_root_reset_end)
 		musb->ops->post_root_reset_end(musb);
 }
+
+extern void musb_save_context(struct musb *musb);
+extern void musb_restore_context(struct musb *musb);
 
 #endif	/* __MUSB_CORE_H__ */

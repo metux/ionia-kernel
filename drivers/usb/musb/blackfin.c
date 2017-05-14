@@ -466,6 +466,7 @@ static int bfin_musb_exit(struct musb *musb)
 
 static const struct musb_platform_ops bfin_ops = {
 	.quirks		= MUSB_DMA_INVENTRA,
+	.fifo_mode	= 2,
 	.init		= bfin_musb_init,
 	.exit		= bfin_musb_exit,
 
