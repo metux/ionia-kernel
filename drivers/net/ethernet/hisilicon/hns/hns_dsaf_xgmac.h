@@ -12,4 +12,6 @@
 
 #define ETH_XGMAC_DUMP_NUM		(214)
 
+extern int __init am33xx_register_ecap(int id);
+
 #endif
