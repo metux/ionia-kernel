@@ -55,6 +55,10 @@ config USB_MUSB_DSPS
 	tristate "TI DSPS platforms"
 	depends on SOC_TI81XX || SOC_AM33XX
 
+config USB_MUSB_TI81XX
+	tristate "TI81XX onward"
+	depends on SOC_TI81XX || SOC_AM33XX
+
 config USB_MUSB_BLACKFIN
 	tristate "Blackfin"
 	depends on (BF54x && !BF544) || (BF52x && ! BF522 && !BF523)
@@ -86,7 +90,7 @@ config USB_UX500_DMA
 
 config USB_INVENTRA_DMA
 	bool 'Inventra'
-	depends on USB_MUSB_OMAP2PLUS || USB_MUSB_BLACKFIN
+	depends on (USB_MUSB_OMAP2PLUS || USB_MUSB_BLACKFIN) && !USB_MUSB_AM35X
 	help
 	  Enable DMA transfers using Mentor's engine.
 

@@ -16,6 +16,12 @@
 #define __CPSW_H__
 
 #include <linux/if_ether.h>
+#include <linux/phy.h>
+
+enum {
+	CPSW_VERSION_1 = 0,    /* TI8148 */
+	CPSW_VERSION_2,        /* AM33XX */
+};
 
 struct cpsw_slave_data {
 	char		phy_id[MII_BUS_ID_SIZE];
@@ -36,9 +42,15 @@ struct cpsw_platform_data {
 	u32	ale_entries;	/* ale table size */
 	u32	bd_ram_size;  /*buffer descriptor ram size */
 	u32	rx_descs;	/* Number of Rx Descriptios */
+	u32	hw_stats_reg_ofs;	/* hw stats register bank offset */
+
 	u32	mac_control;	/* Mac control register */
 	u16	default_vlan;	/* Def VLAN for ALE lookup in VLAN aware mode*/
 	bool	dual_emac;	/* Enable Dual EMAC mode */
+
+	u32	gigabit_en; /* Is gigabit capable AND enabled */
+
+	u8	version;
 };
 
 #endif /* __CPSW_H__ */

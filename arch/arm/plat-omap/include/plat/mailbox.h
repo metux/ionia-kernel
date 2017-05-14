@@ -29,6 +29,8 @@ struct omap_mbox_ops {
 	void		(*fifo_write)(struct omap_mbox *mbox, mbox_msg_t msg);
 	int		(*fifo_empty)(struct omap_mbox *mbox);
 	int		(*fifo_full)(struct omap_mbox *mbox);
+	int		(*fifo_needs_flush)(struct omap_mbox *mbox);
+	mbox_msg_t	(*fifo_readback)(struct omap_mbox *mbox);
 	/* irq */
 	void		(*enable_irq)(struct omap_mbox *mbox,
 						omap_mbox_irq_t irq);
