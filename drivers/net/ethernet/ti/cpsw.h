@@ -36,6 +36,8 @@ struct cpsw_platform_data {
 	u32	mac_control;	/* Mac control register */
 	u16	default_vlan;	/* Def VLAN for ALE lookup in VLAN aware mode*/
 	bool	dual_emac;	/* Enable Dual EMAC mode */
+
+	u8	version;
 };
 
 void cpsw_phy_sel(struct device *dev, phy_interface_t phy_mode, int slave);

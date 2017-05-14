@@ -17,7 +17,7 @@
 #include <linux/mmc/host.h>
 #include <linux/platform_data/gpio-omap.h>
 #include <linux/platform_data/hsmmc-omap.h>
-
+#include <linux/platform_data/mmc-omap.h>
 #include "soc.h"
 #include "omap_device.h"
 #include "omap-pm.h"
@@ -157,6 +157,9 @@ static int __init omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 		kfree(hc_name);
 		return -ENOMEM;
 	}
+
+	if (soc_is_am33xx())
+		mmc->version = MMC_CTRL_VERSION_2;
 
 	if (c->name)
 		strncpy(hc_name, c->name, HSMMC_NAME_LEN);
