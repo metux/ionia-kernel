@@ -28,11 +28,11 @@
 #include <mach/common.h>
 #include <linux/platform_data/spi-davinci.h>
 #include <mach/gpio-davinci.h>
+#include <asm/hardware/davinci_asp.h>
 
 #include "davinci.h"
 #include "clock.h"
 #include "mux.h"
-#include "asp.h"
 
 #define DM355_UART2_BASE	(IO_PHYS + 0x206000)
 #define DM355_OSD_BASE		(IO_PHYS + 0x70200)

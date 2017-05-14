@@ -24,11 +24,11 @@
 #include <mach/serial.h>
 #include <mach/common.h>
 #include <mach/gpio-davinci.h>
+#include <asm/hardware/davinci_asp.h>
 
 #include "davinci.h"
 #include "clock.h"
 #include "mux.h"
-#include "asp.h"
 
 /*
  * Device specific clocks
