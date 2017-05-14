@@ -1111,4 +1111,10 @@ config PID_IN_CONTEXTIDR
 	  additional instructions during context switch. Say Y here only if you
 	  are planning to use hardware trace tools with this kernel.
 
+config DEBUG_JTAG_ENABLE
+	bool "Enable JTAG clock for debugger connectivity"
+	help
+	 Say Y here if you want to enable the JTAG clock to enable
+	 connectivity to a debugger
+
 endmenu

@@ -121,6 +121,20 @@ static int omap2_mbox_fifo_full(struct omap_mbox *mbox)
 	return mbox_read_reg(fifo->fifo_stat);
 }
 
+static int omap2_mbox_fifo_needs_flush(struct omap_mbox *mbox)
+{
+	struct omap_mbox2_fifo *fifo =
+		&((struct omap_mbox2_priv *)mbox->priv)->tx_fifo;
+	return (mbox_read_reg(fifo->msg_stat) == 0);
+}
+
+static mbox_msg_t omap2_mbox_fifo_readback(struct omap_mbox *mbox)
+{
+	struct omap_mbox2_fifo *fifo =
+		&((struct omap_mbox2_priv *)mbox->priv)->tx_fifo;
+	return (mbox_msg_t) mbox_read_reg(fifo->msg);
+}
+
 /* Mailbox IRQ handle functions */
 static void omap2_mbox_enable_irq(struct omap_mbox *mbox, omap_mbox_irq_t irq)
 {
@@ -212,6 +226,8 @@ static struct omap_mbox_ops omap2_mbox_ops = {
 	.fifo_write	= omap2_mbox_fifo_write,
 	.fifo_empty	= omap2_mbox_fifo_empty,
 	.fifo_full	= omap2_mbox_fifo_full,
+	.fifo_needs_flush	= omap2_mbox_fifo_needs_flush,
+	.fifo_readback		= omap2_mbox_fifo_readback,
 	.enable_irq	= omap2_mbox_enable_irq,
 	.disable_irq	= omap2_mbox_disable_irq,
 	.ack_irq	= omap2_mbox_ack_irq,
@@ -219,6 +235,145 @@ static struct omap_mbox_ops omap2_mbox_ops = {
 	.save_ctx	= omap2_mbox_save_ctx,
 	.restore_ctx	= omap2_mbox_restore_ctx,
 };
+
+/*
+ * MAILBOX 0: ARM -> DSP,
+ * MAILBOX 1: ARM <- DSP.
+ * MAILBOX 2: ARM -> IVA,
+ * MAILBOX 3: ARM <- IVA.
+ */
+
+/* FIXME: the following structs should be filled automatically by the user id */
+
+/* DSP */
+static struct omap_mbox2_priv omap2_mbox_dsp_priv = {
+	.tx_fifo = {
+		.msg		= MAILBOX_MESSAGE(0),
+		.fifo_stat	= MAILBOX_FIFOSTATUS(0),
+	},
+	.rx_fifo = {
+		.msg		= MAILBOX_MESSAGE(1),
+		.msg_stat	= MAILBOX_MSGSTATUS(1),
+	},
+	.irqenable	= MAILBOX_IRQENABLE(0),
+	.irqstatus	= MAILBOX_IRQSTATUS(0),
+	.notfull_bit	= MAILBOX_IRQ_NOTFULL(0),
+	.newmsg_bit	= MAILBOX_IRQ_NEWMSG(1),
+	.irqdisable	= MAILBOX_IRQENABLE(0),
+};
+
+struct omap_mbox mbox_dsp_info = {
+	.name	= "dsp",
+	.ops	= &omap2_mbox_ops,
+	.priv	= &omap2_mbox_dsp_priv,
+};
+
+struct omap_mbox *omap3_mboxes[] = { &mbox_dsp_info, NULL };
+
+/* IVA */
+static struct omap_mbox2_priv omap2_mbox_iva_priv = {
+	.tx_fifo = {
+		.msg		= MAILBOX_MESSAGE(2),
+		.fifo_stat	= MAILBOX_FIFOSTATUS(2),
+	},
+	.rx_fifo = {
+		.msg		= MAILBOX_MESSAGE(3),
+		.msg_stat	= MAILBOX_MSGSTATUS(3),
+	},
+	.irqenable	= MAILBOX_IRQENABLE(3),
+	.irqstatus	= MAILBOX_IRQSTATUS(3),
+	.notfull_bit	= MAILBOX_IRQ_NOTFULL(2),
+	.newmsg_bit	= MAILBOX_IRQ_NEWMSG(3),
+	.irqdisable	= MAILBOX_IRQENABLE(3),
+};
+
+static struct omap_mbox mbox_iva_info = {
+	.name	= "iva",
+	.ops	= &omap2_mbox_ops,
+	.priv	= &omap2_mbox_iva_priv,
+};
+
+struct omap_mbox *omap2_mboxes[] = {
+	&mbox_dsp_info,
+#ifdef CONFIG_SOC_OMAP2420
+	&mbox_iva_info,
+#endif
+	NULL
+};
+
+/* A8 -> Wakeup-M3 */
+static struct omap_mbox2_priv omap2_mbox_m3_priv = {
+	.tx_fifo = {
+		.msg		= MAILBOX_MESSAGE(0),
+		.fifo_stat	= MAILBOX_FIFOSTATUS(0),
+		.msg_stat	= MAILBOX_MSGSTATUS(0),
+	},
+	/* TODO: No M3->A8 so this needs to be removed */
+	.rx_fifo = {
+		.msg		= MAILBOX_MESSAGE(1),
+		.msg_stat	= MAILBOX_MSGSTATUS(1),
+	},
+	.irqenable	= OMAP4_MAILBOX_IRQENABLE(3),
+	.irqstatus	= OMAP4_MAILBOX_IRQSTATUS(3),
+	.notfull_bit	= MAILBOX_IRQ_NOTFULL(0),
+	.newmsg_bit	= MAILBOX_IRQ_NEWMSG(0),
+	.irqdisable	= OMAP4_MAILBOX_IRQENABLE_CLR(3),
+};
+
+struct omap_mbox wkup_m3_info = {
+	.name	= "wkup_m3",
+	.ops	= &omap2_mbox_ops,
+	.priv	= &omap2_mbox_m3_priv,
+};
+
+struct omap_mbox *am33xx_mboxes[] = { &wkup_m3_info, NULL };
+
+/* OMAP4 */
+static struct omap_mbox2_priv omap2_mbox_1_priv = {
+	.tx_fifo = {
+		.msg		= MAILBOX_MESSAGE(0),
+		.fifo_stat	= MAILBOX_FIFOSTATUS(0),
+	},
+	.rx_fifo = {
+		.msg		= MAILBOX_MESSAGE(1),
+		.msg_stat	= MAILBOX_MSGSTATUS(1),
+	},
+	.irqenable	= OMAP4_MAILBOX_IRQENABLE(0),
+	.irqstatus	= OMAP4_MAILBOX_IRQSTATUS(0),
+	.notfull_bit	= MAILBOX_IRQ_NOTFULL(0),
+	.newmsg_bit	= MAILBOX_IRQ_NEWMSG(1),
+	.irqdisable	= OMAP4_MAILBOX_IRQENABLE_CLR(0),
+};
+
+struct omap_mbox mbox_1_info = {
+	.name	= "mailbox-1",
+	.ops	= &omap2_mbox_ops,
+	.priv	= &omap2_mbox_1_priv,
+};
+
+static struct omap_mbox2_priv omap2_mbox_2_priv = {
+	.tx_fifo = {
+		.msg		= MAILBOX_MESSAGE(3),
+		.fifo_stat	= MAILBOX_FIFOSTATUS(3),
+	},
+	.rx_fifo = {
+		.msg		= MAILBOX_MESSAGE(2),
+		.msg_stat	= MAILBOX_MSGSTATUS(2),
+	},
+	.irqenable	= OMAP4_MAILBOX_IRQENABLE(0),
+	.irqstatus	= OMAP4_MAILBOX_IRQSTATUS(0),
+	.notfull_bit	= MAILBOX_IRQ_NOTFULL(3),
+	.newmsg_bit	= MAILBOX_IRQ_NEWMSG(2),
+	.irqdisable     = OMAP4_MAILBOX_IRQENABLE_CLR(0),
+};
+
+struct omap_mbox mbox_2_info = {
+	.name	= "mailbox-2",
+	.ops	= &omap2_mbox_ops,
+	.priv	= &omap2_mbox_2_priv,
+};
+
+struct omap_mbox *omap4_mboxes[] = { &mbox_1_info, &mbox_2_info, NULL };
 
 static int omap2_mbox_probe(struct platform_device *pdev)
 {
@@ -347,7 +502,7 @@ static void __exit omap2_mbox_exit(void)
 	platform_driver_unregister(&omap2_mbox_driver);
 }
 
-module_init(omap2_mbox_init);
+device_initcall(omap2_mbox_init);
 module_exit(omap2_mbox_exit);
 
 MODULE_LICENSE("GPL v2");

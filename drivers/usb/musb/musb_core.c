@@ -344,7 +344,7 @@ void musb_load_testpacket(struct musb *musb)
 {
 	void __iomem	*regs = musb->endpoints[0].regs;
 
-	musb_ep_select(musb->mregs, 0);
+	musb_ep_select(musb, musb->mregs, 0);
 	musb_write_fifo(musb->control_ep,
 			sizeof(musb_test_packet), musb_test_packet);
 	musb_writew(regs, MUSB_CSR0, MUSB_CSR0_TXPKTRDY);
@@ -1335,7 +1335,7 @@ static int ep_config_from_hw(struct musb *musb)
 	/* FIXME pick up ep0 maxpacket size */
 
 	for (epnum = 1; epnum < musb->config->num_eps; epnum++) {
-		musb_ep_select(mbase, epnum);
+		musb_ep_select(musb, mbase, epnum);
 		hw_ep = musb->endpoints + epnum;
 
 		ret = musb_read_fifosize(musb, hw_ep, epnum);
@@ -1463,7 +1463,7 @@ static int musb_core_init(u16 musb_type, struct musb *musb)
 			hw_ep->conf = mbase + 0x400 + (((i - 1) & 0xf) << 2);
 #endif
 
-		hw_ep->regs = MUSB_EP_OFFSET(i, 0) + mbase;
+		hw_ep->regs = MUSB_EP_OFFSET(musb, i, 0) + mbase;
 		hw_ep->target_regs = musb_read_target_reg_base(i, mbase);
 		hw_ep->rx_reinit = 1;
 		hw_ep->tx_reinit = 1;
@@ -1537,7 +1537,7 @@ irqreturn_t musb_interrupt(struct musb *musb)
 	ep_num = 1;
 	while (reg) {
 		if (reg & 1) {
-			/* musb_ep_select(musb->mregs, ep_num); */
+			/* musb_ep_select(musb, musb->mregs, ep_num); */
 			/* REVISIT just retval = ep->rx_irq(...) */
 			retval = IRQ_HANDLED;
 			if (devctl & MUSB_DEVCTL_HM)
@@ -1555,7 +1555,7 @@ irqreturn_t musb_interrupt(struct musb *musb)
 	ep_num = 1;
 	while (reg) {
 		if (reg & 1) {
-			/* musb_ep_select(musb->mregs, ep_num); */
+			/* musb_ep_select(musb, musb->mregs, ep_num); */
 			/* REVISIT just retval |= ep->tx_irq(...) */
 			retval = IRQ_HANDLED;
 			if (devctl & MUSB_DEVCTL_HM)
@@ -2039,7 +2039,7 @@ static int musb_remove(struct platform_device *pdev)
 
 #ifdef	CONFIG_PM
 
-static void musb_save_context(struct musb *musb)
+void musb_save_context(struct musb *musb)
 {
 	int i;
 	void __iomem *musb_base = musb->mregs;
@@ -2110,7 +2110,7 @@ static void musb_save_context(struct musb *musb)
 	}
 }
 
-static void musb_restore_context(struct musb *musb)
+void musb_restore_context(struct musb *musb)
 {
 	int i;
 	void __iomem *musb_base = musb->mregs;
