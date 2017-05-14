@@ -7,6 +7,9 @@
  *  option) any later version.
  */
 
+#ifndef __OMAP_GPMC_H
+#define __OMAP_GPMC_H
+
 #include <linux/platform_data/gpmc-omap.h>
 
 #define GPMC_CONFIG_WP		0x00000005
@@ -95,3 +98,5 @@ static inline void gpmc_onenand_init(struct omap_onenand_platform_data *d)
 {
 }
 #endif
+
+#endif /* __OMAP_GPMC_H */
