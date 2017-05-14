@@ -741,7 +741,7 @@ static void musb_ep_program(struct musb *musb, u8 epnum,
 			qh->h_addr_reg, qh->h_port_reg,
 			len);
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 
 	if (is_out && !len) {
 		use_dma = 0;
@@ -971,7 +971,7 @@ static void musb_bulk_nak_timeout(struct musb *musb, struct musb_hw_ep *ep,
 	struct musb_qh		*cur_qh, *next_qh;
 	u16			rx_csr, tx_csr;
 
-	musb_ep_select(mbase, ep->epnum);
+	musb_ep_select(musb, mbase, ep->epnum);
 	if (is_in) {
 		dma = is_dma_capable() ? ep->rx_channel : NULL;
 
@@ -1127,7 +1127,7 @@ irqreturn_t musb_h_ep0_irq(struct musb *musb)
 	/* ep0 only has one queue, "in" */
 	urb = next_urb(qh);
 
-	musb_ep_select(mbase, 0);
+	musb_ep_select(musb, mbase, 0);
 	csr = musb_readw(epio, MUSB_CSR0);
 	len = (csr & MUSB_CSR0_RXPKTRDY)
 			? musb_readb(epio, MUSB_COUNT0)
@@ -1269,7 +1269,7 @@ void musb_host_tx(struct musb *musb, u8 epnum)
 	struct dma_channel	*dma;
 	bool			transfer_pending = false;
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 	tx_csr = musb_readw(epio, MUSB_TXCSR);
 
 	/* with CPPI, DMA sometimes triggers "extra" irqs */
@@ -1313,7 +1313,7 @@ void musb_host_tx(struct musb *musb, u8 epnum)
 			 * if (bulk && qh->ring.next != &musb->out_bulk), then
 			 * we have a candidate... NAKing is *NOT* an error
 			 */
-			musb_ep_select(mbase, epnum);
+			musb_ep_select(musb, mbase, epnum);
 			musb_writew(epio, MUSB_TXCSR,
 					MUSB_TXCSR_H_WZC_BITS
 					| MUSB_TXCSR_TXPKTRDY);
@@ -1339,7 +1339,7 @@ done:
 				| MUSB_TXCSR_H_NAKTIMEOUT
 				);
 
-		musb_ep_select(mbase, epnum);
+		musb_ep_select(musb, mbase, epnum);
 		musb_writew(epio, MUSB_TXCSR, tx_csr);
 		/* REVISIT may need to clear FLUSHFIFO ... */
 		musb_writew(epio, MUSB_TXCSR, tx_csr);
@@ -1524,7 +1524,7 @@ done:
 			qh->use_sg = false;
 	}
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 	musb_writew(epio, MUSB_TXCSR,
 			MUSB_TXCSR_H_WZC_BITS | MUSB_TXCSR_TXPKTRDY);
 }
@@ -1815,7 +1815,7 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 	struct dma_channel	*dma;
 	unsigned int sg_flags = SG_MITER_ATOMIC | SG_MITER_TO_SG;
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 
 	urb = next_urb(qh);
 	dma = is_dma_capable() ? hw_ep->rx_channel : NULL;
@@ -1876,7 +1876,7 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 				musb_bulk_nak_timeout(musb, hw_ep, 1);
 				return;
 			}
-			musb_ep_select(mbase, epnum);
+			musb_ep_select(musb, mbase, epnum);
 			rx_csr |= MUSB_RXCSR_H_WZC_BITS;
 			rx_csr &= ~MUSB_RXCSR_DATAERROR;
 			musb_writew(epio, MUSB_RXCSR, rx_csr);
@@ -1937,7 +1937,7 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 				xfer_len, dma ? ", dma" : "");
 		rx_csr &= ~MUSB_RXCSR_H_REQPKT;
 
-		musb_ep_select(mbase, epnum);
+		musb_ep_select(musb, mbase, epnum);
 		musb_writew(epio, MUSB_RXCSR,
 				MUSB_RXCSR_H_WZC_BITS | rx_csr);
 	}
@@ -1973,7 +1973,7 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 
 /* SCRUB (RX) */
 			/* do the proper sequence to abort the transfer */
-			musb_ep_select(mbase, epnum);
+			musb_ep_select(musb, mbase, epnum);
 			val &= ~MUSB_RXCSR_H_REQPKT;
 			musb_writew(epio, MUSB_RXCSR, val);
 			goto finish;
@@ -2375,7 +2375,7 @@ static int musb_cleanup_urb(struct urb *urb, struct musb_qh *qh)
 	int			status = 0;
 	u16			csr;
 
-	musb_ep_select(regs, hw_end);
+	musb_ep_select(musb, regs, hw_end);
 
 	if (is_dma_capable()) {
 		struct dma_channel	*dma;
