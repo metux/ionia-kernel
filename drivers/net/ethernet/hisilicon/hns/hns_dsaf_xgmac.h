@@ -13,4 +13,9 @@
 #define HNS_XGMAC_DUMP_NUM		214
 #define HNS_XGMAC_NO_LF_RF_INSERT	0x0
 #define HNS_XGMAC_LF_INSERT		0x2
+
+#define ETH_XGMAC_DUMP_NUM		(214)
+
+extern int __init am33xx_register_ecap(int id);
+
 #endif

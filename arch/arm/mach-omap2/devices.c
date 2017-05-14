@@ -19,14 +19,30 @@
 #include <linux/of.h>
 #include <linux/pinctrl/machine.h>
 
+#include <linux/mfd/ti_am335x_tscadc.h>
+#include <linux/platform_data/uio_pruss.h>
+#include <linux/dma-mapping.h>
+
+#include <linux/davinci_emac.h>
+#include <linux/etherdevice.h>
+#include <linux/pwm.h>
+
+#include <mach/hardware.h>
+#include <mach/irqs.h>
 #include <asm/mach-types.h>
 #include <asm/mach/map.h>
 
 #include <linux/omap-dma.h>
 
+#include "gpmc.h"
 #include "iomap.h"
 #include "omap_hwmod.h"
 #include "omap_device.h"
+
+#include <plat/irqs-33xx.h>
+
+/* LCD controller similar DA8xx */
+#include <video/da8xx-fb.h>
 
 #include "soc.h"
 #include "common.h"
@@ -46,7 +62,7 @@ static int __init omap3_l3_init(void)
 	 * To avoid code running on other OMAPs in
 	 * multi-omap builds
 	 */
-	if (!(cpu_is_omap34xx()) || of_have_populated_dt())
+	if (!(cpu_is_omap34xx()) || of_have_populated_dt() || soc_is_am33xx())
 		return -ENODEV;
 
 	snprintf(oh_name, L3_MODULES_MAX_LEN, "l3_main");
@@ -210,6 +226,154 @@ static int __init omap2_init_devices(void)
 	return 0;
 }
 omap_arch_initcall(omap2_init_devices);
+
+#define AM33XX_EMAC_MDIO_FREQ		(1000000)
+
+//static u64 am33xx_cpsw_dmamask = DMA_BIT_MASK(32);
+/* TODO : Verify the offsets */
+//static struct cpsw_slave_data am33xx_cpsw_slaves[] = {
+//	{
+// pass to cpsw_slave_init()
+//		.slave_reg_ofs	= 0x208,
+//		.sliver_reg_ofs	= 0xd80,
+//		.phy_id		= "0:00",
+//	},
+//	{
+// pass to cpsw_slave_init()
+//		.slave_reg_ofs	= 0x308,
+//		.sliver_reg_ofs	= 0xdc0,
+//		.phy_id		= "0:01",
+//	},
+//};
+
+/** FIXME: put these into DT **/
+//static struct cpsw_platform_data am33xx_cpsw_pdata = {
+//	.ss_reg_ofs		= 0x1200,
+//	.channels		= 8,
+//	.cpts_clock_shift	= 0x800,
+//	.slaves			= 2,
+//	.slave_data		= am33xx_cpsw_slaves,
+//	.channels		= 0xd00,
+//	.ale_entries		= 1024,
+//removed ?
+//	.host_port_reg_ofs      = 0x108,
+//	.hw_stats_reg_ofs       = 0x900,
+//	.bd_ram_ofs		= 0x2000,
+//	.bd_ram_size		= SZ_8K,
+//	.rx_descs               = 64,
+//	.mac_control            = BIT(5), /* MIIEN */
+//	.gigabit_en		= 1,
+//	.cpts_clock_mult	= 0,
+//	.no_bd_ram		= false,
+//	.version		= CPSW_VERSION_2,
+//};
+
+//static struct mdio_platform_data am33xx_cpsw_mdiopdata = {
+//	.bus_freq	= AM33XX_EMAC_MDIO_FREQ,
+//};
+
+//static struct platform_device am33xx_cpsw_mdiodevice = {
+//	.name           = "davinci_mdio",
+//	.id             = 0,
+//	.num_resources  = ARRAY_SIZE(am33xx_cpsw_mdioresources),
+//	.resource       = am33xx_cpsw_mdioresources,
+//	.dev.platform_data = &am33xx_cpsw_mdiopdata,
+//};
+
+//static struct platform_device am33xx_cpsw_device = {
+//	.name		=	"cpsw",
+//	.id		=	0,
+//	.num_resources	=	ARRAY_SIZE(am33xx_cpsw_resources),
+//	.resource	=	am33xx_cpsw_resources,
+//	.dev		=	{
+//					.platform_data	= &am33xx_cpsw_pdata,
+//					.dma_mask	= &am33xx_cpsw_dmamask,
+//					.coherent_dma_mask = DMA_BIT_MASK(32),
+//				},
+//};
+
+static unsigned int   am33xx_evmid;
+
+/*
+* am33xx_evmid_fillup - set up board evmid
+* @evmid - evm id which needs to be configured
+*
+* This function is called to configure board evm id.
+* IA Motor Control EVM needs special setting of MAC PHY Id.
+* This function is called when IA Motor Control EVM is detected
+* during boot-up.
+*/
+void am33xx_evmid_fillup(unsigned int evmid)
+{
+	am33xx_evmid = evmid;
+	return;
+}
+
+#define MII_MODE_ENABLE		0x0
+#define RMII_MODE_ENABLE	0x5
+#define RMII_MODE_ENABLE_EXT_CLK	0xF5
+#define RGMII_MODE_ENABLE	0xA
+#define MAC_MII_SEL		0x650
+
+//void am33xx_cpsw_init(unsigned int gigen)
+//{
+//	u32 mac_lo, mac_hi;
+//	u32 i;
+//
+//	mac_lo = omap_ctrl_readl(TI81XX_CONTROL_MAC_ID0_LO);
+//	mac_hi = omap_ctrl_readl(TI81XX_CONTROL_MAC_ID0_HI);
+//	am33xx_cpsw_slaves[0].mac_addr[0] = mac_hi & 0xFF;
+//	am33xx_cpsw_slaves[0].mac_addr[1] = (mac_hi & 0xFF00) >> 8;
+//	am33xx_cpsw_slaves[0].mac_addr[2] = (mac_hi & 0xFF0000) >> 16;
+//	am33xx_cpsw_slaves[0].mac_addr[3] = (mac_hi & 0xFF000000) >> 24;
+//	am33xx_cpsw_slaves[0].mac_addr[4] = mac_lo & 0xFF;
+//	am33xx_cpsw_slaves[0].mac_addr[5] = (mac_lo & 0xFF00) >> 8;
+//
+//	mac_lo = omap_ctrl_readl(TI81XX_CONTROL_MAC_ID1_LO);
+//	mac_hi = omap_ctrl_readl(TI81XX_CONTROL_MAC_ID1_HI);
+//	am33xx_cpsw_slaves[1].mac_addr[0] = mac_hi & 0xFF;
+//	am33xx_cpsw_slaves[1].mac_addr[1] = (mac_hi & 0xFF00) >> 8;
+//	am33xx_cpsw_slaves[1].mac_addr[2] = (mac_hi & 0xFF0000) >> 16;
+//	am33xx_cpsw_slaves[1].mac_addr[3] = (mac_hi & 0xFF000000) >> 24;
+//	am33xx_cpsw_slaves[1].mac_addr[4] = mac_lo & 0xFF;
+//	am33xx_cpsw_slaves[1].mac_addr[5] = (mac_lo & 0xFF00) >> 8;
+//
+//	if (am33xx_evmid == BEAGLE_BONE_OLD) {
+//		printk("Ethernet MAC:RMII mode, internal clock\n");
+//		__raw_writel(RMII_MODE_ENABLE,
+//				AM33XX_CTRL_REGADDR(MAC_MII_SEL));
+//	} else if (am33xx_evmid == BEAGLE_BONE_A3) {
+//		printk("Ethernet MAC: MII mode\n");
+//		__raw_writel(MII_MODE_ENABLE,
+//				AM33XX_CTRL_REGADDR(MAC_MII_SEL));
+//	} else if (am33xx_evmid == duagon_i10x_mii) {
+//		printk("Ethernet MAC: MII mode\n");
+//		__raw_writel(MII_MODE_ENABLE,
+//				AM33XX_CTRL_REGADDR(MAC_MII_SEL));
+//	} else if (am33xx_evmid == duagon_i10x_rmii) {
+//		printk("Ethernet MAC: RMII external clock\n");
+//		__raw_writel(RMII_MODE_ENABLE_EXT_CLK,
+//				AM33XX_CTRL_REGADDR(MAC_MII_SEL));
+//	} else if (am33xx_evmid == IND_AUT_MTR_EVM) {
+//		snprintf(am33xx_cpsw_slaves[0].phy_id, sizeof(am33xx_cpsw_slaves[0].phy_id), "%s", "0:1e");
+//		snprintf(am33xx_cpsw_slaves[1].phy_id, sizeof(am33xx_cpsw_slaves[1].phy_id), "%s", "0:00");
+//	} else {
+//		printk("Ethernet MAC: RGMII\n");
+//		__raw_writel(RGMII_MODE_ENABLE,
+//				AM33XX_CTRL_REGADDR(MAC_MII_SEL));
+//	}
+//
+//	am33xx_cpsw_pdata.gigabit_en = gigen;
+//
+//	platform_device_register(&am33xx_cpsw_mdiodevice);
+//	platform_device_register(&am33xx_cpsw_device);
+//	clk_add_alias(NULL, dev_name(&am33xx_cpsw_mdiodevice.dev),
+//			NULL, &am33xx_cpsw_device.dev);
+//}
+
+#define AM33XX_DCAN_NUM_MSG_OBJS		64
+#define AM33XX_DCAN_RAMINIT_OFFSET		0x644
+#define AM33XX_DCAN_RAMINIT_START(n)		(0x1 << n)
 
 static int __init omap_gpmc_init(void)
 {
