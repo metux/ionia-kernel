@@ -114,11 +114,19 @@ static void omap_uart_set_smartidle(struct platform_device *pdev)
 	omap_hwmod_set_slave_idlemode(od->hwmods[0], HWMOD_IDLEMODE_SMART);
 }
 
+static void omap_uart_set_forceidle(struct platform_device *pdev)
+{
+	struct omap_device *od = to_omap_device(pdev);
+
+	omap_hwmod_set_slave_idlemode(od->hwmods[0], HWMOD_IDLEMODE_FORCE);
+}
+
 #else
 static void omap_uart_enable_wakeup(struct platform_device *pdev, bool enable)
 {}
 static void omap_uart_set_noidle(struct platform_device *pdev) {}
 static void omap_uart_set_smartidle(struct platform_device *pdev) {}
+static void omap_uart_set_forceidle(struct platform_device *pdev) {}
 #endif /* CONFIG_PM */
 
 #ifdef CONFIG_OMAP_MUX
@@ -350,6 +358,7 @@ void __init omap_serial_init_port(struct omap_board_data *bdata,
 	omap_up.flags = UPF_BOOT_AUTOCONF;
 	omap_up.get_context_loss_count = omap_pm_get_dev_context_loss_count;
 	omap_up.set_forceidle = omap_uart_set_smartidle;
+	// omap_up.set_forceidle = omap_uart_set_forceidle;
 	omap_up.set_noidle = omap_uart_set_noidle;
 	omap_up.enable_wakeup = omap_uart_enable_wakeup;
 	omap_up.dma_rx_buf_size = info->dma_rx_buf_size;
@@ -362,7 +371,7 @@ void __init omap_serial_init_port(struct omap_board_data *bdata,
 		omap_up.errata |= UART_ERRATA_i202_MDR1_ACCESS;
 
 	/* Enable DMA Mode Force Idle Errata i291 for omap34xx/3630 */
-	if (cpu_is_omap34xx() || cpu_is_omap3630())
+	if ((cpu_is_omap34xx() || cpu_is_omap3630()) && !cpu_is_am33xx())
 		omap_up.errata |= UART_ERRATA_i291_DMA_FORCEIDLE;
 
 	pdata = &omap_up;
@@ -409,7 +418,8 @@ void __init omap_serial_board_init(struct omap_uart_port_info *info)
 		bdata.pads = NULL;
 		bdata.pads_cnt = 0;
 
-		if (cpu_is_omap44xx() || cpu_is_omap34xx())
+		if (cpu_is_omap44xx() || (cpu_is_omap34xx() &&
+							!cpu_is_am33xx()))
 			omap_serial_fill_default_pads(&bdata);
 
 		if (!info)

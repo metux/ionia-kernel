@@ -117,7 +117,6 @@ comment "OMAP Board Type"
 config MACH_OMAP_GENERIC
 	bool "Generic OMAP2+ board"
 	depends on ARCH_OMAP2PLUS
-	select USE_OF
 	default y
 	help
 	  Support for generic TI OMAP2+ boards using Flattened Device Tree.
@@ -184,6 +183,12 @@ config MACH_OMAP3_TORPEDO
 	 Support for the LogicPD OMAP35x Torpedo Development kit
 	 for full description please see the products webpage at
 	 http://www.logicpd.com/products/development-kits/zoom-omap35x-torpedo-development-kit
+
+config MACH_ENCORE
+	bool "Barnes & Noble Encore (Nook Color)"
+	depends on ARCH_OMAP3
+	default y
+	select OMAP_PACKAGE_CBP
 
 config MACH_OVERO
 	bool "Gumstix Overo board"
@@ -327,6 +332,26 @@ config MACH_TI8148EVM
 	depends on SOC_OMAPTI81XX
 	default y
 
+config MACH_AM335XEVM
+	bool "AM335X Evaluation Module"
+	depends on SOC_OMAPAM33XX
+	default y
+
+config MACH_DUAGON_I101
+	bool "duagon i10x MII"
+	depends on SOC_OMAPAM33XX
+	default n
+
+config MACH_DUAGON_I101_RMII
+	bool "duagon i10x RMII"
+	depends on SOC_OMAPAM33XX
+	default n
+
+config MACH_AM335XIAEVM
+	bool "AM335X IA Evaluation Module"
+	depends on SOC_OMAPAM33XX
+	default y
+
 config MACH_OMAP_4430SDP
 	bool "OMAP 4430 SDP board"
 	default y
@@ -343,6 +368,12 @@ config MACH_OMAP4_PANDA
 	select OMAP_PACKAGE_CBS
 	select REGULATOR_FIXED_VOLTAGE if REGULATOR
 
+config MACH_PCM049
+	bool "OMAP4 based phyCORE OMAP4"
+	depends on ARCH_OMAP4
+	default y
+	select OMAP_PACKAGE_CBS
+
 config OMAP3_EMU
 	bool "OMAP3 debugging peripherals"
 	depends on ARCH_OMAP3
@@ -350,6 +381,15 @@ config OMAP3_EMU
 	select OC_ETM
 	help
 	  Say Y here to enable debugging hardware of omap3
+
+config TI_PM_DISABLE_VT_SWITCH
+	bool "TI Disable PM Console Switch"
+	depends on ARCH_OMAP3
+	default y
+	help
+	  This option disables the default PM VT switch behavior for TI devices.
+	  Some platforms hang during suspend due to a failed attempt to
+	  perform the VT switch.  The VT switch is unnecessary on many platforms.
 
 config OMAP3_SDRC_AC_TIMING
 	bool "Enable SDRC AC timing register changes"
@@ -384,6 +424,14 @@ config OMAP4_ERRATA_I688
 	  In MPU case, L3 T2ASYNC FIFO and DDR T2ASYNC FIFO needs to be drained.
 	  IO barrier ensure that there is no synchronisation loss on initiators
 	  operating on both interconnect port simultaneously.
+
+config OMAP3_EDMA
+	bool "OMAP3 EDMA support"
+	default n
+	depends on ARCH_OMAP3
+	help
+	  Select this option if EDMA is used
+
 endmenu
 
 endif

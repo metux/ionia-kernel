@@ -17,9 +17,16 @@
 #ifndef __LINUX_MFD_TPS65910_H
 #define __LINUX_MFD_TPS65910_H
 
+#include <linux/gpio.h>
+#include <linux/regulator/machine.h>
+
 /* TPS chip id list */
 #define TPS65910			0
 #define TPS65911			1
+
+/* I2C Slave Address 7-bit */
+#define TPS65910_I2C_ID0 0x12 /* Smart Reflex */
+#define TPS65910_I2C_ID1 0x2D /* general-purpose control */
 
 /* TPS regulator type list */
 #define REGULATOR_LDO			0

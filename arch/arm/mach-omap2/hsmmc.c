@@ -305,6 +305,9 @@ static int omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 		return -ENOMEM;
 	}
 
+	if (cpu_is_am33xx())
+		mmc->version = MMC_CTRL_VERSION_2;
+
 	if (c->name)
 		strncpy(hc_name, c->name, HSMMC_NAME_LEN);
 	else
@@ -364,10 +367,11 @@ static int omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 	else
 		mmc->slots[0].ocr_mask = c->ocr_mask;
 
-	if (!cpu_is_omap3517() && !cpu_is_omap3505())
+	if (!cpu_is_omap3517() && !cpu_is_omap3505() && !cpu_is_am33xx())
 		mmc->slots[0].features |= HSMMC_HAS_PBIAS;
 
-	if (cpu_is_omap44xx() && (omap_rev() > OMAP4430_REV_ES1_0))
+	if ((cpu_is_omap44xx() && (omap_rev() > OMAP4430_REV_ES1_0)) ||
+								cpu_is_am33xx())
 		mmc->slots[0].features |= HSMMC_HAS_UPDATED_RESET;
 
 	switch (c->mmc) {
@@ -387,7 +391,7 @@ static int omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 			}
 		}
 
-		if (cpu_is_omap3517() || cpu_is_omap3505())
+		if (cpu_is_omap3517() || cpu_is_omap3505() || cpu_is_am33xx())
 			mmc->slots[0].set_power = nop_mmc_set_power;
 
 		/* OMAP3630 HSMMC1 supports only 4-bit */
@@ -401,6 +405,9 @@ static int omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 	case 2:
 		if (cpu_is_omap3517() || cpu_is_omap3505())
 			mmc->slots[0].set_power = am35x_hsmmc2_set_power;
+
+		if (cpu_is_am33xx())
+			mmc->slots[0].set_power = nop_mmc_set_power;
 
 		if (c->ext_clock)
 			c->transceiver = 1;
@@ -451,7 +458,9 @@ void omap_init_hsmmc(struct omap2_hsmmc_info *hsmmcinfo, int ctrl_nr)
 		pr_err("%s fails!\n", __func__);
 		goto done;
 	}
-	omap_hsmmc_mux(mmc_data, (ctrl_nr - 1));
+
+	if (!cpu_is_am33xx())
+		omap_hsmmc_mux(mmc_data, (ctrl_nr - 1));
 
 	name = "omap_hsmmc";
 

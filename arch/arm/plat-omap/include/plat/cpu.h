@@ -452,6 +452,13 @@ IS_OMAP_TYPE(3517, 0x3517)
 #define OMAP4470_REV_ES1_0	(OMAP447X_CLASS | (0x10 << 8))
 
 void omap2_check_revision(void);
+void omap24xx_check_revision(void);
+void omap3_check_revision(void);
+void omap4_check_revision(void);
+void omap3_check_features(void);
+void ti81xx_check_features(void);
+void am33xx_check_features(void);
+void omap4xxx_check_features(void);
 
 /*
  * Runtime detection of OMAP3 features

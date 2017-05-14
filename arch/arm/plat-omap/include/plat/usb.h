@@ -88,7 +88,8 @@ struct omap_musb_board_data {
 	u8	mode;
 	u16	power;
 	unsigned extvbus:1;
-	void	(*set_phy_power)(u8 on);
+	u8	instances;
+	void	(*set_phy_power)(u8 id, u8 on);
 	void	(*clear_irq)(void);
 	void	(*set_mode)(u8 mode);
 	void	(*reset)(void);
@@ -108,10 +109,10 @@ extern int omap4430_phy_suspend(struct device *dev, int suspend);
 #endif
 
 extern void am35x_musb_reset(void);
-extern void am35x_musb_phy_power(u8 on);
+extern void am35x_musb_phy_power(u8 id, u8 on);
 extern void am35x_musb_clear_irq(void);
 extern void am35x_set_mode(u8 musb_mode);
-extern void ti81xx_musb_phy_power(u8 on);
+extern void ti81xx_musb_phy_power(u8 id, u8 on);
 
 /*
  * FIXME correct answer depends on hmc_mode,
@@ -277,6 +278,11 @@ static inline void omap2_usbfs_init(struct omap_usb_config *pdata)
 
 /* TI816X PHY controls bits */
 #define TI816X_USBPHY0_NORMAL_MODE	(1 << 0)
+#define TI816X_USBPHY1_NORMAL_MODE	(1 << 1)
+
+#define USBCTRL1	0x628
+#define USBSTAT1	0x62c
+
 #define TI816X_USBPHY_REFCLK_OSC	(1 << 8)
 
 /* TI814X PHY controls bits */
@@ -302,6 +308,16 @@ static inline void omap2_usbfs_init(struct omap_usb_config *pdata)
 #define USBPHY_OTGSESSEND_EN	(1 << 20)
 #define USBPHY_DATA_POLARITY	(1 << 23)
 
+/* TI81XX only PHY bits */
+#define TI81XX_USBPHY_DPOPBUFCTL	(1 << 13)
+#define TI81XX_USBPHY_DMOPBUFCTL	(1 << 14)
+#define TI81XX_USBPHY_DPINPUT		(1 << 15)
+#define TI81XX_USBPHY_DMINPUT		(1 << 16)
+
+/* AM335X only PHY bits */
+#define AM335X_USBPHY_GPIO_SIG_INV     (1 << 13)
+#define AM335X_USBPHY_GPIO_SIG_CROSS   (1 << 14)
+
 #if defined(CONFIG_ARCH_OMAP1) && defined(CONFIG_USB)
 u32 omap1_usb0_init(unsigned nwires, unsigned is_device);
 u32 omap1_usb1_init(unsigned nwires);
@@ -321,5 +337,50 @@ static inline u32 omap1_usb2_init(unsigned nwires, unsigned alt_pingroup)
 	return 0;
 }
 #endif
+
+/* DMA registers */
+#define TI81XX_USB_AUTOREQ_REG	0xd0
+#define TI81XX_USB_TEARDOWN_REG	0xd8
+#define USB_AUTOREQ_REG		0x14
+#define USB_TEARDOWN_REG	0x1c
+#define MOP_SOP_INTR_ENABLE	0x64
+/* 0x68-0x6c Reserved */
+#define USB_TX_MODE_REG		0x70	/* Transparent, CDC, [Generic] RNDIS */
+#define USB_RX_MODE_REG		0x74	/* Transparent, CDC, [Generic] RNDIS */
+#define EP_COUNT_MODE_REG	0x78
+#define USB_GENERIC_RNDIS_EP_SIZE_REG(n) (0x80 + (((n) - 1) << 2))
+
+#define QUEUE_THRESHOLD_INTR_ENABLE_REG	0xc0
+#define	QUEUE_63_THRESHOLD_REG	0xc4
+#define QUEUE_63_THRESHOLD_INTR_CLEAR_REG 0xc8
+#define	QUEUE_65_THRESHOLD_REG	0xd4
+#define QUEUE_65_THRESHOLD_INTR_CLEAR_REG 0xd8
+
+/* Mode register bits */
+#define USB_MODE_SHIFT(n)	((((n) - 1) << 1))
+#define USB_MODE_MASK(n)	(3 << USB_MODE_SHIFT(n))
+#define USB_RX_MODE_SHIFT(n)	USB_MODE_SHIFT(n)
+#define USB_TX_MODE_SHIFT(n)	USB_MODE_SHIFT(n)
+#define USB_RX_MODE_MASK(n)	USB_MODE_MASK(n)
+#define USB_TX_MODE_MASK(n)	USB_MODE_MASK(n)
+#define USB_TRANSPARENT_MODE	0
+#define USB_RNDIS_MODE		1
+#define USB_CDC_MODE		2
+#define USB_GENERIC_RNDIS_MODE	3
+
+/* AutoReq register bits */
+#define USB_RX_AUTOREQ_SHIFT(n) (((n) - 1) << 1)
+#define USB_RX_AUTOREQ_MASK(n)	(3 << USB_RX_AUTOREQ_SHIFT(n))
+#define USB_NO_AUTOREQ		0
+#define USB_AUTOREQ_ALL_BUT_EOP 1
+#define USB_AUTOREQ_ALWAYS	3
+
+/* Teardown register bits */
+#define USB_TX_TDOWN_SHIFT(n)	(16 + (n))
+#define USB_TX_TDOWN_MASK(n)	(1 << USB_TX_TDOWN_SHIFT(n))
+#define USB_RX_TDOWN_SHIFT(n)	(n)
+#define USB_RX_TDOWN_MASK(n)	(1 << USB_RX_TDOWN_SHIFT(n))
+
+#define USB_CPPI41_NUM_CH	15
 
 #endif	/* __ASM_ARCH_OMAP_USB_H */

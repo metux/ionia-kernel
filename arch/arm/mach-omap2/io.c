@@ -39,6 +39,8 @@
 #include <plat/omap-pm.h>
 #include "voltage.h"
 #include "powerdomain.h"
+#include "prminst44xx.h"
+#include "cminst44xx.h"
 
 #include "clockdomain.h"
 #include <plat/omap_hwmod.h>
@@ -393,6 +395,7 @@ static void __init omap_hwmod_init_postsetup(void)
 void __init omap2420_init_early(void)
 {
 	omap2_set_globals_242x();
+	omap24xx_check_revision();
 	omap_common_init_early();
 	omap2xxx_voltagedomains_init();
 	omap242x_powerdomains_init();
@@ -407,6 +410,7 @@ void __init omap2420_init_early(void)
 void __init omap2430_init_early(void)
 {
 	omap2_set_globals_243x();
+	omap24xx_check_revision();
 	omap_common_init_early();
 	omap2xxx_voltagedomains_init();
 	omap243x_powerdomains_init();
@@ -425,6 +429,8 @@ void __init omap2430_init_early(void)
 void __init omap3_init_early(void)
 {
 	omap2_set_globals_3xxx();
+	omap3_check_revision();
+	omap3_check_features();
 	omap_common_init_early();
 	omap3xxx_voltagedomains_init();
 	omap3xxx_powerdomains_init();
@@ -457,11 +463,29 @@ void __init am35xx_init_early(void)
 void __init ti81xx_init_early(void)
 {
 	omap2_set_globals_ti81xx();
+	omap3_check_revision();
+	ti81xx_check_features();
 	omap_common_init_early();
 	omap3xxx_voltagedomains_init();
 	omap3xxx_powerdomains_init();
 	omap3xxx_clockdomains_init();
 	omap3xxx_hwmod_init();
+	omap_hwmod_init_postsetup();
+	omap3xxx_clk_init();
+}
+
+void __init am33xx_init_early(void)
+{
+	omap2_set_globals_am33xx();
+	omap3_check_revision();
+	am33xx_check_features();
+	omap_common_init_early();
+	am33xx_voltagedomains_init();
+	omap44xx_prminst_init();
+	am33xx_powerdomains_init();
+	omap44xx_cminst_init();
+	am33xx_clockdomains_init();
+	am33xx_hwmod_init();
 	omap_hwmod_init_postsetup();
 	omap3xxx_clk_init();
 }
@@ -471,9 +495,13 @@ void __init ti81xx_init_early(void)
 void __init omap4430_init_early(void)
 {
 	omap2_set_globals_443x();
+	omap4xxx_check_revision();
+	omap4xxx_check_features();
 	omap_common_init_early();
 	omap44xx_voltagedomains_init();
+	omap44xx_prminst_init();
 	omap44xx_powerdomains_init();
+	omap44xx_cminst_init();
 	omap44xx_clockdomains_init();
 	omap44xx_hwmod_init();
 	omap_hwmod_init_postsetup();
