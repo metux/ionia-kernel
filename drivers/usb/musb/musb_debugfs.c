@@ -33,11 +33,7 @@
 
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/sched.h>
 #include <linux/init.h>
-#include <linux/list.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 
@@ -45,10 +41,6 @@
 
 #include "musb_core.h"
 #include "musb_debug.h"
-
-#ifdef CONFIG_ARCH_DAVINCI
-#include "davinci.h"
-#endif
 
 struct musb_register_map {
 	char			*name;
@@ -243,7 +235,7 @@ static const struct file_operations musb_test_mode_fops = {
 	.release		= single_release,
 };
 
-int __init musb_init_debugfs(struct musb *musb)
+int __devinit musb_init_debugfs(struct musb *musb)
 {
 	struct dentry		*root;
 	struct dentry		*file;
@@ -280,7 +272,7 @@ err0:
 	return ret;
 }
 
-void /* __init_or_exit */ musb_exit_debugfs(struct musb *musb)
+void /* __devinit_or_exit */ musb_exit_debugfs(struct musb *musb)
 {
 	debugfs_remove_recursive(musb_debugfs_root);
 }

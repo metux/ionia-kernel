@@ -41,6 +41,8 @@ struct omap_device;
 
 extern struct omap_hwmod_sysc_fields omap_hwmod_sysc_type1;
 extern struct omap_hwmod_sysc_fields omap_hwmod_sysc_type2;
+extern struct omap_hwmod_sysc_fields omap_hwmod_sysc_type3;
+extern struct omap_hwmod_sysc_fields omap_hwmod_sysc_type4;
 
 /*
  * OCP SYSCONFIG bit shifts/masks TYPE1. These are for IPs compliant
@@ -70,6 +72,32 @@ extern struct omap_hwmod_sysc_fields omap_hwmod_sysc_type2;
 #define SYSC_TYPE2_MIDLEMODE_SHIFT	4
 #define SYSC_TYPE2_MIDLEMODE_MASK	(0x3 << SYSC_TYPE2_MIDLEMODE_SHIFT)
 
+/*
+ * OCP SYSCONFIG bit shifts/masks TYPE3.
+ * This is applicable for some IPs present in AM33XX
+ */
+#define SYSC_TYPE3_SIDLEMODE_SHIFT	0
+#define SYSC_TYPE3_SIDLEMODE_MASK	(0x3 << SYSC_TYPE3_SIDLEMODE_SHIFT)
+#define SYSC_TYPE3_MIDLEMODE_SHIFT	2
+#define SYSC_TYPE3_MIDLEMODE_MASK	(0x3 << SYSC_TYPE3_MIDLEMODE_SHIFT)
+
+/*
+ * OCP SYSCONFIG bit shifts/masks TYPE4.
+ * This is applicable for some IPs present in AM33XX
+ */
+#define SYSC_TYPE4_CLOCKACTIVITY_SHIFT	8
+#define SYSC_TYPE4_CLOCKACTIVITY_MASK	(0x3 << SYSC_CLOCKACTIVITY_SHIFT)
+#define SYSC_TYPE4_MIDLEMODE_SHIFT	5
+#define SYSC_TYPE4_MIDLEMODE_MASK	(0x3 << SYSC_MIDLEMODE_SHIFT)
+#define SYSC_TYPE4_SIDLEMODE_SHIFT	3
+#define SYSC_TYPE4_SIDLEMODE_MASK	(0x3 << SYSC_SIDLEMODE_SHIFT)
+#define SYSC_TYPE4_ENAWAKEUP_SHIFT	2
+#define SYSC_TYPE4_ENAWAKEUP_MASK	(1 << SYSC_ENAWAKEUP_SHIFT)
+#define SYSC_TYPE4_SOFTRESET_SHIFT	1
+#define SYSC_TYPE4_SOFTRESET_MASK	(1 << SYSC_SOFTRESET_SHIFT)
+#define SYSC_TYPE4_AUTOIDLE_SHIFT	0
+#define SYSC_TYPE4_AUTOIDLE_MASK	(1 << SYSC_AUTOIDLE_SHIFT)
+
 /* OCP SYSSTATUS bit shifts/masks */
 #define SYSS_RESETDONE_SHIFT		0
 #define SYSS_RESETDONE_MASK		(1 << SYSS_RESETDONE_SHIFT)
@@ -97,6 +125,7 @@ struct omap_hwmod_mux_info {
 	struct omap_device_pad		*pads;
 	int				nr_pads_dynamic;
 	struct omap_device_pad		**pads_dynamic;
+	int				*irqs;
 	bool				enabled;
 };
 
@@ -416,10 +445,13 @@ struct omap_hwmod_omap4_prcm {
  * _HWMOD_NO_MPU_PORT: no path exists for the MPU to write to this module
  * _HWMOD_WAKEUP_ENABLED: set when the omap_hwmod code has enabled ENAWAKEUP
  * _HWMOD_SYSCONFIG_LOADED: set when the OCP_SYSCONFIG value has been cached
+ * _HWMOD_SKIP_ENABLE: set if hwmod enabled during init (HWMOD_INIT_NO_IDLE) -
+ *     causes the first call to _enable() to only update the pinmux
  */
 #define _HWMOD_NO_MPU_PORT			(1 << 0)
 #define _HWMOD_WAKEUP_ENABLED			(1 << 1)
 #define _HWMOD_SYSCONFIG_LOADED			(1 << 2)
+#define _HWMOD_SKIP_ENABLE			(1 << 3)
 
 /*
  * omap_hwmod._state definitions
@@ -565,6 +597,7 @@ int omap_hwmod_read_hardreset(struct omap_hwmod *oh, const char *name);
 int omap_hwmod_enable_clocks(struct omap_hwmod *oh);
 int omap_hwmod_disable_clocks(struct omap_hwmod *oh);
 
+int omap_hwmod_set_master_standbymode(struct omap_hwmod *oh, u8 idlemode);
 int omap_hwmod_set_slave_idlemode(struct omap_hwmod *oh, u8 idlemode);
 int omap_hwmod_set_ocp_autoidle(struct omap_hwmod *oh, u8 autoidle);
 
@@ -604,6 +637,8 @@ int omap_hwmod_get_context_loss_count(struct omap_hwmod *oh);
 
 int omap_hwmod_no_setup_reset(struct omap_hwmod *oh);
 
+int omap_hwmod_pad_route_irq(struct omap_hwmod *oh, int pad_idx, int irq_idx);
+
 /*
  * Chip variant-specific hwmod init routines - XXX should be converted
  * to use initcalls once the initial boot ordering is straightened out
@@ -612,5 +647,6 @@ extern int omap2420_hwmod_init(void);
 extern int omap2430_hwmod_init(void);
 extern int omap3xxx_hwmod_init(void);
 extern int omap44xx_hwmod_init(void);
+extern int am33xx_hwmod_init(void);
 
 #endif
