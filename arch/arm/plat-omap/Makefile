@@ -3,7 +3,14 @@
 #
 
 # Common support
-obj-y := sram.o dma.o counter_32k.o
+obj-y := sram.o counter_32k.o
+
+ifeq ($(CONFIG_OMAP3_EDMA),y)
+ obj-y += sdma2edma.o
+else
+ obj-y += dma.o
+endif
+
 obj-m :=
 obj-n :=
 obj-  :=

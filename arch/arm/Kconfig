@@ -945,6 +945,7 @@ config ARCH_OMAP
 	select ARCH_REQUIRE_GPIOLIB
 	select CLKSRC_MMIO
 	select GENERIC_CLOCKEVENTS
+	select GENERIC_ALLOCATOR
 	select HAVE_CLK
 	help
 	  Support for TI's OMAP platform (OMAP1/2/3/4).

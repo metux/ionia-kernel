@@ -195,6 +195,13 @@ extern int gpmc_calc_timings(struct gpmc_timings *gpmc_t,
 extern void gpmc_update_nand_reg(struct gpmc_nand_regs *reg, int cs);
 extern int gpmc_get_client_irq(unsigned irq_config);
 
+struct gpmc_devices_info {
+	void	*pdata;
+	int	flag;
+};
+
+extern int omap_init_gpmc(struct gpmc_devices_info *pdata, int pdata_len);
+
 extern unsigned int gpmc_ns_to_ticks(unsigned int time_ns);
 extern unsigned int gpmc_ps_to_ticks(unsigned int time_ps);
 extern unsigned int gpmc_ticks_to_ns(unsigned int ticks);

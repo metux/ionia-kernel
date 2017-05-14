@@ -30,6 +30,7 @@
 #include <linux/slab.h>
 #include <linux/omap-dma.h>
 #include <linux/platform_data/gpio-omap.h>
+#include <linux/genalloc.h>
 
 #include <trace/events/power.h>
 

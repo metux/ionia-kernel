@@ -87,6 +87,10 @@
 #define FOUR_BIT		(1 << 1)
 #define HSPE			(1 << 2)
 #define DDR			(1 << 19)
+#define DVAL_MASK		(3 << 9)
+#define DVAL_MAX		(3 << 9)	/* 8.4 ms debounce period */
+#define WPP_MASK		(1 << 8)
+#define WPP_ACT_LOW		(1 << 8)	/* WPP is Active Low */
 #define DW8			(1 << 5)
 #define OD			0x1
 #define STAT_CLEAR		0xFFFFFFFF
@@ -164,6 +168,7 @@ struct omap_hsmmc_host {
 	void	__iomem		*base;
 	resource_size_t		mapbase;
 	spinlock_t		irq_lock; /* Prevent races with irq handler */
+	unsigned int		id;
 	unsigned int		dma_len;
 	unsigned int		dma_sg_idx;
 	unsigned char		bus_mode;
@@ -1334,11 +1339,8 @@ static int omap_hsmmc_start_dma_transfer(struct omap_hsmmc_host *host,
 	return 0;
 }
 
-static void set_data_timeout(struct omap_hsmmc_host *host,
-			     unsigned int timeout_ns,
-			     unsigned int timeout_clks)
+static void set_data_timeout(struct omap_hsmmc_host *host)
 {
-	unsigned int timeout, cycle_ns;
 	uint32_t reg, clkd, dto = 0;
 
 	reg = OMAP_HSMMC_READ(host->base, SYSCTL);
@@ -1346,25 +1348,8 @@ static void set_data_timeout(struct omap_hsmmc_host *host,
 	if (clkd == 0)
 		clkd = 1;
 
-	cycle_ns = 1000000000 / (clk_get_rate(host->fclk) / clkd);
-	timeout = timeout_ns / cycle_ns;
-	timeout += timeout_clks;
-	if (timeout) {
-		while ((timeout & 0x80000000) == 0) {
-			dto += 1;
-			timeout <<= 1;
-		}
-		dto = 31 - dto;
-		timeout <<= 1;
-		if (timeout && dto)
-			dto += 1;
-		if (dto >= 13)
-			dto -= 13;
-		else
-			dto = 0;
-		if (dto > 14)
-			dto = 14;
-	}
+	/* Use the maximum timeout value allowed in the standard of 14 or 0xE */
+	dto = 14;
 
 	reg &= ~DTO_MASK;
 	reg |= dto << DTO_SHIFT;
@@ -1387,13 +1372,13 @@ omap_hsmmc_prepare_data(struct omap_hsmmc_host *host, struct mmc_request *req)
 		 * busy signal.
 		 */
 		if (req->cmd->flags & MMC_RSP_BUSY)
-			set_data_timeout(host, 100000000U, 0);
+			set_data_timeout(host);
 		return 0;
 	}
 
 	OMAP_HSMMC_WRITE(host->base, BLK, (req->data->blksz)
 					| (req->data->blocks << 16));
-	set_data_timeout(host, req->data->timeout_ns, req->data->timeout_clks);
+	set_data_timeout(host);
 
 	if (host->use_dma) {
 		ret = omap_hsmmc_start_dma_transfer(host, req);
@@ -1488,6 +1473,8 @@ static void omap_hsmmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 {
 	struct omap_hsmmc_host *host = mmc_priv(mmc);
 	int do_send_init_stream = 0;
+	struct omap_mmc_platform_data *pdata = host->pdata;
+	u32 regVal;
 
 	pm_runtime_get_sync(host->dev);
 
@@ -1509,6 +1496,18 @@ static void omap_hsmmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 	}
 
 	/* FIXME: set registers based only on changes to ios */
+
+	if (pdata->version == MMC_CTRL_VERSION_2) {
+		/*
+		* Set
+		*	Debounce filter value to max
+		*	Write protect polarity to Active low level
+		*/
+		regVal = OMAP_HSMMC_READ(host->base, CON);
+		regVal &= ~(DVAL_MASK | WPP_MASK);
+		regVal |= (DVAL_MAX | WPP_ACT_LOW);
+		OMAP_HSMMC_WRITE(host->base, CON, regVal);
+	}
 
 	omap_hsmmc_set_bus_width(host);
 
@@ -1875,7 +1874,10 @@ static int omap_hsmmc_probe(struct platform_device *pdev)
 
 	/* Since we do only SG emulation, we can have as many segs
 	 * as we want. */
-	mmc->max_segs = 1024;
+	if (pdata->version == MMC_CTRL_VERSION_2)
+		mmc->max_segs = 1;
+	else
+		mmc->max_segs = 1024;
 
 	mmc->max_blk_size = 512;       /* Block Length at max can be 1024 */
 	mmc->max_blk_count = 0xFFFF;    /* No. of Blocks is 16 bits */

@@ -25,11 +25,11 @@
 #include <mach/serial.h>
 #include <mach/common.h>
 #include <mach/gpio-davinci.h>
+#include <asm/hardware/davinci_asp.h>
 
 #include "davinci.h"
 #include "clock.h"
 #include "mux.h"
-#include "asp.h"
 
 #define DAVINCI_VPIF_BASE       (0x01C12000)
 
@@ -851,7 +851,7 @@ static struct davinci_soc_info davinci_soc_info_dm646x = {
 	.gpio_irq		= IRQ_DM646X_GPIOBNK0,
 	.serial_dev		= &dm646x_serial_device,
 	.emac_pdata		= &dm646x_emac_pdata,
-	.sram_dma		= 0x10010000,
+	.sram_phys		= 0x10010000,
 	.sram_len		= SZ_32K,
 };
 

@@ -12,6 +12,11 @@
 #ifndef DA8XX_FB_H
 #define DA8XX_FB_H
 
+enum panel_type {
+	QVGA = 0,
+	WVGA,
+};
+
 enum panel_shade {
 	MONOCHROME = 0,
 	COLOR_ACTIVE,

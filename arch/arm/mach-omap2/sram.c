@@ -17,6 +17,7 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>
+#include <linux/genalloc.h>
 
 #include <asm/fncpy.h>
 #include <asm/tlb.h>

@@ -276,8 +276,6 @@ static inline int max_ep_writesize(struct musb *musb, struct musb_ep *ep)
 }
 
 
-#ifdef CONFIG_USB_INVENTRA_DMA
-
 /* Peripheral tx (IN) using Mentor DMA works as follows:
 	Only mode 0 is used for transfers <= wPktSize,
 	mode 1 is used for larger transfers,
@@ -307,8 +305,6 @@ static inline int max_ep_writesize(struct musb *musb, struct musb_ep *ep)
  * Non-Mentor DMA engines can of course work differently, such as by
  * upleveling from irq-per-packet to irq-per-buffer.
  */
-
-#endif
 
 /*
  * An endpoint is transmitting data. This can be called either from
@@ -377,8 +373,7 @@ static void txstate(struct musb *musb, struct musb_request *req)
 
 		/* MUSB_TXCSR_P_ISO is still set correctly */
 
-#if defined(CONFIG_USB_INVENTRA_DMA) || defined(CONFIG_USB_UX500_DMA)
-		{
+		if (is_inventra_dma(musb) || is_ux500_dma(musb)) {
 			if (request_size < musb_ep->packet_sz)
 				musb_ep->dma->desired_mode = 0;
 			else
@@ -415,49 +410,58 @@ static void txstate(struct musb *musb, struct musb_request *req)
 
 				musb_writew(epio, MUSB_TXCSR, csr);
 			}
+		} else if (is_cppi_enabled(musb) || is_cppi41_enabled(musb)) {
+			/* program endpoint CSR first, then setup DMA */
+			csr &= ~(MUSB_TXCSR_P_UNDERRUN | MUSB_TXCSR_TXPKTRDY);
+
+			if (request_size == 0)
+				csr &= ~(MUSB_TXCSR_DMAENAB |
+					MUSB_TXCSR_DMAMODE);
+			else
+				csr |= MUSB_TXCSR_DMAENAB | MUSB_TXCSR_DMAMODE |
+				       MUSB_TXCSR_MODE;
+			musb_writew(epio, MUSB_TXCSR,
+				(MUSB_TXCSR_P_WZC_BITS & ~MUSB_TXCSR_P_UNDERRUN)
+					| csr);
+
+			/* ensure writebuffer is empty */
+			csr = musb_readw(epio, MUSB_TXCSR);
+
+			/* NOTE host side sets DMAENAB later than this; both are
+			 * OK since the transfer dma glue (between CPPI & Mentor
+			 * fifos) just tells CPPI it could start.  Data only
+			 * moves to the USB TX fifo when both fifos are ready.
+			 */
+
+			/* "mode" is irrelevant here; handle terminating ZLPs
+			 * like PIO does, since the hardware RNDIS mode seems
+			 * unreliable except for the last-packet-is-already-
+			 * short case.
+			 */
+			/* for zero byte transfer use pio mode */
+			if (request_size == 0)
+				use_dma = 0;
+			else {
+				use_dma = use_dma && c->channel_program(
+					musb_ep->dma, musb_ep->packet_sz,
+					0,
+					request->dma + request->actual,
+					request_size);
+				if (!use_dma) {
+					c->channel_release(musb_ep->dma);
+					musb_ep->dma = NULL;
+					csr &= ~MUSB_TXCSR_DMAENAB;
+					musb_writew(epio, MUSB_TXCSR, csr);
+				/* invariant: prequest->buf is non-null */
+				}
+			}
+		} else if (tusb_dma_omap(musb)) {
+			use_dma = use_dma && c->channel_program(
+					musb_ep->dma, musb_ep->packet_sz,
+					request->zero,
+					request->dma + request->actual,
+					request_size);
 		}
-
-#elif defined(CONFIG_USB_TI_CPPI_DMA)
-		/* program endpoint CSR first, then setup DMA */
-		csr &= ~(MUSB_TXCSR_P_UNDERRUN | MUSB_TXCSR_TXPKTRDY);
-		csr |= MUSB_TXCSR_DMAENAB | MUSB_TXCSR_DMAMODE |
-		       MUSB_TXCSR_MODE;
-		musb_writew(epio, MUSB_TXCSR,
-			(MUSB_TXCSR_P_WZC_BITS & ~MUSB_TXCSR_P_UNDERRUN)
-				| csr);
-
-		/* ensure writebuffer is empty */
-		csr = musb_readw(epio, MUSB_TXCSR);
-
-		/* NOTE host side sets DMAENAB later than this; both are
-		 * OK since the transfer dma glue (between CPPI and Mentor
-		 * fifos) just tells CPPI it could start.  Data only moves
-		 * to the USB TX fifo when both fifos are ready.
-		 */
-
-		/* "mode" is irrelevant here; handle terminating ZLPs like
-		 * PIO does, since the hardware RNDIS mode seems unreliable
-		 * except for the last-packet-is-already-short case.
-		 */
-		use_dma = use_dma && c->channel_program(
-				musb_ep->dma, musb_ep->packet_sz,
-				0,
-				request->dma + request->actual,
-				request_size);
-		if (!use_dma) {
-			c->channel_release(musb_ep->dma);
-			musb_ep->dma = NULL;
-			csr &= ~MUSB_TXCSR_DMAENAB;
-			musb_writew(epio, MUSB_TXCSR, csr);
-			/* invariant: prequest->buf is non-null */
-		}
-#elif defined(CONFIG_USB_TUSB_OMAP_DMA)
-		use_dma = use_dma && c->channel_program(
-				musb_ep->dma, musb_ep->packet_sz,
-				request->zero,
-				request->dma + request->actual,
-				request_size);
-#endif
 	}
 #endif
 
@@ -468,7 +472,7 @@ static void txstate(struct musb *musb, struct musb_request *req)
 		 */
 		unmap_dma_buffer(req, musb);
 
-		musb_write_fifo(musb_ep->hw_ep, fifo_count,
+		musb->ops->write_fifo(musb_ep->hw_ep, fifo_count,
 				(u8 *) (request->buf + request->actual));
 		request->actual += fifo_count;
 		csr |= MUSB_TXCSR_TXPKTRDY;
@@ -499,7 +503,7 @@ void musb_g_tx(struct musb *musb, u8 epnum)
 	void __iomem		*epio = musb->endpoints[epnum].regs;
 	struct dma_channel	*dma;
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 	req = next_request(musb_ep);
 	request = &req->request;
 
@@ -560,11 +564,9 @@ void musb_g_tx(struct musb *musb, u8 epnum)
 		if ((request->zero && request->length
 			&& (request->length % musb_ep->packet_sz == 0)
 			&& (request->actual == request->length))
-#if defined(CONFIG_USB_INVENTRA_DMA) || defined(CONFIG_USB_UX500_DMA)
-			|| (is_dma && (!dma->desired_mode ||
-				(request->actual &
-					(musb_ep->packet_sz - 1))))
-#endif
+			|| ((is_inventra_dma(musb) || is_ux500_dma(musb)) &&
+			is_dma && (!dma->desired_mode || (request->actual &
+			(musb_ep->packet_sz - 1))))
 		) {
 			/*
 			 * On DMA completion, FIFO may not be
@@ -589,7 +591,7 @@ void musb_g_tx(struct musb *musb, u8 epnum)
 			 * on SMP systems. Reselect the INDEX to be sure
 			 * we are reading/modifying the right registers
 			 */
-			musb_ep_select(mbase, epnum);
+			musb_ep_select(musb, mbase, epnum);
 			req = musb_ep->desc ? next_request(musb_ep) : NULL;
 			if (!req) {
 				dev_dbg(musb->controller, "%s idle now\n",
@@ -603,8 +605,6 @@ void musb_g_tx(struct musb *musb, u8 epnum)
 }
 
 /* ------------------------------------------------------------ */
-
-#ifdef CONFIG_USB_INVENTRA_DMA
 
 /* Peripheral rx (OUT) using Mentor DMA works as follows:
 	- Only mode 0 is used.
@@ -632,8 +632,6 @@ void musb_g_tx(struct musb *musb, u8 epnum)
 
  * Non-Mentor DMA engines can of course work differently.
  */
-
-#endif
 
 /*
  * Context: controller locked, IRQs blocked, endpoint selected
@@ -676,7 +674,8 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 		return;
 	}
 
-	if (is_cppi_enabled() && is_buffer_mapped(req)) {
+	if ((is_cppi_enabled(musb) || is_cppi41_enabled(musb)) &&
+					is_buffer_mapped(req)) {
 		struct dma_controller	*c = musb->dma_controller;
 		struct dma_channel	*channel = musb_ep->dma;
 
@@ -718,8 +717,7 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 			use_mode_1 = 0;
 
 		if (request->actual < request->length) {
-#ifdef CONFIG_USB_INVENTRA_DMA
-			if (is_buffer_mapped(req)) {
+			if (is_buffer_mapped(req) && is_inventra_dma(musb)) {
 				struct dma_controller	*c;
 				struct dma_channel	*channel;
 				int			use_dma = 0;
@@ -792,8 +790,7 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 				if (use_dma)
 					return;
 			}
-#elif defined(CONFIG_USB_UX500_DMA)
-			if ((is_buffer_mapped(req)) &&
+			if (is_ux500_dma(musb) && (is_buffer_mapped(req)) &&
 				(request->actual < request->length)) {
 
 				struct dma_controller *c;
@@ -839,7 +836,6 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 
 					return;
 			}
-#endif	/* Mentor's DMA */
 
 			len = request->length - request->actual;
 			dev_dbg(musb->controller, "%s OUT/RX pio fifo %d/%d, maxpacket %d\n",
@@ -849,8 +845,7 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 
 			fifo_count = min_t(unsigned, len, fifo_count);
 
-#ifdef	CONFIG_USB_TUSB_OMAP_DMA
-			if (tusb_dma_omap() && is_buffer_mapped(req)) {
+			if (tusb_dma_omap(musb) && is_buffer_mapped(req)) {
 				struct dma_controller *c = musb->dma_controller;
 				struct dma_channel *channel = musb_ep->dma;
 				u32 dma_addr = request->dma + request->actual;
@@ -864,7 +859,7 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 				if (ret)
 					return;
 			}
-#endif
+
 			/*
 			 * Unmap the dma buffer back to cpu if dma channel
 			 * programming fails. This buffer is mapped if the
@@ -881,7 +876,7 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 				musb_writew(epio, MUSB_RXCSR, csr);
 			}
 
-			musb_read_fifo(musb_ep->hw_ep, fifo_count, (u8 *)
+			musb->ops->read_fifo(musb_ep->hw_ep, fifo_count, (u8 *)
 					(request->buf + request->actual));
 			request->actual += fifo_count;
 
@@ -921,7 +916,7 @@ void musb_g_rx(struct musb *musb, u8 epnum)
 	else
 		musb_ep = &hw_ep->ep_out;
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 
 	req = next_request(musb_ep);
 	if (!req)
@@ -977,31 +972,31 @@ void musb_g_rx(struct musb *musb, u8 epnum)
 			musb_readw(epio, MUSB_RXCSR),
 			musb_ep->dma->actual_len, request);
 
-#if defined(CONFIG_USB_INVENTRA_DMA) || defined(CONFIG_USB_TUSB_OMAP_DMA) || \
-	defined(CONFIG_USB_UX500_DMA)
-		/* Autoclear doesn't clear RxPktRdy for short packets */
-		if ((dma->desired_mode == 0 && !hw_ep->rx_double_buffered)
-				|| (dma->actual_len
-					& (musb_ep->packet_sz - 1))) {
-			/* ack the read! */
-			csr &= ~MUSB_RXCSR_RXPKTRDY;
-			musb_writew(epio, MUSB_RXCSR, csr);
-		}
+		if (is_inventra_dma(musb) || tusb_dma_omap(musb)
+				|| is_ux500_dma(musb)) {
+			/* Autoclear doesn't clear RxPktRdy for short packets */
+			if ((dma->desired_mode == 0 && !hw_ep->rx_double_buffered)
+					|| (dma->actual_len
+						& (musb_ep->packet_sz - 1))) {
+				/* ack the read! */
+				csr &= ~MUSB_RXCSR_RXPKTRDY;
+				musb_writew(epio, MUSB_RXCSR, csr);
+			}
 
-		/* incomplete, and not short? wait for next IN packet */
-		if ((request->actual < request->length)
-				&& (musb_ep->dma->actual_len
-					== musb_ep->packet_sz)) {
-			/* In double buffer case, continue to unload fifo if
- 			 * there is Rx packet in FIFO.
- 			 **/
-			csr = musb_readw(epio, MUSB_RXCSR);
-			if ((csr & MUSB_RXCSR_RXPKTRDY) &&
-				hw_ep->rx_double_buffered)
-				goto exit;
-			return;
+			/* incomplete, and not short? wait for next IN packet */
+			if ((request->actual < request->length)
+					&& (musb_ep->dma->actual_len
+						== musb_ep->packet_sz)) {
+				/* In double buffer case, continue to unload
+				 * fifo if there is Rx packet in FIFO.
+				 **/
+				csr = musb_readw(epio, MUSB_RXCSR);
+				if ((csr & MUSB_RXCSR_RXPKTRDY) &&
+					hw_ep->rx_double_buffered)
+					rxstate(musb, to_musb_request(request));
+				return;
+			}
 		}
-#endif
 		musb_g_giveback(musb_ep, request, 0);
 		/*
 		 * In the giveback function the MUSB lock is
@@ -1011,16 +1006,12 @@ void musb_g_rx(struct musb *musb, u8 epnum)
 		 * on SMP systems. Reselect the INDEX to be sure
 		 * we are reading/modifying the right registers
 		 */
-		musb_ep_select(mbase, epnum);
+		musb_ep_select(musb, mbase, epnum);
 
 		req = next_request(musb_ep);
 		if (!req)
 			return;
 	}
-#if defined(CONFIG_USB_INVENTRA_DMA) || defined(CONFIG_USB_TUSB_OMAP_DMA) || \
-	defined(CONFIG_USB_UX500_DMA)
-exit:
-#endif
 	/* Analyze request */
 	rxstate(musb, req);
 }
@@ -1088,7 +1079,7 @@ static int musb_gadget_enable(struct usb_ep *ep,
 	/* enable the interrupts for the endpoint, set the endpoint
 	 * packet size (or fail), set the mode, clear the fifo
 	 */
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 	if (usb_endpoint_dir_in(desc)) {
 
 		if (hw_ep->is_shared_fifo)
@@ -1225,7 +1216,7 @@ static int musb_gadget_disable(struct usb_ep *ep)
 	epio = musb->endpoints[epnum].regs;
 
 	spin_lock_irqsave(&musb->lock, flags);
-	musb_ep_select(musb->mregs, epnum);
+	musb_ep_select(musb, musb->mregs, epnum);
 
 	/* zero the endpoint sizes */
 	if (musb_ep->is_in) {
@@ -1303,7 +1294,7 @@ void musb_ep_restart(struct musb *musb, struct musb_request *req)
 		req->tx ? "TX/IN" : "RX/OUT",
 		&req->request, req->request.length, req->epnum);
 
-	musb_ep_select(musb->mregs, req->epnum);
+	musb_ep_select(musb, musb->mregs, req->epnum);
 	if (req->tx)
 		txstate(musb, req);
 	else
@@ -1397,7 +1388,7 @@ static int musb_gadget_dequeue(struct usb_ep *ep, struct usb_request *request)
 	else if (is_dma_capable() && musb_ep->dma) {
 		struct dma_controller	*c = musb->dma_controller;
 
-		musb_ep_select(musb->mregs, musb_ep->current_epnum);
+		musb_ep_select(musb, musb->mregs, musb_ep->current_epnum);
 		if (c->channel_abort)
 			status = c->channel_abort(musb_ep->dma);
 		else
@@ -1445,7 +1436,7 @@ static int musb_gadget_set_halt(struct usb_ep *ep, int value)
 		goto done;
 	}
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 
 	request = next_request(musb_ep);
 	if (value) {
@@ -1533,7 +1524,7 @@ static int musb_gadget_fifo_status(struct usb_ep *ep)
 
 		spin_lock_irqsave(&musb->lock, flags);
 
-		musb_ep_select(mbase, epnum);
+		musb_ep_select(musb, mbase, epnum);
 		/* FIXME return zero unless RXPKTRDY is set */
 		retval = musb_readw(epio, MUSB_RXCOUNT);
 
@@ -1555,7 +1546,7 @@ static void musb_gadget_fifo_flush(struct usb_ep *ep)
 	mbase = musb->mregs;
 
 	spin_lock_irqsave(&musb->lock, flags);
-	musb_ep_select(mbase, (u8) epnum);
+	musb_ep_select(musb, mbase, (u8) epnum);
 
 	/* disable interrupts */
 	musb_writew(mbase, MUSB_INTRTXE, musb->intrtxe & ~(1 << epnum));
@@ -1996,7 +1987,7 @@ static void stop_activity(struct musb *musb, struct usb_gadget_driver *driver)
 		for (i = 0, hw_ep = musb->endpoints;
 				i < musb->nr_endpoints;
 				i++, hw_ep++) {
-			musb_ep_select(musb->mregs, i);
+			musb_ep_select(musb, musb->mregs, i);
 			if (hw_ep->is_shared_fifo /* || !epnum */) {
 				nuke(&hw_ep->ep_in, -ESHUTDOWN);
 			} else {
@@ -2144,11 +2135,9 @@ void musb_g_disconnect(struct musb *musb)
 		dev_dbg(musb->controller, "Unhandled disconnect %s, setting a_idle\n",
 			otg_state_string(musb->xceiv->state));
 		musb->xceiv->state = OTG_STATE_A_IDLE;
-		MUSB_HST_MODE(musb);
 		break;
 	case OTG_STATE_A_PERIPHERAL:
-		musb->xceiv->state = OTG_STATE_A_WAIT_BCON;
-		MUSB_HST_MODE(musb);
+		musb->xceiv->state = OTG_STATE_A_WAIT_VFALL;
 		break;
 	case OTG_STATE_B_WAIT_ACON:
 	case OTG_STATE_B_HOST:

@@ -29,6 +29,11 @@
 #include <linux/usb.h>
 #include <linux/usb/musb.h>
 
+#include "usb.h"
+#include "control.h"
+
+#include "ti81xx.h"
+#include "am33xx.h"
 #include "soc.h"
 #include "control.h"
 #include "usb.h"
@@ -156,7 +161,11 @@ void ti81xx_musb_phy_power(u8 on)
 	void __iomem *scm_base = NULL;
 	u32 usbphycfg;
 
-	scm_base = ioremap(TI81XX_SCM_BASE, SZ_2K);
+	if (cpu_is_ti816x())
+		scm_base = ioremap(TI81XX_SCM_BASE, SZ_2K);
+	else if (soc_is_am33xx())
+		scm_base = ioremap(AM33XX_SCM_BASE, SZ_2K);
+
 	if (!scm_base) {
 		pr_err("system control module ioremap failed\n");
 		return;

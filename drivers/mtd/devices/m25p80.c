@@ -705,6 +705,7 @@ static const struct spi_device_id m25p_ids[] = {
 	{ "m25p16",  INFO(0x202015,  0,  64 * 1024,  32, 0) },
 	{ "m25p32",  INFO(0x202016,  0,  64 * 1024,  64, 0) },
 	{ "m25p64",  INFO(0x202017,  0,  64 * 1024, 128, 0) },
+	{ "m25q64",  INFO(0x20ba17,  0,  64 * 1024, 128, 0) },
 	{ "m25p128", INFO(0x202018,  0, 256 * 1024,  64, 0) },
 	{ "n25q032", INFO(0x20ba16,  0,  64 * 1024,  64, 0) },
 
@@ -716,6 +717,7 @@ static const struct spi_device_id m25p_ids[] = {
 	{ "m25p16-nonjedec",  INFO(0, 0,  64 * 1024,  32, 0) },
 	{ "m25p32-nonjedec",  INFO(0, 0,  64 * 1024,  64, 0) },
 	{ "m25p64-nonjedec",  INFO(0, 0,  64 * 1024, 128, 0) },
+	{ "m25q64-nonjedec",  INFO(0, 0,  64 * 1024, 128, 0) },
 	{ "m25p128-nonjedec", INFO(0, 0, 256 * 1024,  64, 0) },
 
 	{ "m45pe10", INFO(0x204011,  0, 64 * 1024,    2, 0) },

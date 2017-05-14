@@ -306,6 +306,9 @@ static int __init omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 		return -ENOMEM;
 	}
 
+	if (soc_is_am33xx())
+		mmc->version = MMC_CTRL_VERSION_2;
+
 	if (c->name)
 		strncpy(hc_name, c->name, HSMMC_NAME_LEN);
 	else
@@ -368,7 +371,8 @@ static int __init omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 	if (!soc_is_am35xx())
 		mmc->slots[0].features |= HSMMC_HAS_PBIAS;
 
-	if (cpu_is_omap44xx() && (omap_rev() > OMAP4430_REV_ES1_0))
+	if ((cpu_is_omap44xx() && (omap_rev() > OMAP4430_REV_ES1_0)) ||
+								soc_is_am33xx())
 		mmc->slots[0].features |= HSMMC_HAS_UPDATED_RESET;
 
 	switch (c->mmc) {
@@ -402,6 +406,9 @@ static int __init omap_hsmmc_pdata_init(struct omap2_hsmmc_info *c,
 	case 2:
 		if (soc_is_am35xx())
 			mmc->slots[0].set_power = am35x_hsmmc2_set_power;
+
+		if (soc_is_am33xx())
+			mmc->slots[0].set_power = nop_mmc_set_power;
 
 		if (c->ext_clock)
 			c->transceiver = 1;
@@ -489,7 +496,8 @@ static void __init omap_hsmmc_init_one(struct omap2_hsmmc_info *hsmmcinfo,
 	if (res < 0)
 		goto free_mmc;
 
-	omap_hsmmc_mux(mmc_data, (ctrl_nr - 1));
+	if (!soc_is_am33xx())
+		omap_hsmmc_mux(mmc_data, (ctrl_nr - 1));
 
 	name = "omap_hsmmc";
 	res = snprintf(oh_name, MAX_OMAP_MMC_HWMOD_NAME_LEN,

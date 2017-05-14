@@ -24,11 +24,11 @@
 #include <mach/serial.h>
 #include <mach/common.h>
 #include <mach/gpio-davinci.h>
+#include <asm/hardware/davinci_asp.h>
 
 #include "davinci.h"
 #include "clock.h"
 #include "mux.h"
-#include "asp.h"
 
 /*
  * Device specific clocks
@@ -880,7 +880,7 @@ static struct davinci_soc_info davinci_soc_info_dm644x = {
 	.gpio_irq		= IRQ_GPIOBNK0,
 	.serial_dev		= &dm644x_serial_device,
 	.emac_pdata		= &dm644x_emac_pdata,
-	.sram_dma		= 0x00008000,
+	.sram_phys		= 0x00008000,
 	.sram_len		= SZ_16K,
 };
 

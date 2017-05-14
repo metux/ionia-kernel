@@ -35,6 +35,9 @@ static unsigned long omap_sram_skip;
 static unsigned long omap_sram_size;
 static void __iomem *omap_sram_ceil;
 
+struct gen_pool *omap_gen_pool;
+EXPORT_SYMBOL_GPL(omap_gen_pool);
+
 /*
  * Memory allocator for SRAM: calculates the new ceiling address
  * for pushing a function using the fncpy API.

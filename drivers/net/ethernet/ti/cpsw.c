@@ -23,6 +23,7 @@
 #include <linux/interrupt.h>
 #include <linux/if_ether.h>
 #include <linux/etherdevice.h>
+#include <linux/ethtool.h>
 #include <linux/netdevice.h>
 #include <linux/net_tstamp.h>
 #include <linux/phy.h>
@@ -34,6 +35,8 @@
 #include <linux/of_device.h>
 
 #include <linux/platform_data/cpsw.h>
+#include <linux/interrupt.h>
+#include <plat/dmtimer.h>
 
 #include "cpsw_ale.h"
 #include "cpts.h"
@@ -118,6 +121,18 @@ do {								\
 #define TX_PRIORITY_MAPPING	0x33221100
 #define CPDMA_TX_PRIORITY_MAP	0x76543210
 
+#define CPSW_PHY_SPEED		1000
+
+/* CPSW control module masks */
+#define CPSW_INTPACEEN		(0x3 << 16)
+#define CPSW_INTPRESCALE_MASK	(0x7FF << 0)
+#define CPSW_CMINTMAX_CNT	63
+#define CPSW_CMINTMIN_CNT	2
+#define CPSW_CMINTMAX_INTVL	(1000 / CPSW_CMINTMIN_CNT)
+#define CPSW_CMINTMIN_INTVL	((1000 / CPSW_CMINTMAX_CNT) + 1)
+
+#define CPSW_IRQ_QUIRK
+#ifdef CPSW_IRQ_QUIRK
 #define cpsw_enable_irq(priv)	\
 	do {			\
 		u32 i;		\
@@ -130,6 +145,22 @@ do {								\
 		for (i = 0; i < priv->num_irqs; i++) \
 			disable_irq_nosync(priv->irqs_table[i]); \
 	} while (0);
+#else
+#define cpsw_enable_irq(priv) do { } while (0);
+#define cpsw_disable_irq(priv) do { } while (0);
+#endif
+
+#define CPSW_CPDMA_EOI_REG	0x894
+#define CPSW_TIMER_MASK		0xA0908
+#define CPSW_TIMER_CAP_REG	0xFD0
+#define CPSW_RX_TIMER_REQ	5
+#define CPSW_TX_TIMER_REQ	6
+
+struct omap_dm_timer *dmtimer_rx;
+struct omap_dm_timer *dmtimer_tx;
+
+extern u32 omap_ctrl_readl(u16 offset);
+extern void omap_ctrl_writel(u32 val, u16 offset);
 
 static int debug_level;
 module_param(debug_level, int, 0);
@@ -152,6 +183,14 @@ struct cpsw_wr_regs {
 	u32	rx_en;
 	u32	tx_en;
 	u32	misc_en;
+	u32	mem_allign1[8];
+	u32	rx_thresh_stat;
+	u32	rx_stat;
+	u32	tx_stat;
+	u32	misc_stat;
+	u32	mem_allign2[8];
+	u32	rx_imax;
+	u32	tx_imax;
 };
 
 struct cpsw_ss_regs {
@@ -247,6 +286,20 @@ struct cpsw_ss_regs {
 /* Bit definitions for the CPSW1_TS_SEQ_LTYPE register */
 #define CPSW_V1_SEQ_ID_OFS_SHIFT	16
 
+struct cpsw_slave_regs {
+	u32	max_blks;
+	u32	blk_cnt;
+	u32	flow_thresh;
+	u32	port_vlan;
+	u32	tx_pri_map;
+	u32	ts_ctl;
+	u32	ts_seq_ltype;
+	u32	ts_vlan;
+	u32	ts_seq_mtype;
+	u32	sa_lo;
+	u32	sa_hi;
+};
+
 struct cpsw_host_regs {
 	u32	max_blks;
 	u32	blk_cnt;
@@ -268,6 +321,44 @@ struct cpsw_sliver_regs {
 	u32	tx_pause;
 	u32	__reserved_1;
 	u32	rx_pri_map;
+};
+
+struct cpsw_hw_stats {
+	u32	rxgoodframes;
+	u32	rxbroadcastframes;
+	u32	rxmulticastframes;
+	u32	rxpauseframes;
+	u32	rxcrcerrors;
+	u32	rxaligncodeerrors;
+	u32	rxoversizedframes;
+	u32	rxjabberframes;
+	u32	rxundersizedframes;
+	u32	rxfragments;
+	u32	__pad_0[2];
+	u32	rxoctets;
+	u32	txgoodframes;
+	u32	txbroadcastframes;
+	u32	txmulticastframes;
+	u32	txpauseframes;
+	u32	txdeferredframes;
+	u32	txcollisionframes;
+	u32	txsinglecollframes;
+	u32	txmultcollframes;
+	u32	txexcessivecollisions;
+	u32	txlatecollisions;
+	u32	txunderrun;
+	u32	txcarriersenseerrors;
+	u32	txoctets;
+	u32	octetframes64;
+	u32	octetframes65t127;
+	u32	octetframes128t255;
+	u32	octetframes256t511;
+	u32	octetframes512t1023;
+	u32	octetframes1024tup;
+	u32	netoctets;
+	u32	rxsofoverruns;
+	u32	rxmofoverruns;
+	u32	rxdmaoverruns;
 };
 
 struct cpsw_slave {
@@ -296,6 +387,7 @@ struct cpsw_priv {
 	struct resource			*cpsw_res;
 	struct resource			*cpsw_wr_res;
 	struct napi_struct		napi;
+#define napi_to_priv(napi)	container_of(napi, struct cpsw_priv, napi)
 	struct device			*dev;
 	struct cpsw_platform_data	data;
 	struct cpsw_ss_regs __iomem	*regs;
@@ -303,6 +395,9 @@ struct cpsw_priv {
 	struct cpsw_host_regs __iomem	*host_port_regs;
 	u32				msg_enable;
 	u32				version;
+	struct cpsw_hw_stats __iomem	*hw_stats;
+	u32				coal_intvl;
+	u32				bus_freq_mhz;
 	struct net_device_stats		stats;
 	int				rx_packet_max;
 	int				host_port;
@@ -349,6 +444,9 @@ static void cpsw_ndo_set_rx_mode(struct net_device *ndev)
 		}
 	}
 }
+
+static int cpsw_set_coalesce(struct net_device *ndev,
+			struct ethtool_coalesce *coal);
 
 static void cpsw_intr_enable(struct cpsw_priv *priv)
 {
@@ -422,6 +520,14 @@ void cpsw_rx_handler(void *token, int len, int status)
 	WARN_ON(ret < 0);
 }
 
+static void set_cpsw_dmtimer_clear(void)
+{
+	omap_dm_timer_write_status(dmtimer_rx, OMAP_TIMER_INT_CAPTURE);
+	omap_dm_timer_write_status(dmtimer_tx, OMAP_TIMER_INT_CAPTURE);
+
+	return;
+}
+
 static irqreturn_t cpsw_interrupt(int irq, void *dev_id)
 {
 	struct cpsw_priv *priv = dev_id;
@@ -458,6 +564,8 @@ static int cpsw_poll(struct napi_struct *napi, int budget)
 		napi_complete(napi);
 		cpsw_intr_enable(priv);
 		cpdma_ctlr_eoi(priv->dma);
+		set_cpsw_dmtimer_clear();
+		cpsw_intr_enable(priv);
 		cpsw_enable_irq(priv);
 	}
 
@@ -506,8 +614,12 @@ static void _cpsw_adjust_link(struct cpsw_slave *slave,
 		cpsw_ale_control_set(priv->ale, slave_port,
 				     ALE_PORT_STATE, ALE_PORT_STATE_FORWARD);
 
+		if (phy->speed == 10)
+			mac_control |= BIT(18); /* In Band mode */
 		if (phy->speed == 1000)
 			mac_control |= BIT(7);	/* GIGABITEN	*/
+		if (phy->speed == 100)
+			mac_control |= BIT(15);
 		if (phy->duplex)
 			mac_control |= BIT(0);	/* FULLDUPLEXEN	*/
 
@@ -515,6 +627,8 @@ static void _cpsw_adjust_link(struct cpsw_slave *slave,
 		if (phy->speed == 100)
 			mac_control |= BIT(15);
 
+		if (phy->interface == PHY_INTERFACE_MODE_RGMII) /* RGMII */
+			mac_control |= (BIT(15)|BIT(16));
 		*link = true;
 	} else {
 		mac_control = 0;
@@ -559,6 +673,129 @@ static inline int __show_stat(char *buf, int maxlen, const char *name, u32 val)
 				leader + strlen(name), val);
 }
 
+static ssize_t cpsw_hw_stats_show(struct device *dev,
+				     struct device_attribute *attr,
+				     char *buf)
+{
+	struct net_device	*ndev = to_net_dev(dev);
+	struct cpsw_priv	*priv = netdev_priv(ndev);
+	int			len = 0;
+	struct cpdma_chan_stats	dma_stats;
+
+#define show_stat(x) do {						\
+	len += __show_stat(buf + len, SZ_4K - len, #x,			\
+			   __raw_readl(&priv->hw_stats->x));		\
+} while (0)
+
+#define show_dma_stat(x) do {						\
+	len += __show_stat(buf + len, SZ_4K - len, #x, dma_stats.x);	\
+} while (0)
+
+	len += snprintf(buf + len, SZ_4K - len, "CPSW Statistics:\n");
+	show_stat(rxgoodframes);	show_stat(rxbroadcastframes);
+	show_stat(rxmulticastframes);	show_stat(rxpauseframes);
+	show_stat(rxcrcerrors);		show_stat(rxaligncodeerrors);
+	show_stat(rxoversizedframes);	show_stat(rxjabberframes);
+	show_stat(rxundersizedframes);	show_stat(rxfragments);
+	show_stat(rxoctets);		show_stat(txgoodframes);
+	show_stat(txbroadcastframes);	show_stat(txmulticastframes);
+	show_stat(txpauseframes);	show_stat(txdeferredframes);
+	show_stat(txcollisionframes);	show_stat(txsinglecollframes);
+	show_stat(txmultcollframes);	show_stat(txexcessivecollisions);
+	show_stat(txlatecollisions);	show_stat(txunderrun);
+	show_stat(txcarriersenseerrors); show_stat(txoctets);
+	show_stat(octetframes64);	show_stat(octetframes65t127);
+	show_stat(octetframes128t255);	show_stat(octetframes256t511);
+	show_stat(octetframes512t1023);	show_stat(octetframes1024tup);
+	show_stat(netoctets);		show_stat(rxsofoverruns);
+	show_stat(rxmofoverruns);	show_stat(rxdmaoverruns);
+
+	cpdma_chan_get_stats(priv->rxch, &dma_stats);
+	len += snprintf(buf + len, SZ_4K - len, "\nRX DMA Statistics:\n");
+	show_dma_stat(head_enqueue);	show_dma_stat(tail_enqueue);
+	show_dma_stat(pad_enqueue);	show_dma_stat(misqueued);
+	show_dma_stat(desc_alloc_fail);	show_dma_stat(pad_alloc_fail);
+	show_dma_stat(runt_receive_buff); show_dma_stat(runt_transmit_buff);
+	show_dma_stat(empty_dequeue);	show_dma_stat(busy_dequeue);
+	show_dma_stat(good_dequeue);	show_dma_stat(teardown_dequeue);
+
+	cpdma_chan_get_stats(priv->txch, &dma_stats);
+	len += snprintf(buf + len, SZ_4K - len, "\nTX DMA Statistics:\n");
+	show_dma_stat(head_enqueue);	show_dma_stat(tail_enqueue);
+	show_dma_stat(pad_enqueue);	show_dma_stat(misqueued);
+	show_dma_stat(desc_alloc_fail);	show_dma_stat(pad_alloc_fail);
+	show_dma_stat(runt_receive_buff); show_dma_stat(runt_transmit_buff);
+	show_dma_stat(empty_dequeue);	show_dma_stat(busy_dequeue);
+	show_dma_stat(good_dequeue);	show_dma_stat(teardown_dequeue);
+
+	return len;
+}
+
+DEVICE_ATTR(hw_stats, S_IRUGO, cpsw_hw_stats_show, NULL);
+
+#define PHY_CONFIG_REG	22
+static void cpsw_set_phy_config(struct cpsw_priv *priv, struct phy_device *phy)
+{
+	struct cpsw_platform_data *pdata = priv->pdev->dev.platform_data;
+	struct mii_bus *miibus;
+	int phy_addr = 0;
+	u16 val = 0;
+	u16 tmp = 0;
+
+	if (!phy)
+		return;
+
+	miibus = phy->bus;
+
+	if (!miibus)
+		return;
+
+	phy_addr = phy->addr;
+
+	/* Disable 1 Gig mode support if it is not supported */
+	if (!pdata->gigabit_en)
+		phy->supported &= ~(SUPPORTED_1000baseT_Half |
+					SUPPORTED_1000baseT_Full);
+
+	/* Following lines enable gigbit advertisement capability even in case
+	 * the advertisement is not enabled by default
+	 */
+	val = miibus->read(miibus, phy_addr, MII_BMCR);
+	val |= (BMCR_SPEED100 | BMCR_ANENABLE | BMCR_FULLDPLX);
+	miibus->write(miibus, phy_addr, MII_BMCR, val);
+	tmp = miibus->read(miibus, phy_addr, MII_BMCR);
+
+	/* Enable gigabit support only if the speed is 1000Mbps */
+	if (phy->speed == CPSW_PHY_SPEED) {
+		tmp = miibus->read(miibus, phy_addr, MII_BMSR);
+		if (tmp & 0x1) {
+			val = miibus->read(miibus, phy_addr, MII_CTRL1000);
+			val |= BIT(9);
+			miibus->write(miibus, phy_addr, MII_CTRL1000, val);
+			tmp = miibus->read(miibus, phy_addr, MII_CTRL1000);
+		}
+	}
+
+	val = miibus->read(miibus, phy_addr, MII_ADVERTISE);
+	val |= (ADVERTISE_10HALF | ADVERTISE_10FULL | \
+		ADVERTISE_100HALF | ADVERTISE_100FULL);
+	miibus->write(miibus, phy_addr, MII_ADVERTISE, val);
+	tmp = miibus->read(miibus, phy_addr, MII_ADVERTISE);
+
+	/* TODO : This check is required. This should be
+	 * moved to a board init section as its specific
+	 * to a phy.*/
+	if (phy->phy_id == 0x0282F014) {
+		/* This enables TX_CLK-ing in case of 10/100MBps operation */
+		val = miibus->read(miibus, phy_addr, PHY_CONFIG_REG);
+		val |= BIT(5);
+		miibus->write(miibus, phy_addr, PHY_CONFIG_REG, val);
+		tmp = miibus->read(miibus, phy_addr, PHY_CONFIG_REG);
+	}
+
+	return;
+}
+
 static void cpsw_slave_open(struct cpsw_slave *slave, struct cpsw_priv *priv)
 {
 	char name[32];
@@ -600,6 +837,7 @@ static void cpsw_slave_open(struct cpsw_slave *slave, struct cpsw_priv *priv)
 	} else {
 		dev_info(priv->dev, "phy found : id is : 0x%x\n",
 			 slave->phy->phy_id);
+		cpsw_set_phy_config(priv, slave->phy);
 		phy_start(slave->phy);
 	}
 }
@@ -638,6 +876,16 @@ static int cpsw_ndo_open(struct net_device *ndev)
 	pm_runtime_get_sync(&priv->pdev->dev);
 
 	reg = priv->version;
+	ret = device_create_file(&ndev->dev, &dev_attr_hw_stats);
+	if (ret < 0) {
+		dev_err(priv->dev, "unable to add device attr\n");
+		return ret;
+	}
+
+	// FIXME: need to enable phy
+	// call musb_dsps_phy_control() ?
+
+	reg = __raw_readl(&priv->regs->id_ver);
 
 	dev_info(priv->dev, "initializing cpsw version %d.%d (%d)\n",
 		 CPSW_MAJOR_VERSION(reg), CPSW_MINOR_VERSION(reg),
@@ -676,6 +924,24 @@ static int cpsw_ndo_open(struct net_device *ndev)
 	/* continue even if we didn't manage to submit all receive descs */
 	cpsw_info(priv, ifup, "submitted %d rx descriptors\n", i);
 
+	/* Enable Interrupt pacing if configured */
+	if (priv->coal_intvl != 0) {
+		struct ethtool_coalesce coal;
+
+		coal.rx_coalesce_usecs = (priv->coal_intvl << 4);
+		cpsw_set_coalesce(ndev, &coal);
+	}
+
+	/* Enable Timer for capturing cpsw rx interrupts */
+	omap_dm_timer_set_int_enable(dmtimer_rx, OMAP_TIMER_INT_CAPTURE);
+	omap_dm_timer_set_capture(dmtimer_rx, 1, 0, 0);
+	omap_dm_timer_enable(dmtimer_rx);
+
+	/* Enable Timer for capturing cpsw tx interrupts */
+	omap_dm_timer_set_int_enable(dmtimer_tx, OMAP_TIMER_INT_CAPTURE);
+	omap_dm_timer_set_capture(dmtimer_tx, 1, 0, 0);
+	omap_dm_timer_enable(dmtimer_tx);
+
 	cpdma_ctlr_start(priv->dma);
 	cpsw_intr_enable(priv);
 	napi_enable(&priv->napi);
@@ -704,7 +970,11 @@ static int cpsw_ndo_stop(struct net_device *ndev)
 	cpsw_intr_disable(priv);
 	cpdma_ctlr_int_ctrl(priv->dma, false);
 	cpdma_ctlr_stop(priv->dma);
+	omap_dm_timer_set_int_enable(dmtimer_rx, 0);
+	omap_dm_timer_set_int_enable(dmtimer_tx, 0);
+	cpdma_ctlr_stop(priv->dma);
 	cpsw_ale_stop(priv->ale);
+	device_remove_file(&ndev->dev, &dev_attr_hw_stats);
 	for_each_slave(priv, cpsw_slave_stop, priv);
 	pm_runtime_put_sync(&priv->pdev->dev);
 	return 0;
@@ -889,6 +1159,26 @@ static int cpsw_ndo_ioctl(struct net_device *dev, struct ifreq *req, int cmd)
 	return -ENOTSUPP;
 }
 
+static int cpsw_ndo_set_mac_address(struct net_device *ndev, void *p)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct sockaddr *addr = (struct sockaddr *)p;
+
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
+
+	cpsw_ale_del_ucast(priv->ale, priv->mac_addr, priv->host_port);
+
+	memcpy(priv->mac_addr, addr->sa_data, ETH_ALEN);
+	memcpy(ndev->dev_addr, priv->mac_addr, ETH_ALEN);
+
+	cpsw_ale_add_ucast(priv->ale, priv->mac_addr, priv->host_port,
+			   0);
+	/* ALE_SECURE); */
+	for_each_slave(priv, cpsw_set_slave_mac, priv);
+	return 0;
+}
+
 static void cpsw_ndo_tx_timeout(struct net_device *ndev)
 {
 	struct cpsw_priv *priv = netdev_priv(ndev);
@@ -924,6 +1214,86 @@ static void cpsw_ndo_poll_controller(struct net_device *ndev)
 }
 #endif
 
+/**
+ * cpsw_get_coalesce : Get interrupt coalesce settings for this device
+ * @ndev : CPSW network adapter
+ * @coal : ethtool coalesce settings structure
+ *
+ * Fetch the current interrupt coalesce settings
+ *
+ */
+static int cpsw_get_coalesce(struct net_device *ndev,
+				struct ethtool_coalesce *coal)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+
+	coal->rx_coalesce_usecs = priv->coal_intvl;
+	return 0;
+}
+
+/**
+ * cpsw_set_coalesce : Set interrupt coalesce settings for this device
+ * @ndev : CPSW network adapter
+ * @coal : ethtool coalesce settings structure
+ *
+ * Set interrupt coalesce parameters
+ *
+ */
+static int cpsw_set_coalesce(struct net_device *ndev,
+				struct ethtool_coalesce *coal)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	u32 int_ctrl;
+	u32 num_interrupts = 0;
+	u32 prescale = 0;
+	u32 addnl_dvdr = 1;
+	u32 coal_intvl = 0;
+
+	if (!coal->rx_coalesce_usecs)
+		return -EINVAL;
+
+	coal_intvl = coal->rx_coalesce_usecs;
+
+	int_ctrl =  __raw_readl(&priv->wr_regs->int_control);
+	prescale = priv->bus_freq_mhz * 4;
+
+	if (coal_intvl < CPSW_CMINTMIN_INTVL)
+		coal_intvl = CPSW_CMINTMIN_INTVL;
+
+	if (coal_intvl > CPSW_CMINTMAX_INTVL) {
+		/*
+		 * Interrupt pacer works with 4us Pulse, we can
+		 * throttle further by dilating the 4us pulse.
+		 */
+		addnl_dvdr = CPSW_INTPRESCALE_MASK / prescale;
+
+		if (addnl_dvdr > 1) {
+			prescale *= addnl_dvdr;
+			if (coal_intvl > (CPSW_CMINTMAX_INTVL * addnl_dvdr))
+				coal_intvl = (CPSW_CMINTMAX_INTVL
+						* addnl_dvdr);
+		} else {
+			addnl_dvdr = 1;
+			coal_intvl = CPSW_CMINTMAX_INTVL;
+		}
+	}
+
+	num_interrupts = (1000 * addnl_dvdr) / coal_intvl;
+
+	int_ctrl |= CPSW_INTPACEEN;
+	int_ctrl &= (~CPSW_INTPRESCALE_MASK);
+	int_ctrl |= (prescale & CPSW_INTPRESCALE_MASK);
+	__raw_writel(int_ctrl, &priv->wr_regs->int_control);
+
+	__raw_writel(num_interrupts, &priv->wr_regs->rx_imax);
+	__raw_writel(num_interrupts, &priv->wr_regs->tx_imax);
+
+	printk(KERN_INFO"Set coalesce to %d usecs.\n", coal_intvl);
+	priv->coal_intvl = coal_intvl;
+
+	return 0;
+}
+
 static const struct net_device_ops cpsw_netdev_ops = {
 	.ndo_open		= cpsw_ndo_open,
 	.ndo_stop		= cpsw_ndo_stop,
@@ -932,6 +1302,8 @@ static const struct net_device_ops cpsw_netdev_ops = {
 	.ndo_do_ioctl		= cpsw_ndo_ioctl,
 	.ndo_validate_addr	= eth_validate_addr,
 	.ndo_change_mtu		= eth_change_mtu,
+	.ndo_set_mac_address	= cpsw_ndo_set_mac_address,
+	.ndo_validate_addr	= eth_validate_addr,
 	.ndo_tx_timeout		= cpsw_ndo_tx_timeout,
 	.ndo_get_stats		= cpsw_ndo_get_stats,
 	.ndo_set_rx_mode	= cpsw_ndo_set_rx_mode,
@@ -999,6 +1371,8 @@ static const struct ethtool_ops cpsw_ethtool_ops = {
 	.set_msglevel	= cpsw_set_msglevel,
 	.get_link	= ethtool_op_get_link,
 	.get_ts_info	= cpsw_get_ts_info,
+	.get_coalesce	= cpsw_get_coalesce,
+	.set_coalesce	= cpsw_set_coalesce,
 };
 
 static void cpsw_slave_init(struct cpsw_slave *slave, struct cpsw_priv *priv,
@@ -1188,6 +1562,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	priv->slaves = kzalloc(sizeof(struct cpsw_slave) * data->slaves,
 			       GFP_KERNEL);
 	if (!priv->slaves) {
+		dev_err(priv->dev, "failed to allocate slave ports\n");
 		ret = -EBUSY;
 		goto clean_ndev_ret;
 	}
@@ -1200,6 +1575,9 @@ static int cpsw_probe(struct platform_device *pdev)
 		ret = -ENODEV;
 		goto clean_slave_ret;
 	}
+
+	priv->coal_intvl = 0;
+	priv->bus_freq_mhz = clk_get_rate(priv->clk) / 1000000;
 
 	priv->cpsw_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!priv->cpsw_res) {
@@ -1221,6 +1599,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	priv->regs = ss_regs;
 	priv->version = __raw_readl(&priv->regs->id_ver);
 	priv->host_port = HOST_PORT_NUM;
+	priv->hw_stats = ss_regs + data->hw_stats_reg_ofs;
 
 	priv->cpsw_wr_res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
 	if (!priv->cpsw_wr_res) {
@@ -1241,6 +1620,21 @@ static int cpsw_probe(struct platform_device *pdev)
 		goto clean_cpsw_wr_iores_ret;
 	}
 	priv->wr_regs = wr_regs;
+
+	omap_ctrl_writel(CPSW_TIMER_MASK, CPSW_TIMER_CAP_REG);
+
+	dmtimer_rx = omap_dm_timer_request_specific(CPSW_RX_TIMER_REQ);
+	if (!dmtimer_rx) {
+		dev_err(priv->dev, "Error getting Rx Timer resource\n");
+		ret = -ENODEV;
+		goto clean_iomap_ret;
+	}
+	dmtimer_tx = omap_dm_timer_request_specific(CPSW_TX_TIMER_REQ);
+	if (!dmtimer_tx) {
+		dev_err(priv->dev, "Error getting Tx Timer resource\n");
+		ret = -ENODEV;
+		goto clean_timer_rx_ret;
+	}
 
 	memset(&dma_params, 0, sizeof(dma_params));
 	memset(&ale_params, 0, sizeof(ale_params));
@@ -1383,6 +1777,8 @@ clean_wr_iomap_ret:
 clean_cpsw_wr_iores_ret:
 	release_mem_region(priv->cpsw_wr_res->start,
 			   resource_size(priv->cpsw_wr_res));
+clean_timer_rx_ret:
+	omap_dm_timer_free(dmtimer_rx);
 clean_iomap_ret:
 	iounmap(priv->regs);
 clean_cpsw_iores_ret:
