@@ -14,6 +14,7 @@ musb_hdrc-$(CONFIG_DEBUG_FS)			+= musb_debugfs.o
 obj-$(CONFIG_USB_MUSB_OMAP2PLUS)		+= omap2430.o
 obj-$(CONFIG_USB_MUSB_AM35X)			+= am35x.o
 obj-$(CONFIG_USB_MUSB_DSPS)			+= musb_dsps.o
+obj-$(CONFIG_USB_MUSB_TI81XX)			+= ti81xx.o
 obj-$(CONFIG_USB_MUSB_TUSB6010)			+= tusb6010.o
 obj-$(CONFIG_USB_MUSB_DAVINCI)			+= davinci.o
 obj-$(CONFIG_USB_MUSB_DA8XX)			+= da8xx.o
@@ -31,6 +32,7 @@ obj-$(CONFIG_USB_MUSB_AM335X_CHILD)		+= musb_am335x.o
 
 musb_hdrc-$(CONFIG_USB_INVENTRA_DMA)		+= musbhsdma.o
 musb_hdrc-$(CONFIG_USB_TI_CPPI_DMA)		+= cppi_dma.o
+musb-hdrc-$(CONFIG_USB_TI_CPPI41_DMA)		+= cppi41.o cppi41_dma.o
 musb_hdrc-$(CONFIG_USB_TUSB_OMAP_DMA)		+= tusb6010_omap.o
 musb_hdrc-$(CONFIG_USB_UX500_DMA)		+= ux500_dma.o
 musb_hdrc-$(CONFIG_USB_TI_CPPI41_DMA)		+= musb_cppi41.o

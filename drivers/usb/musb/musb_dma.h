@@ -70,14 +70,16 @@ struct musb_hw_ep;
 
 #if defined(CONFIG_USB_TI_CPPI_DMA) || defined(CONFIG_USB_TI_CPPI41_DMA)
 #define	is_cppi_enabled()	1
+#define is_cppi41_enabled(musb)     1
 #else
 #define	is_cppi_enabled()	0
+#define is_cppi41_enabled(musb)     0
 #endif
 
 #ifdef CONFIG_USB_TUSB_OMAP_DMA
-#define tusb_dma_omap()			1
+#define tusb_dma_omap(musb)		(musb->ops->flags & MUSB_GLUE_DMA_TUSB)
 #else
-#define tusb_dma_omap()			0
+#define tusb_dma_omap(musb)		0
 #endif
 
 /* Anomaly 05000456 - USB Receive Interrupt Is Not Generated in DMA Mode 1
@@ -190,5 +192,8 @@ extern struct dma_controller *dma_controller_create(struct musb *, void __iomem 
 
 extern void dma_controller_destroy(struct dma_controller *);
 #endif
+
+struct dma_controller *cppi41_dma_controller_create(struct musb  *musb, void __iomem *mregs);
+void cppi41_dma_controller_destroy(struct dma_controller *controller);
 
 #endif	/* __MUSB_DMA_H__ */

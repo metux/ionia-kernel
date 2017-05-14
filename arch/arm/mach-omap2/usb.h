@@ -1,3 +1,6 @@
+#ifndef __ARCH_ARM_MACH_OMAP2_USB_H
+#define __ARCH_ARM_MACH_OMAP2_USB_H
+
 #include <linux/platform_data/usb-omap.h>
 
 /* AM35x */
@@ -70,3 +73,4 @@ extern void am35x_musb_clear_irq(void);
 extern void am35x_set_mode(u8 musb_mode);
 extern void ti81xx_musb_phy_power(u8 on);
 
+#endif

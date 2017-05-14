@@ -19,6 +19,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef __LINUX_PLATFORM_DATA_USB_OMAP_H
+#define __LINUX_PLATFORM_DATA_USB_OMAP_H
+
 #define OMAP3_HS_USB_PORTS	3
 
 enum usbhs_omap_port_mode {
@@ -75,6 +78,7 @@ struct omap_musb_board_data {
 	u8	interface_type;
 	u8	mode;
 	u16	power;
+	u8	instances;
 	unsigned extvbus:1;
 	void	(*set_phy_power)(u8 on);
 	void	(*clear_irq)(void);
@@ -86,3 +90,5 @@ enum musb_interface {
 	MUSB_INTERFACE_ULPI,
 	MUSB_INTERFACE_UTMI
 };
+
+#endif /* __LINUX_PLATFORM_DATA_USB_OMAP_H */
