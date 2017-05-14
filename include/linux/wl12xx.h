@@ -57,6 +57,8 @@ struct wl12xx_platform_data {
 	bool pwr_in_suspend;
 
 	struct wl1271_if_operations *ops;
+	int bt_enable_gpio;
+	int wlan_enable_gpio;
 };
 
 /* Platform does not support level trigger interrupts */

@@ -120,6 +120,7 @@ extern void omap2_init_common_infrastructure(void);
 extern struct sys_timer omap2_timer;
 extern struct sys_timer omap3_timer;
 extern struct sys_timer omap3_secure_timer;
+extern struct sys_timer omap3_am33xx_timer;
 extern struct sys_timer omap4_timer;
 
 void omap2420_init_early(void);
@@ -143,6 +144,7 @@ void ti81xx_init_late(void);
 void omap4430_init_late(void);
 int omap2_common_pm_late_init(void);
 void omap_prcm_restart(char, const char *);
+void am33xx_init_early(void);
 
 /*
  * IO bases for various OMAP processors

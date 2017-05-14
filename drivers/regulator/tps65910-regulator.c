@@ -654,6 +654,7 @@ static int tps65910_set_voltage_dcdc_sel(struct regulator_dev *dev,
 	struct tps65910_reg *pmic = rdev_get_drvdata(dev);
 	int id = rdev_get_id(dev), vsel;
 	int dcdc_mult = 0;
+	int ret = 0;
 
 	switch (id) {
 	case TPS65910_REG_VDD1:
@@ -662,7 +663,7 @@ static int tps65910_set_voltage_dcdc_sel(struct regulator_dev *dev,
 			dcdc_mult--;
 		vsel = (selector % VDD1_2_NUM_VOLT_FINE) + 3;
 
-		tps65910_modify_bits(pmic, TPS65910_VDD1,
+		ret = tps65910_modify_bits(pmic, TPS65910_VDD1,
 				(dcdc_mult << VDD1_VGAIN_SEL_SHIFT),
 						VDD1_VGAIN_SEL_MASK);
 		tps65910_reg_write_locked(pmic, TPS65910_VDD1_OP, vsel);
@@ -683,7 +684,7 @@ static int tps65910_set_voltage_dcdc_sel(struct regulator_dev *dev,
 		tps65910_reg_write_locked(pmic, TPS65911_VDDCTRL_OP, vsel);
 	}
 
-	return 0;
+	return ret;
 }
 
 static int tps65910_set_voltage_sel(struct regulator_dev *dev,

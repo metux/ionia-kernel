@@ -20,6 +20,7 @@
 #include <linux/err.h>
 #include <linux/dma-mapping.h>
 #include <linux/io.h>
+#include <linux/export.h>
 
 #include "davinci_cpdma.h"
 
@@ -351,6 +352,17 @@ int cpdma_ctlr_stop(struct cpdma_ctlr *ctlr)
 
 	ctlr->state = CPDMA_STATE_IDLE;
 
+	if (ctlr->params.has_soft_reset) {
+		unsigned long timeout = jiffies + HZ/10;
+
+		dma_reg_write(ctlr, CPDMA_SOFTRESET, 1);
+		while (time_before(jiffies, timeout)) {
+			if (dma_reg_read(ctlr, CPDMA_SOFTRESET) == 0)
+				break;
+		}
+		WARN_ON(!time_before(jiffies, timeout));
+	}
+
 	spin_unlock_irqrestore(&ctlr->lock, flags);
 	return 0;
 }
@@ -473,11 +485,15 @@ int cpdma_ctlr_int_ctrl(struct cpdma_ctlr *ctlr, bool enable)
 	spin_unlock_irqrestore(&ctlr->lock, flags);
 	return 0;
 }
+EXPORT_SYMBOL_GPL(cpdma_ctlr_int_ctrl);
 
 void cpdma_ctlr_eoi(struct cpdma_ctlr *ctlr)
 {
 	dma_reg_write(ctlr, CPDMA_MACEOIVECTOR, 0);
+	dma_reg_write(ctlr, CPDMA_MACEOIVECTOR, 1);
+	dma_reg_write(ctlr, CPDMA_MACEOIVECTOR, 2);
 }
+EXPORT_SYMBOL_GPL(cpdma_ctlr_eoi);
 
 struct cpdma_chan *cpdma_chan_create(struct cpdma_ctlr *ctlr, int chan_num,
 				     cpdma_handler_fn handler)
@@ -565,6 +581,7 @@ int cpdma_chan_get_stats(struct cpdma_chan *chan,
 	spin_unlock_irqrestore(&chan->lock, flags);
 	return 0;
 }
+EXPORT_SYMBOL_GPL(cpdma_chan_get_stats);
 
 int cpdma_chan_dump(struct cpdma_chan *chan)
 {
@@ -729,9 +746,6 @@ static int __cpdma_chan_process(struct cpdma_chan *chan)
 	int				status, outlen;
 	struct cpdma_desc_pool		*pool = ctlr->pool;
 	dma_addr_t			desc_dma;
-	unsigned long			flags;
-
-	spin_lock_irqsave(&chan->lock, flags);
 
 	desc = chan->head;
 	if (!desc) {
@@ -760,13 +774,10 @@ static int __cpdma_chan_process(struct cpdma_chan *chan)
 		chan_write(chan, hdp, desc_phys(pool, chan->head));
 	}
 
-	spin_unlock_irqrestore(&chan->lock, flags);
-
 	__cpdma_chan_free(chan, desc, outlen, status);
 	return status;
 
 unlock_ret:
-	spin_unlock_irqrestore(&chan->lock, flags);
 	return status;
 }
 
@@ -946,6 +957,7 @@ unlock_ret:
 	spin_unlock_irqrestore(&ctlr->lock, flags);
 	return ret;
 }
+EXPORT_SYMBOL_GPL(cpdma_control_get);
 
 int cpdma_control_set(struct cpdma_ctlr *ctlr, int control, int value)
 {
@@ -982,3 +994,4 @@ unlock_ret:
 	spin_unlock_irqrestore(&ctlr->lock, flags);
 	return ret;
 }
+EXPORT_SYMBOL_GPL(cpdma_control_set);

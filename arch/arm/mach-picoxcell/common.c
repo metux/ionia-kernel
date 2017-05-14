@@ -78,20 +78,6 @@ static void __init picoxcell_init_irq(void)
 	of_irq_init(vic_of_match);
 }
 
-static void picoxcell_wdt_restart(char mode, const char *cmd)
-{
-	/*
-	 * Configure the watchdog to reset with the shortest possible timeout
-	 * and give it chance to do the reset.
-	 */
-	if (wdt_regs) {
-		writel_relaxed(WDT_CTRL_REG_EN_MASK, wdt_regs + WDT_CTRL_REG_OFFS);
-		writel_relaxed(0, wdt_regs + WDT_TIMEOUT_REG_OFFS);
-		/* No sleeping, possibly atomic. */
-		mdelay(500);
-	}
-}
-
 DT_MACHINE_START(PICOXCELL, "Picochip picoXcell")
 	.map_io		= picoxcell_map_io,
 	.nr_irqs	= NR_IRQS_LEGACY,

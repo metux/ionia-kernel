@@ -95,6 +95,7 @@ static void musb_do_idle(unsigned long _musb)
 	spin_unlock_irqrestore(&musb->lock, flags);
 }
 
+#define MUSB_TIMEOUT_A_WAIT_BCON	1100
 
 static void omap2430_musb_try_idle(struct musb *musb, unsigned long timeout)
 {
@@ -332,6 +333,7 @@ static int omap2430_musb_init(struct musb *musb)
 	if (status)
 		dev_dbg(musb->controller, "notification register failed\n");
 
+	musb->a_wait_bcon = MUSB_TIMEOUT_A_WAIT_BCON;
 	setup_timer(&musb_idle_timer, musb_do_idle, (unsigned long) musb);
 
 	pm_runtime_put_noidle(musb->controller);
@@ -397,8 +399,14 @@ static int omap2430_musb_exit(struct musb *musb)
 }
 
 static const struct musb_platform_ops omap2430_ops = {
+	.fifo_mode	= 4,
+	.flags		= MUSB_GLUE_EP_ADDR_FLAT_MAPPING |
+				MUSB_GLUE_DMA_INVENTRA,
 	.init		= omap2430_musb_init,
 	.exit		= omap2430_musb_exit,
+
+	.read_fifo      = musb_read_fifo,
+	.write_fifo     = musb_write_fifo,
 
 	.set_mode	= omap2430_musb_set_mode,
 	.try_idle	= omap2430_musb_try_idle,
@@ -407,6 +415,9 @@ static const struct musb_platform_ops omap2430_ops = {
 
 	.enable		= omap2430_musb_enable,
 	.disable	= omap2430_musb_disable,
+
+	.dma_controller_create = inventra_dma_controller_create,
+	.dma_controller_destroy = inventra_dma_controller_destroy,
 };
 
 static u64 omap2430_dmamask = DMA_BIT_MASK(32);
@@ -424,12 +435,13 @@ static int __devinit omap2430_probe(struct platform_device *pdev)
 		goto err0;
 	}
 
-	musb = platform_device_alloc("musb-hdrc", -1);
+	musb = platform_device_alloc("musb-hdrc", pdev->id);
 	if (!musb) {
 		dev_err(&pdev->dev, "failed to allocate musb device\n");
 		goto err1;
 	}
 
+	ev_set_name(&pdev->dev, "musb-omap2430");
 	musb->dev.parent		= &pdev->dev;
 	musb->dev.dma_mask		= &omap2430_dmamask;
 	musb->dev.coherent_dma_mask	= omap2430_dmamask;

@@ -60,6 +60,14 @@
 /* AM3505/3517 UART4 */
 #define AM35XX_UART4_BASE	0x4809E000	/* Only on AM3505/3517 */
 
+/* AM33XX serial port */
+#define AM33XX_UART1_BASE	0x44E09000
+#define AM33XX_UART2_BASE	0x48022000
+#define AM33XX_UART3_BASE	0x48024000
+#define AM33XX_UART4_BASE	0x481A6000
+#define AM33XX_UART5_BASE	0x481A8000
+#define AM33XX_UART6_BASE	0x481AA000
+
 /* External port on Zoom2/3 */
 #define ZOOM_UART_BASE		0x10000000
 #define ZOOM_UART_VIRT		0xfa400000
@@ -93,6 +101,8 @@
 #define TI81XXUART1		81
 #define TI81XXUART2		82
 #define TI81XXUART3		83
+#define AM33XXUART1		84
+#define AM33XXUART4		85
 #define ZOOM_UART		95		/* Only on zoom2/3 */
 
 /* This is only used by 8250.c for omap1510 */

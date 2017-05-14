@@ -97,6 +97,9 @@ static int is_sram_locked(void)
 		return 1; /* assume locked with no PPA or security driver */
 }
 
+struct gen_pool *omap_gen_pool;
+EXPORT_SYMBOL_GPL(omap_gen_pool);
+
 /*
  * The amount of SRAM depends on the core type.
  * Note that we cannot try to test for SRAM here because writes
@@ -107,7 +110,7 @@ static void __init omap_detect_sram(void)
 {
 	if (cpu_class_is_omap2()) {
 		if (is_sram_locked()) {
-			if (cpu_is_omap34xx()) {
+			if (cpu_is_omap34xx() && !cpu_is_am33xx()) {
 				omap_sram_start = OMAP3_SRAM_PUB_PA;
 				if ((omap_type() == OMAP2_DEVICE_TYPE_EMU) ||
 				    (omap_type() == OMAP2_DEVICE_TYPE_SEC)) {
@@ -132,6 +135,9 @@ static void __init omap_detect_sram(void)
 			} else if (cpu_is_omap44xx()) {
 				omap_sram_start = OMAP4_SRAM_PA;
 				omap_sram_size = 0xe000; /* 56K */
+			} else if (cpu_is_am33xx()) {
+				omap_sram_start = AM33XX_SRAM_PA;
+				omap_sram_size = 0x10000; /* 64K */
 			} else {
 				omap_sram_start = OMAP2_SRAM_PA;
 				if (cpu_is_omap242x())
@@ -372,6 +378,7 @@ static inline int omap34xx_sram_init(void)
 
 static inline int am33xx_sram_init(void)
 {
+	am33xx_push_sram_idle();
 	return 0;
 }
 
@@ -390,6 +397,8 @@ int __init omap_sram_init(void)
 		am33xx_sram_init();
 	else if (cpu_is_omap34xx())
 		omap34xx_sram_init();
+	else if (cpu_is_am33xx())
+		am33xx_sram_init();
 
 	return 0;
 }
