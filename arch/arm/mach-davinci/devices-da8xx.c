@@ -25,8 +25,9 @@
 #include <mach/cpuidle.h>
 #include <mach/sram.h>
 
+#include <asm/hardware/davinci_asp.h>
+
 #include "clock.h"
-#include "asp.h"
 
 #define DA8XX_TPCC_BASE			0x01c00000
 #define DA8XX_TPTC0_BASE		0x01c08000

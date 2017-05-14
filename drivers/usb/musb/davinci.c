@@ -491,6 +491,8 @@ static int davinci_musb_exit(struct musb *musb)
 }
 
 static const struct musb_platform_ops davinci_ops = {
+	.fifo_mode	= 2,
+	.flags		= MUSB_GLUE_EP_ADDR_FLAT_MAPPING | MUSB_GLUE_DMA_CPPI,
 	.init		= davinci_musb_init,
 	.exit		= davinci_musb_exit,
 
@@ -500,6 +502,12 @@ static const struct musb_platform_ops davinci_ops = {
 	.set_mode	= davinci_musb_set_mode,
 
 	.set_vbus	= davinci_musb_set_vbus,
+
+	.read_fifo	= musb_read_fifo,
+	.write_fifo	= musb_write_fifo,
+
+	.dma_controller_create = cppi_dma_controller_create,
+	.dma_controller_destroy = cppi_dma_controller_destroy,
 };
 
 static const struct platform_device_info davinci_dev_info = {

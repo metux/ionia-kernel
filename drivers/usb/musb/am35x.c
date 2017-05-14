@@ -47,9 +47,7 @@
 #define USB_STAT_REG		0x08
 #define USB_EMULATION_REG	0x0c
 /* 0x10 Reserved */
-#define USB_AUTOREQ_REG		0x14
 #define USB_SRP_FIX_TIME_REG	0x18
-#define USB_TEARDOWN_REG	0x1c
 #define EP_INTR_SRC_REG		0x20
 #define EP_INTR_SRC_SET_REG	0x24
 #define EP_INTR_SRC_CLEAR_REG	0x28
@@ -80,6 +78,11 @@
 #define AM35X_RX_EP_MASK	0xfffe		/* 15 Rx EPs */
 #define AM35X_TX_INTR_MASK	(AM35X_TX_EP_MASK << AM35X_INTR_TX_SHIFT)
 #define AM35X_RX_INTR_MASK	(AM35X_RX_EP_MASK << AM35X_INTR_RX_SHIFT)
+
+/* CPPI 4.1 queue manager registers */
+#define QMGR_PEND0_REG		0x4090
+#define QMGR_PEND1_REG		0x4094
+#define QMGR_PEND2_REG		0x4098
 
 #define USB_MENTOR_CORE_OFFSET	0x400
 
@@ -223,10 +226,36 @@ static irqreturn_t am35x_musb_interrupt(int irq, void *hci)
 	struct usb_otg *otg = musb->xceiv->otg;
 	unsigned long flags;
 	irqreturn_t ret = IRQ_NONE;
+	u32 pend1 = 0, pend2 = 0, tx, rx;
 	u32 epintr, usbintr;
 
 	spin_lock_irqsave(&musb->lock, flags);
 
+	/*
+	 * CPPI 4.1 interrupts share the same IRQ and the EOI register but
+	 * don't get reflected in the interrupt source/mask registers.
+	 */
+	if (is_cppi41_enabled(musb)) {
+		/*
+		 * Check for the interrupts from Tx/Rx completion queues; they
+		 * are level-triggered and will stay asserted until the queues
+		 * are emptied.  We're using the queue pending register 0 as a
+		 * substitute for the interrupt status register and reading it
+		 * directly for speed.
+		 */
+		pend1 = musb_readl(reg_base, QMGR_PEND1_REG);
+		pend2 = musb_readl(reg_base, QMGR_PEND2_REG);
+
+		/* AM3517 uses 63,64,65 and 66 queues as completion queue */
+		if ((pend1 & (1 << 31)) || (pend2 & (7 << 0))) {
+			tx = (pend1 >> 31)  | ((pend2 & 1) ? (1 << 1) : 0);
+			rx = (pend2 >> 1) & 0x3;
+
+			dev_dbg(musb->controller, "CPPI 4.1 IRQ: Tx %x, Rx %x\n", tx, rx);
+			cppi41_completion(musb, rx, tx);
+			ret = IRQ_HANDLED;
+		}
+	}
 	/* Get endpoint interrupts */
 	epintr = musb_readl(reg_base, EP_INTR_SRC_MASKED_REG);
 
@@ -377,7 +406,7 @@ static int am35x_musb_init(struct musb *musb)
 
 	/* Start the on-chip PHY and its PLL. */
 	if (data->set_phy_power)
-		data->set_phy_power(1);
+		data->set_phy_power(0, 1);
 
 	msleep(5);
 
@@ -400,7 +429,7 @@ static int am35x_musb_exit(struct musb *musb)
 
 	/* Shutdown the on-chip PHY and its PLL. */
 	if (data->set_phy_power)
-		data->set_phy_power(0);
+		data->set_phy_power(0, 0);
 
 	usb_put_phy(musb->xceiv);
 
@@ -438,7 +467,8 @@ static void am35x_read_fifo(struct musb_hw_ep *hw_ep, u16 len, u8 *dst)
 }
 
 static const struct musb_platform_ops am35x_ops = {
-	.quirks		= MUSB_INDEXED_EP,
+	.fifo_mode	= 4,
+	.flags		= MUSB_GLUE_EP_ADDR_FLAT_MAPPING | MUSB_GLUE_DMA_CPPI41,
 	.init		= am35x_musb_init,
 	.exit		= am35x_musb_exit,
 
@@ -450,6 +480,8 @@ static const struct musb_platform_ops am35x_ops = {
 	.try_idle	= am35x_musb_try_idle,
 
 	.set_vbus	= am35x_musb_set_vbus,
+
+	.write_fifo = musb_write_fifo,
 };
 
 static const struct platform_device_info am35x_dev_info = {
@@ -574,7 +606,7 @@ static int am35x_suspend(struct device *dev)
 
 	/* Shutdown the on-chip PHY and its PLL. */
 	if (data->set_phy_power)
-		data->set_phy_power(0);
+		data->set_phy_power(0, 0);
 
 	clk_disable(glue->phy_clk);
 	clk_disable(glue->clk);
@@ -591,7 +623,7 @@ static int am35x_resume(struct device *dev)
 
 	/* Start the on-chip PHY and its PLL. */
 	if (data->set_phy_power)
-		data->set_phy_power(1);
+		data->set_phy_power(0, 1);
 
 	ret = clk_enable(glue->phy_clk);
 	if (ret) {
