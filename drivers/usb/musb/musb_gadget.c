@@ -418,7 +418,7 @@ static void txstate(struct musb *musb, struct musb_request *req)
 		 */
 		unmap_dma_buffer(req, musb);
 
-		musb_write_fifo(musb_ep->hw_ep, fifo_count,
+		musb->ops->write_fifo(musb_ep->hw_ep, fifo_count,
 				(u8 *) (request->buf + request->actual));
 		request->actual += fifo_count;
 		csr |= MUSB_TXCSR_TXPKTRDY;
@@ -449,7 +449,7 @@ void musb_g_tx(struct musb *musb, u8 epnum)
 	void __iomem		*epio = musb->endpoints[epnum].regs;
 	struct dma_channel	*dma;
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 	req = next_request(musb_ep);
 	request = &req->request;
 
@@ -539,7 +539,7 @@ void musb_g_tx(struct musb *musb, u8 epnum)
 			 * on SMP systems. Reselect the INDEX to be sure
 			 * we are reading/modifying the right registers
 			 */
-			musb_ep_select(mbase, epnum);
+			musb_ep_select(musb, mbase, epnum);
 			req = musb_ep->desc ? next_request(musb_ep) : NULL;
 			if (!req) {
 				dev_dbg(musb->controller, "%s idle now\n",
@@ -595,7 +595,8 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 		return;
 	}
 
-	if (is_cppi_enabled() && is_buffer_mapped(req)) {
+	if ((is_cppi_enabled() || is_cppi41_enabled(musb)) &&
+					is_buffer_mapped(req)) {
 		struct dma_controller	*c = musb->dma_controller;
 		struct dma_channel	*channel = musb_ep->dma;
 
@@ -713,7 +714,7 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 					return;
 			}
 #elif defined(CONFIG_USB_UX500_DMA)
-			if ((is_buffer_mapped(req)) &&
+			if (is_ux500_dma(musb)) &&
 				(request->actual < request->length)) {
 
 				struct dma_controller *c;
@@ -771,8 +772,7 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 
 			fifo_count = min_t(unsigned, len, fifo_count);
 
-#ifdef	CONFIG_USB_TUSB_OMAP_DMA
-			if (tusb_dma_omap() && is_buffer_mapped(req)) {
+			if (tusb_dma_omap(musb) && is_buffer_mapped(req)) {
 				struct dma_controller *c = musb->dma_controller;
 				struct dma_channel *channel = musb_ep->dma;
 				u32 dma_addr = request->dma + request->actual;
@@ -786,7 +786,7 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 				if (ret)
 					return;
 			}
-#endif
+
 			/*
 			 * Unmap the dma buffer back to cpu if dma channel
 			 * programming fails. This buffer is mapped if the
@@ -803,7 +803,7 @@ static void rxstate(struct musb *musb, struct musb_request *req)
 				musb_writew(epio, MUSB_RXCSR, csr);
 			}
 
-			musb_read_fifo(musb_ep->hw_ep, fifo_count, (u8 *)
+			musb->ops->read_fifo(musb_ep->hw_ep, fifo_count, (u8 *)
 					(request->buf + request->actual));
 			request->actual += fifo_count;
 
@@ -843,7 +843,7 @@ void musb_g_rx(struct musb *musb, u8 epnum)
 	else
 		musb_ep = &hw_ep->ep_out;
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 
 	req = next_request(musb_ep);
 	if (!req)
@@ -933,7 +933,7 @@ void musb_g_rx(struct musb *musb, u8 epnum)
 		 * on SMP systems. Reselect the INDEX to be sure
 		 * we are reading/modifying the right registers
 		 */
-		musb_ep_select(mbase, epnum);
+		musb_ep_select(musb, mbase, epnum);
 
 		req = next_request(musb_ep);
 		if (!req)
@@ -1010,7 +1010,7 @@ static int musb_gadget_enable(struct usb_ep *ep,
 	/* enable the interrupts for the endpoint, set the endpoint
 	 * packet size (or fail), set the mode, clear the fifo
 	 */
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 	if (usb_endpoint_dir_in(desc)) {
 
 		if (hw_ep->is_shared_fifo)
@@ -1151,7 +1151,7 @@ static int musb_gadget_disable(struct usb_ep *ep)
 	epio = musb->endpoints[epnum].regs;
 
 	spin_lock_irqsave(&musb->lock, flags);
-	musb_ep_select(musb->mregs, epnum);
+	musb_ep_select(musb, musb->mregs, epnum);
 
 	/* zero the endpoint sizes */
 	if (musb_ep->is_in) {
@@ -1229,7 +1229,7 @@ void musb_ep_restart(struct musb *musb, struct musb_request *req)
 		req->tx ? "TX/IN" : "RX/OUT",
 		&req->request, req->request.length, req->epnum);
 
-	musb_ep_select(musb->mregs, req->epnum);
+	musb_ep_select(musb, musb->mregs, req->epnum);
 	if (req->tx)
 		txstate(musb, req);
 	else
@@ -1324,7 +1324,7 @@ static int musb_gadget_dequeue(struct usb_ep *ep, struct usb_request *request)
 	else if (is_dma_capable() && musb_ep->dma) {
 		struct dma_controller	*c = musb->dma_controller;
 
-		musb_ep_select(musb->mregs, musb_ep->current_epnum);
+		musb_ep_select(musb, musb->mregs, musb_ep->current_epnum);
 		if (c->channel_abort)
 			status = c->channel_abort(musb_ep->dma);
 		else
@@ -1372,7 +1372,7 @@ static int musb_gadget_set_halt(struct usb_ep *ep, int value)
 		goto done;
 	}
 
-	musb_ep_select(mbase, epnum);
+	musb_ep_select(musb, mbase, epnum);
 
 	request = next_request(musb_ep);
 	if (value) {
@@ -1460,7 +1460,7 @@ static int musb_gadget_fifo_status(struct usb_ep *ep)
 
 		spin_lock_irqsave(&musb->lock, flags);
 
-		musb_ep_select(mbase, epnum);
+		musb_ep_select(musb, mbase, epnum);
 		/* FIXME return zero unless RXPKTRDY is set */
 		retval = musb_readw(epio, MUSB_RXCOUNT);
 
@@ -1482,7 +1482,7 @@ static void musb_gadget_fifo_flush(struct usb_ep *ep)
 	mbase = musb->mregs;
 
 	spin_lock_irqsave(&musb->lock, flags);
-	musb_ep_select(mbase, (u8) epnum);
+	musb_ep_select(musb, mbase, (u8) epnum);
 
 	/* disable interrupts */
 	musb_writew(mbase, MUSB_INTRTXE, musb->intrtxe & ~(1 << epnum));
@@ -1903,7 +1903,7 @@ static void stop_activity(struct musb *musb, struct usb_gadget_driver *driver)
 		for (i = 0, hw_ep = musb->endpoints;
 				i < musb->nr_endpoints;
 				i++, hw_ep++) {
-			musb_ep_select(musb->mregs, i);
+			musb_ep_select(musb, musb->mregs, i);
 			if (hw_ep->is_shared_fifo /* || !epnum */) {
 				nuke(&hw_ep->ep_in, -ESHUTDOWN);
 			} else {

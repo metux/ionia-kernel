@@ -87,4 +87,6 @@ struct omap_hsmmc_platform_data {
 
 	const char *name;
 	u32 ocr_mask;
+
+	int version;
 };

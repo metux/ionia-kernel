@@ -1533,4 +1533,11 @@ config CORESIGHT_SOURCE_ETM3X
 	  This is primarily useful for instruction level tracing.  Depending
 	  the ETM version data tracing may also be available.
 endif
+
+config DEBUG_JTAG_ENABLE
+	bool "Enable JTAG clock for debugger connectivity"
+	help
+	 Say Y here if you want to enable the JTAG clock to enable
+	 connectivity to a debugger
+
 endmenu
