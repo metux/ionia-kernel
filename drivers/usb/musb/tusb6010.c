@@ -890,7 +890,7 @@ static irqreturn_t tusb_musb_interrupt(int irq, void *__hci)
 
 		dev_dbg(musb->controller, "DMA IRQ %08x\n", dma_src);
 		real_dma_src = ~real_dma_src & dma_src;
-		if (tusb_dma_omap() && real_dma_src) {
+		if (tusb_dma_omap(musb) && real_dma_src) {
 			int	tx_source = (real_dma_src & 0xffff);
 			int	i;
 
@@ -1182,6 +1182,8 @@ static int tusb_musb_exit(struct musb *musb)
 
 static const struct musb_platform_ops tusb_ops = {
 	.quirks		= MUSB_IN_TUSB,
+	.fifo_mode	= 4,
+	.flags		= MUSB_GLUE_TUSB_STYLE | MUSB_GLUE_EP_ADDR_INDEXED_MAPPING,
 	.init		= tusb_musb_init,
 	.exit		= tusb_musb_exit,
 
@@ -1198,8 +1200,13 @@ static const struct musb_platform_ops tusb_ops = {
 	.set_mode	= tusb_musb_set_mode,
 	.try_idle	= tusb_musb_try_idle,
 
+	.get_hw_revision	= tusb_get_revision,
+
 	.vbus_status	= tusb_musb_vbus_status,
 	.set_vbus	= tusb_musb_set_vbus,
+
+	.dma_controller_create	= tusb_dma_controller_create,
+	.dma_controller_destroy	= tusb_dma_controller_destroy,
 };
 
 static const struct platform_device_info tusb_dev_info = {
