@@ -39,7 +39,7 @@ static inline void dsb_sev(void)
 {
 #if __LINUX_ARM_ARCH__ >= 7
 	__asm__ __volatile__ (
-		"dsb ishst\n"
+		"dsb\n"
 		SEV
 	);
 #else

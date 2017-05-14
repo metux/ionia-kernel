@@ -69,6 +69,8 @@ obj-$(CONFIG_SOC_DRA7XX)		+= omap4-restart.o
 obj-$(CONFIG_SOC_OMAP2420)		+= mux2420.o
 obj-$(CONFIG_SOC_OMAP2430)		+= mux2430.o
 obj-$(CONFIG_ARCH_OMAP3)		+= mux34xx.o
+obj-$(CONFIG_ARCH_OMAP4)		+= mux44xx.o
+obj-$(CONFIG_SOC_AM33XX)		+= mux33xx.o
 
 # SMS/SDRC
 obj-$(CONFIG_ARCH_OMAP2)		+= sdrc2xxx.o
@@ -262,6 +264,10 @@ obj-$(CONFIG_MACH_CRANEBOARD)		+= board-am3517crane.o
 obj-$(CONFIG_MACH_SBC3530)		+= board-omap3stalker.o
 obj-$(CONFIG_MACH_TI8168EVM)		+= board-ti8168evm.o
 obj-$(CONFIG_MACH_TI8148EVM)		+= board-ti8168evm.o
+obj-$(CONFIG_MACH_AM335XEVM)		+= board-am335xevm.o
+obj-$(CONFIG_MACH_DUAGON_I101)		+= board-duagon-i101.o
+obj-$(CONFIG_MACH_DUAGON_I101_RMII)	+= board-duagon-i101-rmii.o
+obj-$(CONFIG_MACH_AM335XIAEVM)		+= board-am335xevm.o
 
 # Platform specific device init code
 
