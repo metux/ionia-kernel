@@ -705,7 +705,7 @@ static void __init omap3_evm_init(void)
 	omap_sdrc_init(mt46h32m32lf6_sdrc_params, NULL);
 
 	/* OMAP3EVM uses ISP1504 phy and so register nop transceiver */
-	usb_nop_xceiv_register();
+	usb_nop_xceiv_register(0);
 
 	if (get_omap3_evm_rev() >= OMAP3EVM_BOARD_GEN_2) {
 		/* enable EHCI VBUS using GPIO22 */
@@ -737,6 +737,12 @@ static void __init omap3_evm_init(void)
 	omap3evm_init_smsc911x();
 	omap3_evm_display_init();
 	omap3_evm_wl12xx_init();
+	/* NAND */
+	omap_nand_init(omap3_evm_nand_partitions,
+			ARRAY_SIZE(omap3_evm_nand_partitions),
+			0, NAND_BUSWIDTH_16, &nand_default_timings);
+	board_onenand_init(omap3_evm_onenand_partitions,
+			ARRAY_SIZE(omap3_evm_onenand_partitions), 0);
 }
 
 MACHINE_START(OMAP3EVM, "OMAP3 EVM")

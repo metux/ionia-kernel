@@ -21,8 +21,13 @@
 
 #define AM33XX_PRM_BASE               0x44E00000
 
+#ifdef __ASSEMBLY__
+#define AM33XX_PRM_REGADDR(inst, reg)                         \
+	(AM33XX_PRM_BASE + AM33XX_L4_WK_IO_OFFSET + (inst) + (reg))
+#else
 #define AM33XX_PRM_REGADDR(inst, reg)                         \
 	AM33XX_L4_WK_IO_ADDRESS(AM33XX_PRM_BASE + (inst) + (reg))
+#endif
 
 
 /* PRM instances */
@@ -117,6 +122,7 @@
 #define AM33XX_PM_CEFUSE_PWRSTST_OFFSET		0x0004
 #define AM33XX_PM_CEFUSE_PWRSTST		AM33XX_PRM_REGADDR(AM33XX_PRM_CEFUSE_MOD, 0x0004)
 
+#ifndef __ASSEMBLER__
 extern u32 am33xx_prm_read_reg(s16 inst, u16 idx);
 extern void am33xx_prm_write_reg(u32 val, s16 inst, u16 idx);
 extern u32 am33xx_prm_rmw_reg_bits(u32 mask, u32 bits, s16 inst, s16 idx);
@@ -126,4 +132,6 @@ extern int am33xx_prm_is_hardreset_asserted(u8 shift, s16 inst,
 extern int am33xx_prm_assert_hardreset(u8 shift, s16 inst, u16 rstctrl_offs);
 extern int am33xx_prm_deassert_hardreset(u8 shift, s16 inst,
 		u16 rstctrl_offs, u16 rstst_offs);
+#endif /* __ASSEMBLER__ */
+
 #endif

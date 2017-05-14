@@ -117,7 +117,7 @@ static void musb_port_reset(struct musb *musb, bool do_reset)
 	u8		power;
 	void __iomem	*mbase = musb->mregs;
 
-	if (musb->xceiv->state == OTG_STATE_B_IDLE) {
+	if (is_otg_enabled(musb) && musb->xceiv->state == OTG_STATE_B_IDLE) {
 		dev_dbg(musb->controller, "HNP: Returning from HNP; no hub reset from b_idle\n");
 		musb->port1_status &= ~USB_PORT_STAT_RESET;
 		return;
@@ -417,6 +417,10 @@ int musb_hub_control(
 				goto error;
 			}
 			musb_writeb(musb->mregs, MUSB_TESTMODE, temp);
+			if (wIndex == 4) {
+				musb_writew(musb->endpoints[0].regs,
+					MUSB_CSR0, MUSB_CSR0_TXPKTRDY);
+			}
 			break;
 		default:
 			goto error;

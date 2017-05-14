@@ -95,6 +95,7 @@ struct usb_phy {
 	struct device		*dev;
 	const char		*label;
 	unsigned int		 flags;
+	u8			id;
 
 	enum usb_phy_type	type;
 	enum usb_otg_state	state;
@@ -140,14 +141,14 @@ extern void usb_remove_phy(struct usb_phy *);
 
 #if defined(CONFIG_NOP_USB_XCEIV) || (defined(CONFIG_NOP_USB_XCEIV_MODULE) && defined(MODULE))
 /* sometimes transceivers are accessed only through e.g. ULPI */
-extern void usb_nop_xceiv_register(void);
-extern void usb_nop_xceiv_unregister(void);
+extern void usb_nop_xceiv_register(int id);
+extern void usb_nop_xceiv_unregister(int id);
 #else
-static inline void usb_nop_xceiv_register(void)
+static inline void usb_nop_xceiv_register(int id)
 {
 }
 
-static inline void usb_nop_xceiv_unregister(void)
+static inline void usb_nop_xceiv_unregister(int id)
 {
 }
 #endif

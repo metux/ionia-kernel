@@ -39,6 +39,11 @@ enum {
 	PWMF_ENABLED = 1 << 1,
 };
 
+enum {
+	PWM_VERSION_0,
+	PWM_VERSION_1,
+};
+
 struct pwm_device {
 	const char		*label;
 	unsigned long		flags;

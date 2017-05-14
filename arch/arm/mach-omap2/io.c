@@ -36,6 +36,9 @@
 #include "iomap.h"
 #include "voltage.h"
 #include "powerdomain.h"
+#include "prminst44xx.h"
+#include "cminst44xx.h"
+
 #include "clockdomain.h"
 #include "common.h"
 #include "clock.h"
@@ -535,7 +538,9 @@ void __init omap4430_init_early(void)
 	omap4xxx_check_features();
 	omap_common_init_early();
 	omap44xx_voltagedomains_init();
+	omap44xx_prminst_init();
 	omap44xx_powerdomains_init();
+//	omap44xx_cminst_init();
 	omap44xx_clockdomains_init();
 	omap44xx_hwmod_init();
 	omap_hwmod_init_postsetup();

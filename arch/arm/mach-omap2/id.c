@@ -103,6 +103,8 @@ static struct omap_id omap_ids[] __initdata = {
 static void __iomem *tap_base;
 static u16 tap_prod_id;
 
+static void __init omap3_cpuinfo(void);
+
 void omap_get_die_id(struct omap_die_id *odi)
 {
 	if (cpu_is_omap44xx() || soc_is_omap54xx()) {
@@ -298,6 +300,23 @@ void __init omap4xxx_check_features(void)
 void __init ti81xx_check_features(void)
 {
 	omap_features = OMAP3_HAS_NEON;
+	omap3_cpuinfo();
+}
+
+void __init am33xx_check_features(void)
+{
+	omap_features = OMAP3_HAS_NEON;
+	omap3_cpuinfo();
+}
+
+void __init omap3_check_revision(void)
+{
+	u32 status;
+
+	status = omap_ctrl_readl(AM33XX_DEV_FEATURE);
+	if (status & AM33XX_SGX_MASK)
+		omap_features |= OMAP3_HAS_SGX;
+
 	omap3_cpuinfo();
 }
 
@@ -551,6 +570,37 @@ void __init omap5xxx_check_revision(void)
 
 	pr_info("OMAP%04x ES%d.0\n",
 			omap_rev() >> 16, ((omap_rev() >> 12) & 0xf));
+}
+
+/*
+ * Try to detect the exact revision of the omap we're running on
+ */
+void __init omap2_check_revision(void)
+{
+	/*
+	 * At this point we have an idea about the processor revision set
+	 * earlier with omap2_set_globals_tap().
+	 */
+	if (cpu_is_omap24xx()) {
+		omap24xx_check_revision();
+	} else if (cpu_is_omap34xx()) {
+		omap3_check_revision();
+
+		/* TI81XX doesn't have feature register */
+		if (!cpu_is_ti81xx())
+			omap3xxx_check_features();
+		else
+			ti81xx_check_features();
+
+		omap3_cpuinfo();
+		return;
+	} else if (cpu_is_omap44xx()) {
+		omap4_check_revision();
+		omap4xxx_check_features();
+		return;
+	} else {
+		pr_err("OMAP revision unknown, please fix!\n");
+	}
 }
 
 /*

@@ -23,7 +23,7 @@
 #include <linux/platform_device.h>
 #include <linux/spi/spi.h>
 
-#include <mach/asp.h>
+#include <asm/hardware/asp.h>
 #include <mach/keyscan.h>
 #include <mach/hardware.h>
 
