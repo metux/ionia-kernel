@@ -214,6 +214,13 @@ extern int gpmc_calc_timings(struct gpmc_timings *gpmc_t,
 extern void gpmc_update_nand_reg(struct gpmc_nand_regs *reg, int cs);
 extern int gpmc_get_client_irq(unsigned irq_config);
 
+struct gpmc_devices_info {
+	void	*pdata;
+	int	flag;
+};
+
+extern int omap_init_gpmc(struct gpmc_devices_info *pdata, int pdata_len);
+
 extern unsigned int gpmc_ticks_to_ns(unsigned int ticks);
 
 extern void gpmc_cs_write_reg(int cs, int idx, u32 val);
@@ -227,5 +234,7 @@ extern void omap3_gpmc_restore_context(void);
 extern int gpmc_configure(int cmd, int wval);
 extern void gpmc_read_settings_dt(struct device_node *np,
 				  struct gpmc_settings *p);
+
+extern u32 gpmc_cs_read_reg(int cs, int idx);
 
 #endif

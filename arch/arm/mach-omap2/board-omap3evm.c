@@ -722,6 +722,13 @@ static void __init omap3_evm_init(void)
 #endif
 	omap3_evm_wl12xx_init();
 	omap_twl4030_audio_init("omap3evm", NULL);
+
+	/* NAND */
+	board_nand_init(omap3_evm_nand_partitions,
+			ARRAY_SIZE(omap3_evm_nand_partitions),
+			0, NAND_BUSWIDTH_16, &nand_default_timings);
+	board_onenand_init(omap3_evm_onenand_partitions,
+			ARRAY_SIZE(omap3_evm_onenand_partitions), 0);
 }
 
 MACHINE_START(OMAP3EVM, "OMAP3 EVM")
