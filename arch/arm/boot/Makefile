@@ -79,6 +79,16 @@ $(obj)/uImage:	$(obj)/zImage FORCE
 	@$(check_for_multiple_loadaddr)
 	$(call if_changed,uimage)
 
+# HACK: create uImage w/ appended DTB
+$(obj)/zImage-dtb:	$(obj)/zImage $(IMAGE_APPEND_DTB_FILE) FORCE
+	cat $(obj)/zImage $(APPEND_DTB_FILE) >$@
+
+$(obj)/uImage-dtb:	$(obj)/zImage-dtb FORCE
+	@$(check_for_multiple_loadaddr)
+	$(call if_changed,uimage)
+
+# uImage-dtb:	$(obj)/uImage-dtb
+
 $(obj)/bootp/bootp: $(obj)/zImage initrd FORCE
 	$(Q)$(MAKE) $(build)=$(obj)/bootp $@
 

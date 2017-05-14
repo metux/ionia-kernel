@@ -44,6 +44,7 @@
 #include <linux/pm_runtime.h>
 #include <linux/pm_wakeirq.h>
 #include <linux/platform_data/hsmmc-omap.h>
+#include <linux/platform_data/mmc-omap.h>
 
 /* OMAP HSMMC Host Controller Registers */
 #define OMAP_HSMMC_SYSSTATUS	0x0014
@@ -99,6 +100,10 @@
 #define DDR			(1 << 19)
 #define CLKEXTFREE		(1 << 16)
 #define CTPL			(1 << 11)
+#define DVAL_MASK		(3 << 9)
+#define DVAL_MAX		(3 << 9)	/* 8.4 ms debounce period */
+#define WPP_MASK		(1 << 8)
+#define WPP_ACT_LOW		(1 << 8)	/* WPP is Active Low */
 #define DW8			(1 << 5)
 #define OD			0x1
 #define STAT_CLEAR		0xFFFFFFFF
@@ -1647,6 +1652,8 @@ static void omap_hsmmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 {
 	struct omap_hsmmc_host *host = mmc_priv(mmc);
 	int do_send_init_stream = 0;
+	struct omap_mmc_platform_data *pdata = host->pdata;
+	u32 regVal;
 
 	if (ios->power_mode != host->power_mode) {
 		switch (ios->power_mode) {
@@ -1664,6 +1671,18 @@ static void omap_hsmmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 	}
 
 	/* FIXME: set registers based only on changes to ios */
+
+	if (pdata->version == MMC_CTRL_VERSION_2) {
+		/*
+		* Set
+		*	Debounce filter value to max
+		*	Write protect polarity to Active low level
+		*/
+		regVal = OMAP_HSMMC_READ(host->base, CON);
+		regVal &= ~(DVAL_MASK | WPP_MASK);
+		regVal |= (DVAL_MAX | WPP_ACT_LOW);
+		OMAP_HSMMC_WRITE(host->base, CON, regVal);
+	}
 
 	omap_hsmmc_set_bus_width(host);
 
@@ -2108,7 +2127,10 @@ static int omap_hsmmc_probe(struct platform_device *pdev)
 
 	/* Since we do only SG emulation, we can have as many segs
 	 * as we want. */
-	mmc->max_segs = 1024;
+	if (pdata->version == MMC_CTRL_VERSION_2)
+		mmc->max_segs = 1;
+	else
+		mmc->max_segs = 1024;
 
 	mmc->max_blk_size = 512;       /* Block Length at max can be 1024 */
 	mmc->max_blk_count = 0xFFFF;    /* No. of Blocks is 16 bits */

@@ -114,3 +114,6 @@ all.config
 
 # Kdevelop4
 *.kdev4
+
+arch/arm/boot/uImage-dtb
+arch/arm/boot/zImage-dtb
