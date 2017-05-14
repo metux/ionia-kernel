@@ -1,8 +1,11 @@
 /*
- * TI DaVinci Audio definitions
+ * <asm/hardware/davinci_asp.h> - DaVinci Audio Serial Port support
  */
-#ifndef __ASM_ARCH_DAVINCI_ASP_H
-#define __ASM_ARCH_DAVINCI_ASP_H
+#ifndef __ASM_HARDWARE_DAVINCI_ASP_H
+#define __ASM_HARDWARE_DAVINCI_ASP_H
+
+#include <mach/irqs.h>
+#include <mach/edma.h>
 
 /* Bases of dm644x and dm355 register banks */
 #define DAVINCI_ASP0_BASE	0x01E02000
@@ -46,4 +49,4 @@
 #define DAVINCI_ASP1_RX_INT	IRQ_MBRINT
 #define DAVINCI_ASP1_TX_INT	IRQ_MBXINT
 
-#endif /* __ASM_ARCH_DAVINCI_ASP_H */
+#endif /* __ASM_HARDWARE_DAVINCI_ASP_H */
