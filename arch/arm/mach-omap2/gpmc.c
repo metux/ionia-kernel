@@ -189,7 +189,7 @@ void gpmc_cs_write_reg(int cs, int idx, u32 val)
 	writel_relaxed(val, reg_addr);
 }
 
-static u32 gpmc_cs_read_reg(int cs, int idx)
+u32 gpmc_cs_read_reg(int cs, int idx)
 {
 	void __iomem *reg_addr;
 

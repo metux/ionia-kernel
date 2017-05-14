@@ -86,6 +86,8 @@ int gpmc_nand_init(struct omap_nand_platform_data *gpmc_nand_data,
 
 	BUG_ON(gpmc_nand_data->cs >= GPMC_CS_NUM);
 
+	printk(KERN_INFO "Registering NAND on CS%d\n", gpmc_nand_data->cs);
+
 	err = gpmc_cs_request(gpmc_nand_data->cs, NAND_IO_SIZE,
 			      (unsigned long *)&gpmc_nand_res[0].start);
 	if (err < 0) {
