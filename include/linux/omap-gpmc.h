@@ -7,6 +7,9 @@
  *  option) any later version.
  */
 
+#ifndef __OMAP_GPMC_H
+#define __OMAP_GPMC_H
+
 /* Maximum Number of Chip Selects */
 #define GPMC_CS_NUM		8
 
@@ -198,3 +201,5 @@ static inline void gpmc_onenand_init(struct omap_onenand_platform_data *d)
 {
 }
 #endif
+
+#endif /* __OMAP_GPMC_H */

@@ -459,6 +459,7 @@ static int da8xx_musb_exit(struct musb *musb)
 
 static const struct musb_platform_ops da8xx_ops = {
 	.quirks		= MUSB_DMA_CPPI | MUSB_INDEXED_EP,
+	.fifo_mode	= 2,
 	.init		= da8xx_musb_init,
 	.exit		= da8xx_musb_exit,
 
@@ -474,6 +475,9 @@ static const struct musb_platform_ops da8xx_ops = {
 	.try_idle	= da8xx_musb_try_idle,
 
 	.set_vbus	= da8xx_musb_set_vbus,
+
+	.read_fifo	= musb_read_fifo,
+	.write_fifo	= musb_write_fifo,
 };
 
 static const struct platform_device_info da8xx_dev_info = {
