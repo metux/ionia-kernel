@@ -31,6 +31,7 @@
 #include "usb.h"
 
 static struct musb_hdrc_config musb_config = {
+	.fifo_mode	= 4,
 	.multipoint	= 1,
 	.dyn_fifo	= 1,
 	.num_eps	= 16,
