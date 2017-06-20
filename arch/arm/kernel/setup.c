@@ -359,7 +359,7 @@ static void __init cacheid_init(void)
  */
 extern struct proc_info_list *lookup_processor_type(unsigned int);
 
-void __init early_print(const char *str, ...)
+void early_print(const char *str, ...)
 {
 	extern void printascii(const char *);
 	char buf[256];
