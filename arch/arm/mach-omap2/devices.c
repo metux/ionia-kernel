@@ -25,12 +25,10 @@
 
 #include <linux/davinci_emac.h>
 #include <linux/etherdevice.h>
-#include <linux/can/platform/d_can.h>
 #include <linux/pwm.h>
 
 #include <mach/hardware.h>
 #include <mach/irqs.h>
-#include <mach/board-am335xevm.h>
 #include <asm/mach-types.h>
 #include <asm/mach/map.h>
 
@@ -376,52 +374,6 @@ void am33xx_evmid_fillup(unsigned int evmid)
 #define AM33XX_DCAN_NUM_MSG_OBJS		64
 #define AM33XX_DCAN_RAMINIT_OFFSET		0x644
 #define AM33XX_DCAN_RAMINIT_START(n)		(0x1 << n)
-
-static void d_can_hw_raminit(unsigned int instance, unsigned int enable)
-{
-	u32 val;
-
-	/* Read the value */
-	val = readl(AM33XX_CTRL_REGADDR(AM33XX_DCAN_RAMINIT_OFFSET));
-	if (enable) {
-		/* Set to "1" */
-		val &= ~AM33XX_DCAN_RAMINIT_START(instance);
-		val |= AM33XX_DCAN_RAMINIT_START(instance);
-		writel(val, AM33XX_CTRL_REGADDR(AM33XX_DCAN_RAMINIT_OFFSET));
-	} else {
-		/* Set to "0" */
-		val &= ~AM33XX_DCAN_RAMINIT_START(instance);
-		writel(val, AM33XX_CTRL_REGADDR(AM33XX_DCAN_RAMINIT_OFFSET));
-	}
-}
-
-/* dcan dev_attr */
-static struct d_can_platform_data am33xx_dcan_info = {
-	.num_of_msg_objs	= AM33XX_DCAN_NUM_MSG_OBJS,
-	.ram_init		= d_can_hw_raminit,
-	.dma_support		= false,
-};
-
-void am33xx_d_can_init(unsigned int instance)
-{
-	struct omap_hwmod *oh;
-	struct platform_device *pdev;
-	char oh_name[L3_MODULES_MAX_LEN];
-
-	/* Copy string name to oh_name buffer */
-	snprintf(oh_name, L3_MODULES_MAX_LEN, "d_can%d", instance);
-
-	oh = omap_hwmod_lookup(oh_name);
-	if (!oh) {
-		pr_err("could not find %s hwmod data\n", oh_name);
-		return;
-	}
-
-	pdev = omap_device_build("d_can", instance, oh, &am33xx_dcan_info,
-			sizeof(am33xx_dcan_info));
-	if (IS_ERR(pdev))
-		pr_err("could not build omap_device for %s\n", oh_name);
-}
 
 static int __init omap_gpmc_init(void)
 {
