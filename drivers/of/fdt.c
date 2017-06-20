@@ -1092,9 +1092,11 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 	 */
 #ifdef CONFIG_CMDLINE
 #if defined(CONFIG_CMDLINE_EXTEND)
+	early_print("early_init_dt_scan_chosen(): appending compiled-in command line: %s\n", CONFIG_CMDLINE);
 	strlcat(data, " ", COMMAND_LINE_SIZE);
 	strlcat(data, CONFIG_CMDLINE, COMMAND_LINE_SIZE);
 #elif defined(CONFIG_CMDLINE_FORCE)
+	early_print("early_init_dt_scan_chosen(): forcing compiled-in command line: %s\n", CONFIG_CMDLINE);
 	strlcpy(data, CONFIG_CMDLINE, COMMAND_LINE_SIZE);
 #else
 	/* No arguments from boot loader, use kernel's  cmdl*/
