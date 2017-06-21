@@ -1,0 +1,88 @@
+/*
+ * Copyright (C) 2017 metux IT consult
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+/dts-v1/;
+
+#include "duagon-i101-common.dtsi"
+
+/ {
+	model = "Duagon Ionia I101 RMII";
+	compatible = "duagon,ionia-i101-rmii", "ti,am33xx";
+};
+
+/* pinmux settings for the RMII variant */
+
+&am33xx_pinmux {
+	nandflash_pins_s0: nandflash_pins_s0 {
+		pinctrl-single,pins = <
+			AM33XX_IOPAD(0x800, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad0.gpmc_ad0 */
+			AM33XX_IOPAD(0x804, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad1.gpmc_ad1 */
+			AM33XX_IOPAD(0x808, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad2.gpmc_ad2 */
+			AM33XX_IOPAD(0x80c, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad3.gpmc_ad3 */
+			AM33XX_IOPAD(0x810, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad4.gpmc_ad4 */
+			AM33XX_IOPAD(0x814, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad5.gpmc_ad5 */
+			AM33XX_IOPAD(0x818, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad6.gpmc_ad6 */
+			AM33XX_IOPAD(0x81c, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad7.gpmc_ad7 */
+			AM33XX_IOPAD(0x820, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad8.gpmc_ad8 */
+			AM33XX_IOPAD(0x824, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad9.gpmc_ad9 */
+			AM33XX_IOPAD(0x828, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad10.gpmc_ad10 */
+			AM33XX_IOPAD(0x82c, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad11.gpmc_ad11 */
+			AM33XX_IOPAD(0x830, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad12.gpmc_ad12 */
+			AM33XX_IOPAD(0x834, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad13.gpmc_ad13 */
+			AM33XX_IOPAD(0x838, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad14.gpmc_ad14 */
+			AM33XX_IOPAD(0x83c, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_ad15.gpmc_ad15 */
+			AM33XX_IOPAD(0x844, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_a1.gpmc_a1 */
+			AM33XX_IOPAD(0x848, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_a2.gpmc_a2 */
+			AM33XX_IOPAD(0x84c, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_a3.gpmc_a3 */
+			AM33XX_IOPAD(0x858, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_a6.gpmc_a6 */
+			AM33XX_IOPAD(0x85c, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_a7.gpmc_a7 */
+			AM33XX_IOPAD(0x860, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_a8.gpmc_a8 */
+			AM33XX_IOPAD(0x870, MUX_MODE0 | PIN_INPUT_PULLUP)	/* gpmc_wait0.gpmc_wait0 */
+			AM33XX_IOPAD(0x87c, MUX_MODE0 | PIN_INPUT_PULLUP)	/* gpmc_csn0.gpmc_csn0 */
+			AM33XX_IOPAD(0x880, MUX_MODE0 | PIN_INPUT_PULLUP)	/* gpmc_csn1.gpmc_csn1 */
+			AM33XX_IOPAD(0x884, MUX_MODE0 | PIN_INPUT_PULLUP)	/* gpmc_csn2.gpmc_csn2 */
+			AM33XX_IOPAD(0x888, MUX_MODE0 | PIN_INPUT_PULLUP)	/* gpmc_csn3.gpmc_csn3 */
+			AM33XX_IOPAD(0x88c, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* gpmc_clk.gpmc_clk */
+			AM33XX_IOPAD(0x890, MUX_MODE0 | PIN_INPUT_PULLUP)	/* gpmc_advn_ale.gpmc_advn_ale */
+			AM33XX_IOPAD(0x894, MUX_MODE0 | PIN_INPUT_PULLUP)	/* gpmc_oen_ren.gpmc_oen_ren */
+			AM33XX_IOPAD(0x898, MUX_MODE0 | PIN_INPUT_PULLUP)	/* gpmc_wen.gpmc_wen */
+			AM33XX_IOPAD(0x89c, MUX_MODE0 | PIN_INPUT_PULLUP)	/* gpmc_be0n_cle.gpmc_be0n_cle */
+		>;
+	};
+
+	cpsw_default: cpsw_default {
+		pinctrl-single,pins = <
+			/* Slave 1 */
+			AM33XX_IOPAD(0x90c, MUX_MODE1 | PIN_INPUT_PULLDOWN)	/* mii1_crs.rmii1_crs_dv */
+			AM33XX_IOPAD(0x910, MUX_MODE1 | PIN_INPUT_PULLDOWN)	/* mii1_rxerr.mii1_rxerr */
+			AM33XX_IOPAD(0x914, MUX_MODE1 | PIN_OUTPUT)		/* mii1_txen.mii1_txen */
+			AM33XX_IOPAD(0x924, MUX_MODE1 | PIN_OUTPUT)		/* mii1_txd1.mii1_txd1 */
+			AM33XX_IOPAD(0x928, MUX_MODE1 | PIN_OUTPUT)		/* mii1_txd0.mii1_txd0 */
+			AM33XX_IOPAD(0x93c, MUX_MODE1 | PIN_INPUT_PULLDOWN)	/* mii1_rxd1.mii1_rxd1 */
+			AM33XX_IOPAD(0x940, MUX_MODE1 | PIN_INPUT_PULLDOWN)	/* mii1_rxd0.mii1_rxd0 */
+			AM33XX_IOPAD(0x944, MUX_MODE0 | PIN_INPUT_PULLDOWN)	/* rmii1_refclk.rmii1_refclk */
+			/* Slave 2 */
+			AM33XX_IOPAD(0x840, MUX_MODE3 | PIN_OUTPUT)		/* gpmc_a0.rmii2_txen */
+			AM33XX_IOPAD(0x850, MUX_MODE3 | PIN_OUTPUT)		/* gpmc_a4.rmii2_TXD1 */
+			AM33XX_IOPAD(0x854, MUX_MODE3 | PIN_OUTPUT)		/* gpmc_a5.rmii2_TXD0 */
+			AM33XX_IOPAD(0x864, MUX_MODE3 | PIN_INPUT_PULLDOWN)	/* gpmc_a9.MMC2DAT7 | RMII2_CRSDV, 2. multiplexer must be set */
+			AM33XX_IOPAD(0x868, MUX_MODE3 | PIN_INPUT_PULLDOWN)	/* gpmc_a10.rmii2_rxd1 */
+			AM33XX_IOPAD(0x86c, MUX_MODE3 | PIN_INPUT_PULLDOWN)	/* gpmc_a11.rmii2_rxd0 */
+			AM33XX_IOPAD(0x874, MUX_MODE3 | PIN_INPUT_PULLUP)	/* gpmc_wpn.rmii2_rxer */
+		>;
+	};
+};
+
+&cpsw_emac0 {
+	phy_id = <&davinci_mdio>, <0>;
+	phy-mode = "rmii";
+};
+
+&cpsw_emac1 {
+	phy_id = <&davinci_mdio>, <1>;
+	phy-mode = "rmii";
+};

@@ -11,9 +11,6 @@
 #include <dt-bindings/interrupt-controller/irq.h>
 
 / {
-	model = "Duagon Ionia I101";
-	compatible = "ti,am335x-evm", "ti,am33xx";
-
 	cpus {
 		cpu@0 {
 			cpu0-supply = <&vdd1_reg>;
@@ -60,8 +57,7 @@
 
 &am33xx_pinmux {
 	pinctrl-names = "default";
-	// FIXME: cleanup - put into proper devices
-	pinctrl-0 = <&clkout2_pin &usb1_pins>;
+	pinctrl-0 = <&clkout2_pin>;
 
 	/* Module pin mux for SPI flash */
 	/* FIXME: still needed ? daughter board ? */
@@ -95,94 +91,21 @@
 		>;
 	};
 
-#if 0 /* pins are used by dcan1 */
-	uart1_pins: pinmux_uart1_pins {
-		pinctrl-single,pins = <
-			AM33XX_IOPAD(0x978, PIN_INPUT | MUX_MODE0)		/* uart1_ctsn.uart1_ctsn */
-			AM33XX_IOPAD(0x97C, PIN_OUTPUT_PULLDOWN | MUX_MODE0)	/* uart1_rtsn.uart1_rtsn */
-			AM33XX_IOPAD(0x980, PIN_INPUT_PULLUP | MUX_MODE0)	/* uart1_rxd.uart1_rxd */
-			AM33XX_IOPAD(0x984, PIN_OUTPUT_PULLDOWN | MUX_MODE0)	/* uart1_txd.uart1_txd */
-		>;
-	};
-#endif
-
+	/* hand out clkout2 clock to peripherals (codecs ? gpmc ?) */
 	clkout2_pin: pinmux_clkout2_pin {
 		pinctrl-single,pins = <
 			AM33XX_IOPAD(0x9b4, PIN_OUTPUT_PULLDOWN | MUX_MODE3)	/* xdma_event_intr1.clkout2 */
 		>;
 	};
 
-	nandflash_pins_s0: nandflash_pins_s0 {
-		pinctrl-single,pins = <
-			AM33XX_IOPAD(0x800, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad0.gpmc_ad0 */
-			AM33XX_IOPAD(0x804, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad1.gpmc_ad1 */
-			AM33XX_IOPAD(0x808, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad2.gpmc_ad2 */
-			AM33XX_IOPAD(0x80c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad3.gpmc_ad3 */
-			AM33XX_IOPAD(0x810, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad4.gpmc_ad4 */
-			AM33XX_IOPAD(0x814, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad5.gpmc_ad5 */
-			AM33XX_IOPAD(0x818, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad6.gpmc_ad6 */
-			AM33XX_IOPAD(0x81c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad7.gpmc_ad7 */
-			AM33XX_IOPAD(0x820, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad8.gpmc_ad8 */
-			AM33XX_IOPAD(0x824, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad9.gpmc_ad9 */
-			AM33XX_IOPAD(0x828, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad10.gpmc_ad10 */
-			AM33XX_IOPAD(0x82c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad11.gpmc_ad11 */
-			AM33XX_IOPAD(0x830, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad12.gpmc_ad12 */
-			AM33XX_IOPAD(0x834, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad13.gpmc_ad13 */
-			AM33XX_IOPAD(0x838, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad14.gpmc_ad14 */
-			AM33XX_IOPAD(0x83c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_ad15.gpmc_ad15 */
-			AM33XX_IOPAD(0x840, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a0.gpmc_a0 */
-			AM33XX_IOPAD(0x844, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a1.gpmc_a1 */
-			AM33XX_IOPAD(0x848, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a2.gpmc_a2 */
-			AM33XX_IOPAD(0x84c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a3.gpmc_a3 */
-			AM33XX_IOPAD(0x850, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a4.gpmc_a4 */
-			AM33XX_IOPAD(0x854, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a5.gpmc_a5 */
-			AM33XX_IOPAD(0x858, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a6.gpmc_a6 */
-			AM33XX_IOPAD(0x85c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a7.gpmc_a7 */
-			AM33XX_IOPAD(0x860, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a8.gpmc_a8 */
-			AM33XX_IOPAD(0x864, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a9.gpmc_a9 */
-			AM33XX_IOPAD(0x868, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a10.gpmc_a10 */
-			AM33XX_IOPAD(0x86c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_a11.gpmc_a11 */
-			AM33XX_IOPAD(0x870, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_wait0.gpmc_wait0 */
-			AM33XX_IOPAD(0x874, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_wpn.gpmc_wpn */
-			AM33XX_IOPAD(0x87c, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_csn0.gpmc_csn0 */
-			AM33XX_IOPAD(0x880, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_csn1.gpmc_csn1 */
-			AM33XX_IOPAD(0x884, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_csn2.gpmc_csn2 */
-			AM33XX_IOPAD(0x888, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_csn3.gpmc_csn3 */
-			AM33XX_IOPAD(0x88c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* gpmc_clk.gpmc_clk */
-			AM33XX_IOPAD(0x890, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_advn_ale.gpmc_advn_ale */
-			AM33XX_IOPAD(0x894, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_oen_ren.gpmc_oen_ren */
-			AM33XX_IOPAD(0x898, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_wen.gpmc_wen */
-			AM33XX_IOPAD(0x89c, PIN_INPUT_PULLUP | MUX_MODE0)	/* gpmc_be0n_cle.gpmc_be0n_cle */
-		>;
-	};
-
-	// FIXME
+	/* FIXME: really neeeded ? */
 	ecap0_pins: backlight_pins {
 		pinctrl-single,pins = <
 			AM33XX_IOPAD(0x964, MUX_MODE0)	/* eCAP0_in_PWM0_out.eCAP0_in_PWM0_out */
 		>;
 	};
 
-	cpsw_default: cpsw_default {
-		pinctrl-single,pins = <
-			/* Slave 1 */
-			AM33XX_IOPAD(0x910, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* mii1_rxerr.mii1_rxerr */
-			AM33XX_IOPAD(0x914, PIN_OUTPUT | MUX_MODE0)		/* mii1_txen.mii1_txen */
-			AM33XX_IOPAD(0x918, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* mii1_rxdv.mii1_rxdv */
-			AM33XX_IOPAD(0x91c, PIN_OUTPUT | MUX_MODE0)		/* mii1_txd3.mii1_txd3 */
-			AM33XX_IOPAD(0x920, PIN_OUTPUT | MUX_MODE0)		/* mii1_txd2.mii1_txd2 */
-			AM33XX_IOPAD(0x924, PIN_OUTPUT | MUX_MODE0)		/* mii1_txd1.mii1_txd1 */
-			AM33XX_IOPAD(0x928, PIN_OUTPUT | MUX_MODE0)		/* mii1_txd0.mii1_txd0 */
-			AM33XX_IOPAD(0x92c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* mii1.txclk.mii1_txclk */
-			AM33XX_IOPAD(0x930, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* mii1.rxclk.mii1_rxclk */
-			AM33XX_IOPAD(0x934, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* mii1_rxd3.mii1_rxd3 */
-			AM33XX_IOPAD(0x938, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* mii1_rxd2.mii1_rxd2 */
-			AM33XX_IOPAD(0x93c, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* mii1_rxd1.mii1_rxd1 */
-			AM33XX_IOPAD(0x940, PIN_INPUT_PULLDOWN | MUX_MODE0)	/* mii1_rxd0.mii1_rxd0 */
-			// FIXME: move to davinci_mdio_default ?
-		>;
-	};
-
+	/* FIXME: separate them by board ? */
 	cpsw_sleep: cpsw_sleep {
 		pinctrl-single,pins = <
 			/* Slave 1 reset value */
@@ -205,8 +128,8 @@
 	davinci_mdio_default: davinci_mdio_default {
 		pinctrl-single,pins = <
 			/* MDIO */
-			AM33XX_IOPAD(0x948, PIN_INPUT_PULLUP | MUX_MODE0)			/* mdio_data.mdio_data */
-			AM33XX_IOPAD(0x94c, PIN_OUTPUT_PULLUP | MUX_MODE0)			/* mdio_clk.mdio_clk */
+			AM33XX_IOPAD(0x948, PIN_INPUT_PULLUP | MUX_MODE0)	/* mdio_data.mdio_data */
+			AM33XX_IOPAD(0x94c, PIN_OUTPUT_PULLUP | MUX_MODE0)	/* mdio_clk.mdio_clk */
 		>;
 	};
 
@@ -218,31 +141,23 @@
 		>;
 	};
 
-	mmc1_pins: pinmux_mmc1_pins {
-		pinctrl-single,pins = <
-			AM33XX_IOPAD(0x960, PIN_INPUT | MUX_MODE7) /* spi0_cs1.gpio0_6 */
-		>;
-	};
-
-	/* FIXME: still needed ? */
 	usb0_pins: pinmux_usb0_pins {
 		pinctrl-single,pins = <
-			AM33XX_IOPAD(0x0A1C, PIN_OUTPUT_PULLDOWN | MUX_MODE0)	/* usb0_drvvbus.usb0_drvvbus */
+			AM33XX_IOPAD(0x0A1C, MUX_MODE0 | PIN_OUTPUT_PULLDOWN)	/* usb0_drvvbus.usb0_drvvbus */
 		>;
 	};
 
-	/* WTH is this actually for ? */
 	usb1_pins: pinmux_usb1_pins {
 		pinctrl-single,pins = <
-			AM33XX_IOPAD(0x0A34, PIN_INPUT | MUX_MODE7)	/* usb0_drvvbus.gpio3_13 */
+			AM33XX_IOPAD(0x0A34, MUX_MODE0 | PIN_OUTPUT_PULLDOWN)	/* usb1_drvvbus.usb1_drvvbus */
 		>;
 	};
 
 	// FIXME: check IO directions
 	dcan1_pins_default: dcan1_pins_default {
 		pinctrl-single,pins = <
-			AM33XX_IOPAD(0x980, PIN_INPUT_PULLUP | MUX_MODE2)	/* uart1_txd.dcan1_rx */
-			AM33XX_IOPAD(0x984, PIN_INPUT_PULLUP | MUX_MODE2)	/* uart1_rxd.dcan1_tx */
+			AM33XX_IOPAD(0x980, MUX_MODE2 | PIN_INPUT_PULLUP)	/* uart1_txd.dcan1_rx */
+			AM33XX_IOPAD(0x984, MUX_MODE2 | PIN_INPUT_PULLUP)	/* uart1_rxd.dcan1_tx */
 		>;
 	};
 };
@@ -253,15 +168,6 @@
 
 	status = "okay";
 };
-
-#if 0 /* pins are used for i2c1 and dcan1 */
-&uart1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&uart1_pins>;
-
-	status = "okay";
-};
-#endif
 
 &i2c0 {
 	pinctrl-names = "default";
@@ -293,11 +199,15 @@
 
 &usb0 {
 	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&usb0_pins>;
 };
 
 &usb1 {
 	status = "okay";
 	dr_mode = "host";
+	pinctrl-names = "default";
+	pinctrl-0 = <&usb1_pins>;
 };
 
 &cppi41dma  {
@@ -557,6 +467,7 @@
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&cpsw_default>;
 	pinctrl-1 = <&cpsw_sleep>;
+	slaves = <1>;
 	status = "okay";
 };
 
@@ -567,14 +478,8 @@
 	status = "okay";
 };
 
-&cpsw_emac0 {
-	phy_id = <&davinci_mdio>, <0>;
-	phy-mode = "rgmii-txid";
-};
-
-&cpsw_emac1 {
-	phy_id = <&davinci_mdio>, <1>;
-	phy-mode = "rgmii-txid";
+&phy_sel {
+	rmii-clock-ext;		// clock provided by PHY
 };
 
 &tscadc {
