@@ -4,6 +4,16 @@
 
 menu "Misc devices"
 
+config DUAGON_BACKPLANE
+	tristate "Duagon Ionia backplane"
+	select SPRINT_MCTRL
+	select TTY
+	default n
+	help
+	  Duagon Ionia backplane
+
+	  Driver for the backplane interfaces found on Duagon Ionia machines.
+
 config SENSORS_LIS3LV02D
 	tristate
 	depends on INPUT
