@@ -53,6 +53,11 @@
 		startup-delay-us = <70000>;
 		enable-active-high;
 	};
+
+	backplane: backplane@018000000 {
+		compatible = "duagon,i101-backplane";
+		reg = <0x18000000 0x1000>; // FIXME: need to find out actual iomem size
+	};
 };
 
 &am33xx_pinmux {
@@ -382,6 +387,44 @@
 			reg = <0x021000000 0x01f000000>;
 		};
 	};
+
+#if 0
+	backplane0: backplane0,0 {
+		compatible = "duagon,i101-backplane";
+		reg = <0 0 4>; /* CS0, offset 0, IO size 4 */
+		interrupt-parent = <&gpmc>;
+		interrupts = <0 IRQ_TYPE_NONE>, /* fifoevent */
+			     <1 IRQ_TYPE_NONE>;	/* termcount */
+#if 0
+		rb-gpios = <&gpmc 0 GPIO_ACTIVE_HIGH>; /* gpmc_wait0 */ // FIXME
+		ti,nand-ecc-opt = "bch8";
+		ti,elm-id = <&elm>;
+		nand-bus-width = <8>;
+#endif
+		gpmc,device-width = <1>;
+		gpmc,sync-clk-ps = <0>;
+		gpmc,cs-on-ns = <0>;
+		gpmc,cs-rd-off-ns = <44>;
+		gpmc,cs-wr-off-ns = <44>;
+		gpmc,adv-on-ns = <6>;
+		gpmc,adv-rd-off-ns = <34>;
+		gpmc,adv-wr-off-ns = <44>;
+		gpmc,we-on-ns = <0>;
+		gpmc,we-off-ns = <40>;
+		gpmc,oe-on-ns = <0>;
+		gpmc,oe-off-ns = <54>;
+		gpmc,access-ns = <64>;
+		gpmc,rd-cycle-ns = <82>;
+		gpmc,wr-cycle-ns = <82>;
+		gpmc,bus-turnaround-ns = <0>;
+		gpmc,cycle2cycle-delay-ns = <0>;
+		gpmc,clk-activation-ns = <0>;
+		gpmc,wr-access-ns = <40>;
+		gpmc,wr-data-mux-bus-ns = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+	};
+#endif
 };
 
 #include "tps65910.dtsi"

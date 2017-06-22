@@ -1,0 +1,1 @@
+obj-$(CONFIG_DUAGON_BACKPLANE)	+= core.o
