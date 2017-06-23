@@ -50,8 +50,6 @@ struct platform_device ionia_backplane_device = {
 	.id = -1,
 };
 
-struct platform_device *bp_global = NULL;
-
 /**
  * HACK: HACK: HACK:
  *
@@ -90,10 +88,6 @@ static int cmd_write_op(void *data, u64 value)
 	struct platform_device *pdev = data;
 
 	printk(KERN_INFO "ionia_core cmd: %llu\n", value);
-	if (data == bp_global)
-		printk(KERN_INFO "===> got pdev\n");
-	else
-		printk(KERN_INFO "===> no pdev ???\n");
 
 	if (value == 666)
 		ionia_backplane_looptest(pdev);
@@ -116,7 +110,6 @@ static void init_debugfs(struct platform_device* pdev)
 static int backplane_probe(struct platform_device* pdev)
 {
 	int rc;
-//	const struct of_device_id *match;
 	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
 
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
@@ -124,13 +117,6 @@ static int backplane_probe(struct platform_device* pdev)
 		dev_err(&pdev->dev, "failed to allocate memory\n");
 		return -ENOMEM;
 	}
-
-	// extra sanity check
-//	match = of_match_device(backplane_of_match, &pdev->dev);
-//	if (!match) {
-//		dev_err(&pdev->dev, "dt compatible mismatch\n");
-//		return -EINVAL;
-//	}
 
 	rc = of_address_to_resource(pdev->dev.of_node, 0, &pdata->res);
 	if (rc) {
@@ -146,8 +132,6 @@ static int backplane_probe(struct platform_device* pdev)
 
 	pdev->dev.platform_data = pdata;
 	dev_info(&pdev->dev, "probe succeed: phys %pK mem at %pK\n", (void*)pdata->res.start, pdata->registers);
-
-	bp_global = pdev;
 
 	init_debugfs(pdev);
 
