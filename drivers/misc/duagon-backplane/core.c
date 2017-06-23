@@ -29,6 +29,7 @@
 #include "ionia.h"
 #include "ionia-pdata.h"
 #include "hdio.h"
+#include "i101-regs.h"
 
 static struct of_device_id backplane_of_match[] = {
 	{ .compatible = "duagon,i101-backplane", },

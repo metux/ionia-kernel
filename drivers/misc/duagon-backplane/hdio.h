@@ -20,6 +20,8 @@ struct duagon_hdio_channel {
 #define IONIA_BACKPLANE_STATUS_DOWN	0
 #define IONIA_BACKPLANE_STATUS_PROBED	1	// loop test went through
 
+#define IONIA_BACKPLANE_DBGCMD_LOOPTEST		666
+
 #define IONIA_BACKPLANE_IOMEM_ASYNC		0x18000000
 #define IONIA_BACKPLANE_IOMEM_SYNC		0x1C000000
 
@@ -27,6 +29,7 @@ struct duagon_hdio_channel {
 #define IONIA_BACKPLANE_BANK_OFFSET		0x00000800
 
 /* registers are word-aligned - IOW: byte offset = regid * 2 */
+#define IONIA_BACKPLANE_REG_BURNIN		0x04
 #define IONIA_BACKPLANE_REG_LOOPBACK		0x16
 
 static inline uint16_t ionia_backplane_getreg(struct ionia_backplane_platform_data *pdata, int reg) {
