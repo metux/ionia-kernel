@@ -55,6 +55,12 @@ static int backplane_probe(struct platform_device* pdev)
 	const struct of_device_id *match;
 	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
 
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata) {
+		dev_err(&pdev->dev, "failed to allocate memory\n");
+		return -ENOMEM;
+	}
+
 	match = of_match_device(backplane_of_match, &pdev->dev);
 	if (!match) {
 		dev_err(&pdev->dev, "dt compatible mismatch\n");
@@ -67,23 +73,19 @@ static int backplane_probe(struct platform_device* pdev)
 		return rc;
 	}
 
-	if (!request_mem_region(pdata->res.start, resource_size(&pdata->res), pdev->name)) {
-		dev_err(&pdev->dev, "request mem region failed\n");
-		return -EADDRINUSE;
-	}
-
-	pdata->registers = of_iomap(pdev->dev.of_node, 0);
+	pdata->registers = devm_ioremap_resource(&pdev->dev, &pdata->res);
 	if (!pdata->registers) {
-		dev_err(&pdev->dev, "iomap from of failed\n");
+		dev_err(&pdev->dev, "ioremap resource failed\n");
 		goto failed;
 	}
 
-	dev_info(&pdev->dev, "probe succeed - mem at %pK\n", pdata->registers);
+	pdev->dev.platform_data = pdata;
+
+	dev_info(&pdev->dev, "probe succeed: phys %pK mem at %pK\n", pdata->res.start, pdata->registers);
 	return 0;
 
 failed:
 	if (pdata->registers) iounmap(pdata->registers);
-	release_mem_region(pdata->res.start, resource_size(&pdata->res));
 	return -EINVAL;
 }
 

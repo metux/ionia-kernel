@@ -56,7 +56,8 @@
 
 	backplane: backplane@018000000 {
 		compatible = "duagon,i101-backplane";
-		reg = <0x18000000 0x1000>; // FIXME: need to find out actual iomem size
+		reg = <0x18000000 4000000>;	// 64 MB - async area
+		// sync area 0x1C000000..0x1FFFFFFF
 	};
 };
 
@@ -301,7 +302,13 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&nandflash_pins_s0>;
+#if 0
+	ranges = <0 0 0x08000000 0x1000000	/* CS0: 16MB for NAND */
+		  2 0 0x18000000 0x4000000	/* CS2: 64MB for FPGA async */
+		  3 0 0x1C000000 0x4000000>;	/* CS3: 64MB for FPGA sync */*
+#else
 	ranges = <0 0 0x08000000 0x1000000>;	/* CS0: 16MB for NAND */
+#endif
 	nand0: nand@0,0 {
 		compatible = "ti,omap2-nand";
 		reg = <0 0 4>; /* CS0, offset 0, IO size 4 */
@@ -389,38 +396,59 @@
 	};
 
 #if 0
-	backplane0: backplane0,0 {
+	backplane: backplane@018000000 {
 		compatible = "duagon,i101-backplane";
-		reg = <0 0 4>; /* CS0, offset 0, IO size 4 */
-		interrupt-parent = <&gpmc>;
-		interrupts = <0 IRQ_TYPE_NONE>, /* fifoevent */
-			     <1 IRQ_TYPE_NONE>;	/* termcount */
-#if 0
-		rb-gpios = <&gpmc 0 GPIO_ACTIVE_HIGH>; /* gpmc_wait0 */ // FIXME
-		ti,nand-ecc-opt = "bch8";
-		ti,elm-id = <&elm>;
-		nand-bus-width = <8>;
-#endif
-		gpmc,device-width = <1>;
-		gpmc,sync-clk-ps = <0>;
-		gpmc,cs-on-ns = <0>;
-		gpmc,cs-rd-off-ns = <44>;
-		gpmc,cs-wr-off-ns = <44>;
-		gpmc,adv-on-ns = <6>;
-		gpmc,adv-rd-off-ns = <34>;
-		gpmc,adv-wr-off-ns = <44>;
-		gpmc,we-on-ns = <0>;
-		gpmc,we-off-ns = <40>;
-		gpmc,oe-on-ns = <0>;
-		gpmc,oe-off-ns = <54>;
-		gpmc,access-ns = <64>;
-		gpmc,rd-cycle-ns = <82>;
-		gpmc,wr-cycle-ns = <82>;
-		gpmc,bus-turnaround-ns = <0>;
-		gpmc,cycle2cycle-delay-ns = <0>;
-		gpmc,clk-activation-ns = <0>;
-		gpmc,wr-access-ns = <40>;
-		gpmc,wr-data-mux-bus-ns = <0>;
+		// FIXME
+		reg = <2 0 4>; /* CS2, offset 0, IO size 4 */
+
+		/* config1 */
+		gpmc,burst-length	= <4>;
+		gpmc,device-width	= <2>;
+		gpmc,mux-add-data	= <2>;
+		gpmc,wait-pin		= <0>;
+		// gpmc clock 	= 1/2 fclk (GPMCFCLKDIVIDER=1)
+
+		/* config2 */
+		gpmc,cs-wr-off-ns	= <44>;	// FIXME: 7 fclk cylces
+		gpmc,cs-rd-off-ns	= <44>;	// FIXME: 11 fclk cycles
+		gpmc,cs-on-ns		= <0>;
+		// CSEXTRADELAY		= 0
+
+		/* config3 */
+		gpmc,adv-rd-off-ns	= <34>;	// FIXME: 3 fclk cycles
+		gpmc,adv-wr-off-ns	= <44>;	// FIXME: 3 fclk cycles
+		gpmc,adv-on-ns		= <6>;	// FIXME: 1 fclk cycles
+
+		/* config4 */
+		gpmc,we-off-ns		= <40>;	// FIXME: 7 fclk cycles
+		gpmc,we-on-ns		= <0>;	// FIXME: 3 fclk cycles
+		gpmc,oe-off-ns		= <54>;	// FIXME: 11 fclk cycles
+		gpmc,oe-on-ns		= <0>;	// FIXME: 3 fclk cycles
+		// WEEXTRADELAY		= 0
+		// OEAADMUXOFFTIME	= 3
+		// OEEXTRADELAY		= 0
+		// OEAADMUXONTIME	= 1
+
+		/* config5 */
+		// PAGEBURSTACCESSTIME=1
+		gpmc,rd-cycle-ns		= <82>;	// FIXME: 8 fclk cycles
+		gpmc,wr-cycle-ns		= <82>;	// FIXME: 8 fclk cycles
+		gpmc,access-ns			= <64>;	// FIXME: 10 fclk cycles
+
+		/* config6 */
+		gpmc,wr-access-ns		= <40>;	// FIXME: 4 fclk cycles
+		gpmc,bus-turnaround-ns		= <0>;	// FIXME: 1 fclk cycles
+		gpmc,cycle2cycle-delay-ns	= <0>;	// FIXME: 1 fclk cycles
+		// WRACCESSTIME = 4
+		// WRDATAONADMUXBUS = 3
+
+		/* config7 */
+		// MASKADDRESS = 12 (64mbytes)
+		// CSVALID = 1 -> CSn enabled
+		// BASEADDRESS = 0x18 (<<24)
+		gpmc,clk-activation-ns = <0>;	// ??
+
+		gpmc,wr-data-mux-bus-ns		= <0>;	// FIXME: 3 fclk cylces
 		#address-cells = <1>;
 		#size-cells = <1>;
 	};
