@@ -23,6 +23,7 @@
 #include <linux/platform_device.h>
 
 #include "ionia.h"
+#include "ionia-pdata.h"
 #include "hdio.h"
 
 /**

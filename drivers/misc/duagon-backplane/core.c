@@ -31,6 +31,7 @@
 #define DEVICE_NAME		"ionia-backplane"
 
 #include "ionia.h"
+#include "ionia-pdata.h"
 #include "hdio.h"
 
 static struct of_device_id backplane_of_match[] = {
@@ -79,6 +80,7 @@ static int backplane_probe(struct platform_device* pdev)
 {
 	int rc;
 	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
+	struct resource res;
 
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
 	if (!pdata) {
@@ -86,20 +88,20 @@ static int backplane_probe(struct platform_device* pdev)
 		return -ENOMEM;
 	}
 
-	rc = of_address_to_resource(pdev->dev.of_node, 0, &pdata->res);
+	rc = of_address_to_resource(pdev->dev.of_node, 0, &res);
 	if (rc) {
 		dev_err(&pdev->dev, "fetching resource address failed: %d\n", rc);
 		return rc;
 	}
 
-	pdata->registers = devm_ioremap_resource(&pdev->dev, &pdata->res);
+	pdata->registers = devm_ioremap_resource(&pdev->dev, &res);
 	if (!pdata->registers) {
 		dev_err(&pdev->dev, "ioremap resource failed\n");
 		return -EINVAL;
 	}
 
 	pdev->dev.platform_data = pdata;
-	dev_info(&pdev->dev, "probe succeed: phys %pK mem at %pK\n", (void*)pdata->res.start, pdata->registers);
+	dev_info(&pdev->dev, "probe succeed: phys %pK mem at %pK\n", (void*)res.start, pdata->registers);
 
 	init_debugfs(pdev);
 

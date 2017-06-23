@@ -20,14 +20,6 @@ struct duagon_hdio_channel {
 #define IONIA_BACKPLANE_STATUS_DOWN	0
 #define IONIA_BACKPLANE_STATUS_PROBED	1	// loop test went through
 
-// move to own pdata header
-struct ionia_backplane_pdata {
-	uint32_t status;
-	struct resource res;
-	void * __iomem registers;
-	struct dentry *debugfs_dentry;
-};
-
 #define IONIA_BACKPLANE_IOMEM_ASYNC		0x18000000
 #define IONIA_BACKPLANE_IOMEM_SYNC		0x1C000000
 
