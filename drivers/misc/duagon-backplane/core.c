@@ -59,21 +59,11 @@ struct platform_device *bp_global = NULL;
  * userland to do the gpmc init. Therefore the device cannot be used
  * before that's done - triggring device init via debugfs
  */
-static int backplane_looptest(struct platform_device* pdev)
+int ionia_backplane_looptest(struct platform_device* pdev)
 {
 	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
-	uint16_t regval;
 	int x=0;
 	int fail=0;
-
-	dev_info(&pdev->dev, "reading from loopback register\n");
-	regval = ionia_backplane_getreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK);
-	dev_info(&pdev->dev, "  got %X\n", regval);
-	dev_info(&pdev->dev, "writing to loopback register ...\n");
-	ionia_backplane_setreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK, 0x1313);
-	dev_info(&pdev->dev, "reading back\n");
-	regval = ionia_backplane_getreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK);
-	dev_info(&pdev->dev, " -> got %X\n", regval);
 
 	dev_info(&pdev->dev, "running loop test\n");
 	for (x=0; x<0xFFFF; x+=0x7F) {
@@ -97,6 +87,8 @@ static int backplane_looptest(struct platform_device* pdev)
 
 static int cmd_write_op(void *data, u64 value)
 {
+	struct platform_device *pdev = data;
+
 	printk(KERN_INFO "ionia_core cmd: %llu\n", value);
 	if (data == bp_global)
 		printk(KERN_INFO "===> got pdev\n");
@@ -104,7 +96,7 @@ static int cmd_write_op(void *data, u64 value)
 		printk(KERN_INFO "===> no pdev ???\n");
 
 	if (value == 666)
-		backplane_looptest(bp_global);
+		ionia_backplane_looptest(pdev);
 
 	return 0;
 }
