@@ -1,6 +1,8 @@
 #ifndef __LINUX_DUAGON_HDIO_H
 #define __LINUX_DUAGON_HDIO_H
 
+#include <linux/io.h>
+
 struct duagon_hdio_channel;
 
 typedef int (*duagon_hdio_channel_timeout_func)(struct duagon_hdio_channel* ch);

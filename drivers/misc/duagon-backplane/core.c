@@ -30,6 +30,7 @@
 #define DRIVER_NAME		"ionia-backplane"
 #define DEVICE_NAME		"ionia-backplane"
 
+#include "ionia.h"
 #include "hdio.h"
 
 static struct of_device_id backplane_of_match[] = {
@@ -49,39 +50,6 @@ struct platform_device ionia_backplane_device = {
 	},
 	.id = -1,
 };
-
-/**
- * HACK: HACK: HACK:
- *
- * Until we've modeled GPMC parameter into DT, we need to rely on legacy
- * userland to do the gpmc init. Therefore the device cannot be used
- * before that's done - triggring device init via debugfs
- */
-int ionia_backplane_looptest(struct platform_device* pdev)
-{
-	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
-	int x=0;
-	int fail=0;
-
-	dev_info(&pdev->dev, "running loop test\n");
-	for (x=0; x<0xFFFF; x+=0x7F) {
-		ionia_backplane_setreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK, x);
-		if (ionia_backplane_getreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK) != x) {
-			dev_err(&pdev->dev, "loop test failed for value %X\n", x);
-			fail++;
-		}
-	}
-
-	if (fail) {
-		pdata->status = IONIA_BACKPLANE_STATUS_DOWN;
-		return -ENOENT;
-	}
-
-	dev_info(&pdev->dev, "loop test OKAY\n");
-	pdata->status = IONIA_BACKPLANE_STATUS_PROBED;
-
-	return 0;
-}
 
 static int cmd_write_op(void *data, u64 value)
 {
