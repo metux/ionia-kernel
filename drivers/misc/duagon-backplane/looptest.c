@@ -10,29 +10,12 @@
 
 #include <linux/device.h>
 #include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/kmemcheck.h>
-#include <linux/ctype.h>
-#include <linux/delay.h>
-#include <linux/idr.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-
-#include <linux/c2port.h>
-
 #include <linux/platform_device.h>
+#include <linux/kernel.h>
 
 #include "ionia.h"
 #include "ionia-pdata.h"
-#include "hdio.h"
 
-/**
- * HACK: HACK: HACK:
- *
- * Until we've modeled GPMC parameter into DT, we need to rely on legacy
- * userland to do the gpmc init. Therefore the device cannot be used
- * before that's done - triggring device init via debugfs
- */
 int ionia_backplane_looptest(struct platform_device* pdev)
 {
 	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;

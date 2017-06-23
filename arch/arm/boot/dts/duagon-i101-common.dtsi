@@ -54,6 +54,8 @@
 		enable-active-high;
 	};
 
+	// async access 0x18000000
+	// sync access 0x1C000000
 	backplane: backplane@018000000 {
 		compatible = "duagon,i101-backplane";
 		reg = <0x18000000 4000000>;	// 64 MB - async area

@@ -9,7 +9,6 @@
  */
 
 #include <linux/module.h>
-#include <linux/debugfs.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/of_device.h>
@@ -29,6 +28,8 @@
 #include "ionia.h"
 #include "ionia-pdata.h"
 #include "hdio.h"
+#include "ionia.h"
+#include "ionia-pdata.h"
 #include "i101-regs.h"
 
 static struct of_device_id backplane_of_match[] = {
@@ -88,7 +89,7 @@ static int backplane_remove(struct platform_device* pdev)
 }
 
 struct platform_driver ionia_backplane_driver = {
-	.probe = backplane_probe,
+	.probe  = backplane_probe,
 	.remove = backplane_remove,
 	.driver = {
 		.name = IONIA_BACKPLANE_DRIVER_NAME,
@@ -105,7 +106,6 @@ static int __init backplane_init(void)
 
 static void __exit backplane_exit(void)
 {
-	pr_info("unloading module");
 	return platform_driver_unregister(&ionia_backplane_driver);
 }
 

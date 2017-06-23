@@ -8,22 +8,15 @@
  * the Free Software Foundation
  */
 
+#include <linux/module.h>
 #include <linux/debugfs.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/kmemcheck.h>
-#include <linux/ctype.h>
-#include <linux/delay.h>
-#include <linux/idr.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
 #include <linux/platform_device.h>
+#include <linux/errno.h>
 
 #include "ionia.h"
 #include "ionia-pdata.h"
-#include "hdio.h"
+
+#define IONIA_BACKPLANE_DBGCMD_LOOPTEST		666
 
 static int cmd_write_op(void *data, u64 value)
 {
@@ -31,8 +24,14 @@ static int cmd_write_op(void *data, u64 value)
 
 	printk(KERN_INFO "ionia_core cmd: %llu\n", value);
 
-	if (value == 666)
-		ionia_backplane_looptest(pdev);
+	switch (value) {
+		case IONIA_BACKPLANE_DBGCMD_LOOPTEST:
+			ionia_backplane_looptest(pdev);
+		break;
+		default:
+			dev_info(&pdev->dev, "unhandled debug cmd: %llu\n", value);
+		break;
+	}
 
 	return 0;
 }

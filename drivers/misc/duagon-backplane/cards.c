@@ -1,8 +1,17 @@
+/*
+ *  Duagon Ionia backplane core Linux support
+ *
+ *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 as published by
+ * the Free Software Foundation
+ */
 
 #include <linux/bug.h>
 #include <linux/kernel.h>
 
-#include "i101-cards.h"
+#include "cards.h"
 
 #define CARD_DECL(t,n,c0,c1) 				\
 	{						\
