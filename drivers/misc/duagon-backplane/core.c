@@ -9,6 +9,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/debugfs.h>
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/of_device.h>
@@ -49,10 +50,81 @@ struct platform_device ionia_backplane_device = {
 	.id = -1,
 };
 
+struct platform_device *bp_global = NULL;
+
+/**
+ * HACK: HACK: HACK:
+ *
+ * Until we've modeled GPMC parameter into DT, we need to rely on legacy
+ * userland to do the gpmc init. Therefore the device cannot be used
+ * before that's done - triggring device init via debugfs
+ */
+static int backplane_looptest(struct platform_device* pdev)
+{
+	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
+	uint16_t regval;
+	int x=0;
+	int fail=0;
+
+	dev_info(&pdev->dev, "reading from loopback register\n");
+	regval = ionia_backplane_getreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK);
+	dev_info(&pdev->dev, "  got %X\n", regval);
+	dev_info(&pdev->dev, "writing to loopback register ...\n");
+	ionia_backplane_setreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK, 0x1313);
+	dev_info(&pdev->dev, "reading back\n");
+	regval = ionia_backplane_getreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK);
+	dev_info(&pdev->dev, " -> got %X\n", regval);
+
+	dev_info(&pdev->dev, "running loop test\n");
+	for (x=0; x<0xFFFF; x+=0x7F) {
+		ionia_backplane_setreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK, x);
+		if (ionia_backplane_getreg(pdata, IONIA_BACKPLANE_REG_LOOPBACK) != x) {
+			dev_err(&pdev->dev, "loop test failed for value %X\n", x);
+			fail++;
+		}
+	}
+
+	if (fail) {
+		pdata->status = IONIA_BACKPLANE_STATUS_DOWN;
+		return -ENOENT;
+	}
+
+	dev_info(&pdev->dev, "loop test OKAY\n");
+	pdata->status = IONIA_BACKPLANE_STATUS_PROBED;
+
+	return 0;
+}
+
+static int cmd_write_op(void *data, u64 value)
+{
+	printk(KERN_INFO "ionia_core cmd: %llu\n", value);
+	if (data == bp_global)
+		printk(KERN_INFO "===> got pdev\n");
+	else
+		printk(KERN_INFO "===> no pdev ???\n");
+
+	if (value == 666)
+		backplane_looptest(bp_global);
+
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(cmd_fops, NULL, cmd_write_op, "%llu\n");
+
+static void init_debugfs(struct platform_device* pdev)
+{
+	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
+
+	struct dentry* dbg_dir = debugfs_create_dir(DRIVER_NAME, NULL);
+	debugfs_create_file("cmd", 0222, dbg_dir, pdev, &cmd_fops);
+	debugfs_create_u32("state", 0444, dbg_dir, &(pdata->status));
+	pdata->debugfs_dentry = dbg_dir;
+}
+
 static int backplane_probe(struct platform_device* pdev)
 {
 	int rc;
-	const struct of_device_id *match;
+//	const struct of_device_id *match;
 	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
 
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
@@ -61,11 +133,12 @@ static int backplane_probe(struct platform_device* pdev)
 		return -ENOMEM;
 	}
 
-	match = of_match_device(backplane_of_match, &pdev->dev);
-	if (!match) {
-		dev_err(&pdev->dev, "dt compatible mismatch\n");
-		return -EINVAL;
-	}
+	// extra sanity check
+//	match = of_match_device(backplane_of_match, &pdev->dev);
+//	if (!match) {
+//		dev_err(&pdev->dev, "dt compatible mismatch\n");
+//		return -EINVAL;
+//	}
 
 	rc = of_address_to_resource(pdev->dev.of_node, 0, &pdata->res);
 	if (rc) {
@@ -76,24 +149,23 @@ static int backplane_probe(struct platform_device* pdev)
 	pdata->registers = devm_ioremap_resource(&pdev->dev, &pdata->res);
 	if (!pdata->registers) {
 		dev_err(&pdev->dev, "ioremap resource failed\n");
-		goto failed;
+		return -EINVAL;
 	}
 
 	pdev->dev.platform_data = pdata;
+	dev_info(&pdev->dev, "probe succeed: phys %pK mem at %pK\n", (void*)pdata->res.start, pdata->registers);
 
-	dev_info(&pdev->dev, "probe succeed: phys %pK mem at %pK\n", pdata->res.start, pdata->registers);
+	bp_global = pdev;
+
+	init_debugfs(pdev);
+
 	return 0;
-
-failed:
-	if (pdata->registers) iounmap(pdata->registers);
-	return -EINVAL;
 }
 
 static int backplane_remove(struct platform_device* pdev)
 {
 	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
-	if (pdata->registers) iounmap(pdata->registers);
-	release_mem_region(pdata->res.start, resource_size(&pdata->res));
+	debugfs_remove_recursive(pdata->debugfs_dentry);
 	return 0;
 }
 
