@@ -35,7 +35,7 @@
  */
 int ionia_backplane_looptest(struct platform_device* pdev)
 {
-	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
+	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
 	int x=0;
 	int fail=0;
 

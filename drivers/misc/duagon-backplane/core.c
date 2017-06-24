@@ -40,7 +40,7 @@ static struct of_device_id backplane_of_match[] = {
 };
 MODULE_DEVICE_TABLE(of, backplane_of_match);
 
-struct ionia_backplane_pdata bp_pdata = {
+struct ionia_backplane_platform_data bp_pdata = {
 	.status = 0,
 };
 
@@ -68,7 +68,7 @@ DEFINE_SIMPLE_ATTRIBUTE(cmd_fops, NULL, cmd_write_op, "%llu\n");
 
 static void init_debugfs(struct platform_device* pdev)
 {
-	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
+	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
 
 	struct dentry* dbg_dir = debugfs_create_dir(DRIVER_NAME, NULL);
 	debugfs_create_file("cmd", 0222, dbg_dir, pdev, &cmd_fops);
@@ -79,7 +79,7 @@ static void init_debugfs(struct platform_device* pdev)
 static int backplane_probe(struct platform_device* pdev)
 {
 	int rc;
-	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
+	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
 	struct resource res;
 
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
@@ -110,7 +110,7 @@ static int backplane_probe(struct platform_device* pdev)
 
 static int backplane_remove(struct platform_device* pdev)
 {
-	struct ionia_backplane_pdata *pdata = pdev->dev.platform_data;
+	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
 	debugfs_remove_recursive(pdata->debugfs_dentry);
 	return 0;
 }

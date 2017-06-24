@@ -29,12 +29,12 @@ struct duagon_hdio_channel {
 /* registers are word-aligned - IOW: byte offset = regid * 2 */
 #define IONIA_BACKPLANE_REG_LOOPBACK		0x16
 
-static inline uint16_t ionia_backplane_getreg(struct ionia_backplane_pdata *pdata, int reg) {
+static inline uint16_t ionia_backplane_getreg(struct ionia_backplane_platform_data *pdata, int reg) {
 	printk(KERN_INFO "ionia_backplane_getreg() addr=%pK\n", pdata->registers + IONIA_BACKPLANE_BANK_OFFSET + reg*2);
 	return readw(pdata->registers + IONIA_BACKPLANE_BANK_OFFSET + reg*2);
 }
 
-static inline void ionia_backplane_setreg(struct ionia_backplane_pdata *pdata, uint16_t reg, uint16_t val) {
+static inline void ionia_backplane_setreg(struct ionia_backplane_platform_data *pdata, uint16_t reg, uint16_t val) {
 	writew(val, pdata->registers + IONIA_BACKPLANE_BANK_OFFSET + reg*2);
 }
 
