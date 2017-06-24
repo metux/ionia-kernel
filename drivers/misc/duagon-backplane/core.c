@@ -26,10 +26,6 @@
 
 #include <linux/c2port.h>
 
-#define DRIVER_VERSION		"0.1.0"
-#define DRIVER_NAME		"ionia-backplane"
-#define DEVICE_NAME		"ionia-backplane"
-
 #include "ionia.h"
 #include "ionia-pdata.h"
 #include "hdio.h"
@@ -45,36 +41,12 @@ struct ionia_backplane_platform_data bp_pdata = {
 };
 
 struct platform_device ionia_backplane_device = {
-	.name = DEVICE_NAME,
+	.name = IONIA_BACKPLANE_DEVICE_NAME,
 	.dev = {
 		.platform_data = &bp_pdata,
 	},
 	.id = -1,
 };
-
-static int cmd_write_op(void *data, u64 value)
-{
-	struct platform_device *pdev = data;
-
-	printk(KERN_INFO "ionia_core cmd: %llu\n", value);
-
-	if (value == 666)
-		ionia_backplane_looptest(pdev);
-
-	return 0;
-}
-
-DEFINE_SIMPLE_ATTRIBUTE(cmd_fops, NULL, cmd_write_op, "%llu\n");
-
-static void init_debugfs(struct platform_device* pdev)
-{
-	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
-
-	struct dentry* dbg_dir = debugfs_create_dir(DRIVER_NAME, NULL);
-	debugfs_create_file("cmd", 0222, dbg_dir, pdev, &cmd_fops);
-	debugfs_create_u32("state", 0444, dbg_dir, &(pdata->status));
-	pdata->debugfs_dentry = dbg_dir;
-}
 
 static int backplane_probe(struct platform_device* pdev)
 {
@@ -103,15 +75,14 @@ static int backplane_probe(struct platform_device* pdev)
 	pdev->dev.platform_data = pdata;
 	dev_info(&pdev->dev, "probe succeed: phys %pK mem at %pK\n", (void*)res.start, pdata->registers);
 
-	init_debugfs(pdev);
+	ionia_backplane_debugfs_init(pdev);
 
 	return 0;
 }
 
 static int backplane_remove(struct platform_device* pdev)
 {
-	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
-	debugfs_remove_recursive(pdata->debugfs_dentry);
+	ionia_backplane_debugfs_fini(pdev);
 	return 0;
 }
 
@@ -119,7 +90,7 @@ struct platform_driver ionia_backplane_driver = {
 	.probe = backplane_probe,
 	.remove = backplane_remove,
 	.driver = {
-		.name = DRIVER_NAME,
+		.name = IONIA_BACKPLANE_DRIVER_NAME,
 		.owner = THIS_MODULE,
 		.of_match_table = backplane_of_match,
 	},
@@ -127,7 +98,7 @@ struct platform_driver ionia_backplane_driver = {
 
 static int __init backplane_init(void)
 {
-	pr_info("loading module v" DRIVER_VERSION "\n");
+	pr_info("loading module v" IONIA_BACKPLANE_DRIVER_VERSION "\n");
 	return platform_driver_register(&ionia_backplane_driver);
 }
 
@@ -141,5 +112,5 @@ module_init(backplane_init);
 module_exit(backplane_exit);
 
 MODULE_AUTHOR("Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>");
-MODULE_DESCRIPTION("Ionia backplane support v" DRIVER_VERSION);
+MODULE_DESCRIPTION("Ionia backplane support v" IONIA_BACKPLANE_DRIVER_VERSION);
 MODULE_LICENSE("GPL");

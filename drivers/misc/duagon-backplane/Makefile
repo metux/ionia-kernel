@@ -1,1 +1,1 @@
-obj-$(CONFIG_DUAGON_BACKPLANE)	+= core.o looptest.o
+obj-$(CONFIG_DUAGON_BACKPLANE)	+= core.o looptest.o debugfs.o
