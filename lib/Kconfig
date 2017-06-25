@@ -7,6 +7,25 @@ config BINARY_PRINTF
 
 menu "Library routines"
 
+config ERRNO_PRINTF
+	bool "printf conversion %M for errno codes"
+	default n
+	help
+	  This option adds an %M modifier for *printf() for errno values.
+	  (and callers like printk() etc)
+
+	  In conjunction with ERRNO_PRINTF_VERBOSE, it prints human readable
+	  strerror()-like text, otherwise just numeric values.
+
+config ERRNO_PRINTF_VERBOSE
+	bool "Verbose errno strings"
+	default y
+	depends on ERRNO_PRINTF
+	help
+	  Enable verbose error strings for ERRNO_PRINTF.
+
+	  Small embedded systems might disable it for reducing kernel size.
+
 config RAID6_PQ
 	tristate
 
