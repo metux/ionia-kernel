@@ -187,4 +187,8 @@ static inline const char *kbasename(const char *path)
 	return tail ? tail + 1 : path;
 }
 
+#ifdef CONFIG_SPRINT_MCTRL
+size_t sprint_mctrl(char *buf, size_t size, int mctl);
+#endif
+
 #endif /* _LINUX_STRING_H_ */
