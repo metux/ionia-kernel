@@ -348,6 +348,11 @@ config BCH_CONST_T
 	  Drivers should declare a default value for this symbol if
 	  they select option BCH_CONST_PARAMS.
 
+config SPRINT_MCTRL
+	bool
+	help
+	  Helper for printing modem status value into a char buffer
+
 #
 # Textsearch support is select'ed if needed
 #
