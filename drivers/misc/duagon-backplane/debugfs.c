@@ -16,6 +16,9 @@
 
 #include "ionia.h"
 #include "ionia-pdata.h"
+#include "ionia-serial.h"
+
+#include "ionia-rpc.h"
 
 #define IONIA_DEBUG_CMD_LOOPTEST	666
 #define IONIA_DEBUG_CMD_UART_DUMP	1
@@ -41,7 +44,18 @@ static int cmd_write_op(void *data, u64 value)
 	return 0;
 }
 
+static int test_write_op(void *data, u64 value)
+{
+	struct platform_device *pdev = data;
+
+	dev_info(&pdev->dev, "test: %lld\n", value);
+	ionia_log_channel_enable(i101_cards[value].port, 0x0f, 0x0f);
+
+	return 0;
+}
+
 DEFINE_SIMPLE_ATTRIBUTE(cmd_fops, NULL, cmd_write_op, "%llu\n");
+DEFINE_SIMPLE_ATTRIBUTE(test_fops, NULL, test_write_op, "%llu\n");
 
 void ionia_backplane_debugfs_init(struct platform_device* pdev)
 {
@@ -49,6 +63,7 @@ void ionia_backplane_debugfs_init(struct platform_device* pdev)
 
 	struct dentry* dbg_dir = debugfs_create_dir(IONIA_BACKPLANE_DRIVER_NAME, NULL);
 	debugfs_create_file("cmd", 0222, dbg_dir, pdev, &cmd_fops);
+	debugfs_create_file("test", 0222, dbg_dir, pdev, &test_fops);
 	debugfs_create_u32("state", 0444, dbg_dir, &(pdata->status));
 	pdata->debugfs_dentry = dbg_dir;
 }

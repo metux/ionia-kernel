@@ -66,13 +66,6 @@ int  ionia_backplane_looptest(struct platform_device *pdev);
 void ionia_backplane_debugfs_init(struct platform_device *pdev);
 void ionia_backplane_debugfs_fini(struct platform_device *pdev);
 
-struct uart_port *ionia_uart_init(struct platform_device *pdev, int card);
-int ionia_serial_init(struct platform_device *pdev);
-
-void ionia_uart_dump(struct uart_port *port);
-
-void ionia_serial_dumpall(struct platform_device *pdev);
-
 // artificial wait between write and read cycles
 static inline void ionia_backplane_waitreg(void) {
 	udelay(1); //10

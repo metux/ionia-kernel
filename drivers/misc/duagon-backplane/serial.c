@@ -142,7 +142,7 @@ int ionia_uart_putc(struct uart_port *port, char c)
 	return 0;
 }
 
-static int ionia_uart_getc(struct uart_port *port)
+int ionia_uart_getc(struct uart_port *port)
 {
 	struct ionia_port *pp = container_of(port, struct ionia_port, port);
 	uint16_t ret = ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_READWRITE);
