@@ -12,6 +12,9 @@
 #include <linux/kernel.h>
 
 #include "ionia.h"
+#include "ionia-modules.h"
+#include "ionia-protocol.h"
+#include "ionia-cards.h"
 
 #define CARD_DECL(n,b) 	\
 	{			\
@@ -49,3 +52,33 @@ struct i101_card i101_cards[] = {
 };
 
 const int i101_cards_max = ARRAY_SIZE(i101_cards);
+
+#define CARD_TYPE_DECL(n,mt,pt)		\
+	{				\
+		.name = n,		\
+		.module_type = mt,	\
+		.protocol_type = pt,	\
+	}
+
+const struct ionia_card_type ionia_card_types[] = {
+	// CO cards
+	CARD_TYPE_DECL("i305", IONIA_MODULE_TYPE_SER_COM, IONIA_PROTOCOL_SER_COM),
+	CARD_TYPE_DECL("i301", IONIA_MODULE_TYPE_MVB_COM, IONIA_PROTOCOL_MVB),
+	CARD_TYPE_DECL("i306", IONIA_MODULE_TYPE_IO,      IONIA_PROTOCOL_WTB),
+	CARD_TYPE_DECL("i303", IONIA_MODULE_TYPE_SOC_COM, IONIA_PROTOCOL_SOCKETS),
+
+	// IO cards
+	CARD_TYPE_DECL("i211", IONIA_MODULE_TYPE_AI,      IONIA_PROTOCOL_AI),
+	CARD_TYPE_DECL("i213", IONIA_MODULE_TYPE_AO,      IONIA_PROTOCOL_AO),
+	CARD_TYPE_DECL("i701", IONIA_MODULE_TYPE_LOG,     IONIA_PROTOCOL_LOG),
+
+	// PWR cards
+	CARD_TYPE_DECL("i012", IONIA_MODULE_TYPE_POWER,   IONIA_PROTOCOL_POWER),
+
+	// CPU cards
+	CARD_TYPE_DECL("i101", IONIA_MODULE_TYPE_MVB,     IONIA_PROTOCOL_MVB),
+	CARD_TYPE_DECL("i102", IONIA_MODULE_TYPE_MVB,     IONIA_PROTOCOL_MVB),
+	CARD_TYPE_DECL("i103", IONIA_MODULE_TYPE_MVB,     IONIA_PROTOCOL_MVB),
+};
+
+const int ionia_card_types_max = ARRAY_SIZE(ionia_card_types);

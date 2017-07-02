@@ -18,7 +18,7 @@
 #include "ionia-rpc.h"
 #include "ionia-rpc-log.h"
 
-struct ionia_rpc_buf *ionia_rpc_buf_get(u8 proto, u8 cmd)
+struct ionia_rpc_buf *ionia_rpc_buf_get(ionia_protocol_t proto, u8 cmd)
 {
 	struct ionia_rpc_buf *rpcbuf = kzalloc(GFP_KERNEL, sizeof(struct ionia_rpc_buf));
 	rpcbuf->protocol = proto;

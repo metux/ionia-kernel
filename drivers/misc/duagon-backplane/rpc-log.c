@@ -21,7 +21,7 @@ struct uart_port;
 int ionia_log_channel_enable(struct uart_port *port, int mode, int mask)
 {
 	int ret;
-	struct ionia_rpc_buf *rpcbuf = ionia_rpc_buf_get(IONIA_RPC_PROTO_LOG, IONIA_LOG_CMD_CHANNEL_ENABLE);
+	struct ionia_rpc_buf *rpcbuf = ionia_rpc_buf_get(IONIA_PROTOCOL_LOG, IONIA_LOG_CMD_CHANNEL_ENABLE);
 
 	if ((ret = ionia_rpc_buf_write_u32(rpcbuf, mode + (mask << 16))))
 		goto out;
