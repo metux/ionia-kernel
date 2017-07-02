@@ -4,7 +4,7 @@
  *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
  *
  * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 as published by
+ * under the terms of the GNU General Public License version 3 as published by
  * the Free Software Foundation
  */
 
@@ -17,8 +17,8 @@
 #include "ionia.h"
 #include "ionia-pdata.h"
 #include "ionia-serial.h"
-
 #include "ionia-rpc.h"
+#include "ionia-rpc-log.h"
 
 #define IONIA_DEBUG_CMD_LOOPTEST	666
 #define IONIA_DEBUG_CMD_UART_DUMP	1

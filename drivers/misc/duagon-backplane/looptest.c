@@ -4,7 +4,7 @@
  *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
  *
  * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 as published by
+ * under the terms of the GNU General Public License version 3 as published by
  * the Free Software Foundation
  */
 
@@ -17,7 +17,6 @@
 
 #include "ionia.h"
 #include "ionia-pdata.h"
-
 
 static inline uint16_t ionia_backplane_getreg(struct platform_device *pdev, int reg) {
 	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;

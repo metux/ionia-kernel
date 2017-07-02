@@ -1,3 +1,13 @@
+/*
+ *  Duagon Ionia backplane core Linux support
+ *
+ *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ */
+
 #ifndef __DUAGON_RPC_LOG_H
 #define __DUAGON_RPC_LOG_H
 
@@ -14,5 +24,9 @@ enum {
 	IONIA_LOG_CMD_TEMP_GET		= 11,	/* Return temperature */
 	IONIA_LOG_CMD_SAMPLING_DATA_GET	= 12	/* Get Sensor Data Array */
 };
+
+struct uart_port;
+
+int ionia_log_channel_enable(struct uart_port *port, int mode, int mask);
 
 #endif /* __DUAGON_RPC_LOG_H */

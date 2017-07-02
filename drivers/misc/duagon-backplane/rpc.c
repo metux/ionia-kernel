@@ -1,55 +1,63 @@
+/*
+ *  Duagon Ionia backplane core Linux support
+ *
+ *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ */
 
 #include <linux/types.h>
 #include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
 
 #include "ionia-serial.h"
 #include "ionia-rpc.h"
 #include "ionia-rpc-log.h"
 
-struct uart_port;
-
-int ionia_rpc_send(struct uart_port* port, u8 proto, u8 cmd, char *outb, size_t outsz, char *inb, size_t insz)
+struct ionia_rpc_buf *ionia_rpc_buf_get(u8 proto, u8 cmd)
 {
-	ionia_uart_putc(port, proto);
-	ionia_uart_putc(port, cmd);
+	struct ionia_rpc_buf *rpcbuf = kzalloc(GFP_KERNEL, sizeof(struct ionia_rpc_buf));
+	rpcbuf->protocol = proto;
+	rpcbuf->command = cmd;
+	return rpcbuf;
+}
+
+int ionia_rpc_buf_put(struct ionia_rpc_buf *rpcbuf)
+{
+	kfree(rpcbuf);
 	return 0;
 }
 
-int ionia_rpc_send_hdr(struct uart_port* port, u8 proto, u8 cmd)
+int ionia_rpc_buf_write_u32(struct ionia_rpc_buf *rpcbuf, u32 val)
 {
-	ionia_uart_putc(port, proto);
-	ionia_uart_putc(port, cmd);
+	u32 bufval = cpu_to_be32(val);
+
+	if (rpcbuf->wptr + sizeof(bufval) > sizeof(rpcbuf->buf)) {
+		pr_err("ionia_rpc_buf_write_u32(): buffer overflow\n");
+		return -ENOMEM;
+	}
+
+	memcpy(&rpcbuf->buf[rpcbuf->wptr], &bufval, sizeof(bufval));
+	rpcbuf->wptr += sizeof(bufval);
 	return 0;
 }
 
-int ionia_rpc_send_u32(struct uart_port* port, u32 data)
+int ionia_rpc_buf_send(struct ionia_rpc_buf *rpcbuf, struct uart_port *port)
 {
-	char* c = (char*)&data;
-	data = cpu_to_be32(data);
+	int x;
+	int payload_size = rpcbuf->wptr / 4; // 32bit words
 
-	ionia_uart_putc(port, c[0]);
-	ionia_uart_putc(port, c[1]);
-	ionia_uart_putc(port, c[2]);
-	ionia_uart_putc(port, c[3]);
-	return 0;
-}
+	ionia_uart_putc(port, rpcbuf->protocol);
+	ionia_uart_putc(port, rpcbuf->command);
+	ionia_uart_putc(port, payload_size & 0xFF);
+	ionia_uart_putc(port, payload_size >> 8);
 
-u32 ionia_rpc_read_u32(struct uart_port *port)
-{
-	u32 data;
-	char *c = (char*)&data;
+	for (x=0; x<rpcbuf->wptr; x++)
+		ionia_uart_putc(port, rpcbuf->buf[x]);
 
-	c[0] = ionia_uart_getc(port);
-	c[1] = ionia_uart_getc(port);
-	c[2] = ionia_uart_getc(port);
-	c[3] = ionia_uart_getc(port);
-	return be32_to_cpu(data);
-}
-
-int ionia_log_channel_enable(struct uart_port *port, int mode, int mask)
-{
-	u32 package = mode + (mask << 16);
-	ionia_rpc_send_hdr(port, IONIA_RPC_PROTO_LOG, IONIA_LOG_CMD_CHANNEL_ENABLE);
-	ionia_rpc_send_u32(port, package);
 	return 0;
 }

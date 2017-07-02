@@ -1,3 +1,12 @@
+/*
+ *  Duagon Ionia backplane core Linux support
+ *
+ *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 as published by
+ * the Free Software Foundation
+ */
 
 #include <linux/module.h>
 #include <linux/platform_device.h>
@@ -27,7 +36,7 @@
 
 #define RSR_MULTIPLIER		4
 
-#define HACK_LOOPBACK
+//#define HACK_LOOPBACK
 
 struct ionia_port {
 	struct uart_port port;
