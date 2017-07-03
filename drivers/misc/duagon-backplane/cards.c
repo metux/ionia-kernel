@@ -82,3 +82,66 @@ const struct ionia_card_type ionia_card_types[] = {
 };
 
 const int ionia_card_types_max = ARRAY_SIZE(ionia_card_types);
+
+const struct ionia_card ionia_cards[] = {
+	/* power supply */
+	{
+		.id            = 0,
+		.model         = "i012",
+		.title         = "20W EN50155 compliant Power Supply",
+		.module_type   = IONIA_MODULE_TYPE_POWER,
+		.protocol_type = IONIA_PROTOCOL_POWER,
+		.slot_width    = 4,
+		.width         = 4,
+		.slot_pos      = 1,
+		.mod_pos       = 3,
+	},
+	/* cpu module */
+	{
+		.id            = 1,
+		.model         = "i103",
+		.title         = "ARM Cortex-A8 based CPU module",
+		.module_type   = IONIA_MODULE_TYPE_POWER,
+		.protocol_type = IONIA_PROTOCOL_POWER,
+		.slot_width    = 4,
+		.width         = 8,
+		.slot_pos      = 1,
+		.mod_pos       = 7,
+	},
+	/* empty space */
+	{
+		.slot_width    = 3,
+	},
+	{
+		.slot_width    = 3,
+	},
+	{
+		.slot_width    = 3,
+	},
+	/* ADC card */
+	{
+		.id            = 2,
+		.model         = "i701",
+		.title         = "intelligent 4 channel 1bit ADC module for Jaquet",
+		.module_type   = IONIA_MODULE_TYPE_LOG,
+		.protocol_type = IONIA_PROTOCOL_LOG,
+		.slot_width    = 4,
+		.width         = 3,
+		.slot_pos      = 1,
+		.mod_pos       = 21,
+	},
+	/* DIO Dcard */
+	{
+		.id            = 3,
+		.model         = "i202",
+		.title         = "8 digital outputs, 8 digital inputs",
+		.module_type   = IONIA_MODULE_TYPE_IO,
+		.protocol_type = IONIA_PROTOCOL_IO,
+		.slot_width    = 3,
+		.width         = 3,
+		.slot_pos      = 1,
+		.mod_pos       = 24,
+	},
+};
+
+const int ionia_cards_max = ARRAY_SIZE(ionia_cards);

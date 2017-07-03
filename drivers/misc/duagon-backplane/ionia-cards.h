@@ -24,4 +24,16 @@ struct ionia_card_type {
 const struct ionia_card_type ionia_card_types[];
 const int ionia_card_types_max;
 
+struct ionia_card {
+	char *model;
+	char *title;
+	int id;
+	ionia_module_type_t module_type;
+	ionia_protocol_t protocol_type;
+	int slot_width;
+	int width;
+	int slot_pos;
+	int mod_pos;
+};
+
 #endif /* __DUAGON_IONIA_CARDS_H */
