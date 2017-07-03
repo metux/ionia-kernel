@@ -29,5 +29,9 @@ enum {
 
 int ionia_log_init(ionia_rpc_t *rpc);
 int ionia_log_channel_enable(ionia_rpc_t *rpc, int mode, int mask);
+int ionia_log_set_samplerate(ionia_rpc_t *rpc, int rate);
+int ionia_log_get_data(ionia_rpc_t *rpc, u32 *data, size_t sz);
+int ionia_log_clear_buffer(ionia_rpc_t *rpc);
+int ionia_log_pattern_gen_enable(ionia_rpc_t *rpc, int enable);
 
 #endif /* __DUAGON_RPC_H */

@@ -16,52 +16,106 @@
 #include "ionia-rpc.h"
 #include "ionia-log.h"
 
-#define LOG_DRIVER_VERSION 0x00010001  /*!< 0xMMMMmmmm MMMM=major=1 mmmm=minor=1 */
+#define LOG_DRIVER_VERSION		0x00010001	/* 0xMMMMmmmm MMMM=major=1 mmmm=minor=1 */
+#define LOG_SENSOR_DATA_WORD_SIZE	120		/* sensor data size */
 
-struct uart_port;
+#define LOGRPC_BEGIN(cmd)							\
+	int ret;								\
+	u32 log_errno;								\
+	ionia_rpcbuf_t *rpcbuf = ionia_rpcbuf_get(IONIA_PROTOCOL_LOG, cmd);	\
 
-int ionia_log_channel_enable(ionia_rpc_t *rpc, int mode, int mask)
-{
-	int ret;
-	ionia_rpcbuf_t *rpcbuf = ionia_rpcbuf_get(IONIA_PROTOCOL_LOG, IONIA_LOG_CMD_CHANNEL_ENABLE);
+#define LOGRPC_END								\
+	goto out;								\
+err:										\
+	pr_err("%s: error: %M\n", __func__, -ret);				\
+out:										\
+	ionia_rpcbuf_put(rpcbuf);						\
+	return ret;								\
 
-	if ((ret = ionia_rpcbuf_write_u32(rpcbuf, mode + (mask << 16))))
+#define LOGRPC_END_OKVAL(v)							\
+	ret = v;								\
+	LOGRPC_END								\
+
+#define LOGRPC_PAR_U32(v)							\
+	if ((ret = ionia_rpcbuf_write_u32(rpcbuf, v)))				\
 		goto out;
 
-	if ((ret = ionia_rpc_call(rpc, rpcbuf)))
+#define LOGRPC_CALL								\
+	if ((ret = ionia_rpc_call(rpc, rpcbuf)))				\
 		goto out;
 
-out:
-	ionia_rpcbuf_put(rpcbuf);
-	return ret;
-}
+#define LOGRPC_RET_ERR								\
+	if ((ret = ionia_rpcbuf_read_u32(rpcbuf, &log_errno)))			\
+		goto err;
+
+#define LOGRPC_RET_U32(rv)							\
+	if ((ret = ionia_rpcbuf_read_u32(rpcbuf, rv)))				\
+		goto err;
+
+#define LOGRPC_RET_BLOCK(rv,sz)							\
+	if ((ret = ionia_rpcbuf_read_block(rpcbuf, rv, sz)))			\
+		goto err;
 
 int ionia_log_init(ionia_rpc_t *rpc)
 {
-	int ret;
 	u32 version;
-	u32 log_errno;
-	ionia_rpcbuf_t *rpcbuf = ionia_rpcbuf_get(IONIA_PROTOCOL_LOG, IONIA_LOG_CMD_INIT);
 
-	if ((ret = ionia_rpcbuf_write_u32(rpcbuf, LOG_DRIVER_VERSION)))
-		goto err;
-
-	if ((ret = ionia_rpc_call(rpc, rpcbuf)))
-		goto err;
-
-	if ((ret = ionia_rpcbuf_read_u32(rpcbuf, &version)))
-		goto err;
-
-	if ((ret = ionia_rpcbuf_read_u32(rpcbuf, &log_errno)))
-		goto err;
+	LOGRPC_BEGIN(IONIA_LOG_CMD_INIT)
+	LOGRPC_PAR_U32(LOG_DRIVER_VERSION)
+	LOGRPC_CALL
+	LOGRPC_RET_U32(&version)
+	LOGRPC_RET_ERR
 
 	pr_info("ionia_log_init: version=%08X\n", version);
-	goto out;
 
-err:
-	pr_err("ionia_log_init: err=%M\n", -ret);
+	LOGRPC_END
+}
 
-out:
-	ionia_rpcbuf_put(rpcbuf);
-	return ret;
+int ionia_log_channel_enable(ionia_rpc_t *rpc, int mode, int mask)
+{
+	LOGRPC_BEGIN(IONIA_LOG_CMD_CHANNEL_ENABLE)
+	LOGRPC_PAR_U32(mode + (mask << 16))
+	LOGRPC_CALL
+	LOGRPC_RET_ERR
+	LOGRPC_END
+}
+
+int ionia_log_set_samplerate(ionia_rpc_t *rpc, int rate)
+{
+	LOGRPC_BEGIN(IONIA_LOG_CMD_SAMPLING_RATE)
+	LOGRPC_PAR_U32(rate)
+	LOGRPC_CALL
+	LOGRPC_RET_ERR
+	LOGRPC_END
+}
+
+int ionia_log_pattern_gen_enable(ionia_rpc_t *rpc, int enable)
+{
+	LOGRPC_BEGIN(IONIA_LOG_CMD_PATTERN_GEN);
+	LOGRPC_PAR_U32(0)
+	LOGRPC_CALL
+	LOGRPC_RET_ERR
+	LOGRPC_END
+}
+
+int ionia_log_clear_buffer(ionia_rpc_t *rpc)
+{
+	LOGRPC_BEGIN(IONIA_LOG_CMD_BUFFER_CLEAR);
+	LOGRPC_PAR_U32(0x01);
+	LOGRPC_CALL
+	LOGRPC_RET_ERR
+	LOGRPC_END
+}
+
+
+int ionia_log_get_data(ionia_rpc_t *rpc, u32 *data, size_t sz)
+{
+	LOGRPC_BEGIN(IONIA_LOG_CMD_SAMPLING_DATA_GET)
+	if (sz < LOG_SENSOR_DATA_WORD_SIZE) {
+		pr_err("%s: sample buffer %d too small\n", __func__, sz);
+		return -EINVAL;
+	}
+	LOGRPC_RET_BLOCK(data, LOG_SENSOR_DATA_WORD_SIZE)
+	LOGRPC_RET_ERR
+	LOGRPC_END_OKVAL(LOG_SENSOR_DATA_WORD_SIZE)
 }

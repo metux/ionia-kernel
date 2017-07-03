@@ -31,8 +31,8 @@ typedef struct
 {
 	ionia_protocol_t protocol;
 	u8 command;
-	int wptr;
-	int rptr;
+	int write_ptr;
+	int read_ptr;
 	char buf[1024];
 } ionia_rpcbuf_t;
 
@@ -51,5 +51,6 @@ ionia_rpcbuf_t *ionia_rpcbuf_get(ionia_protocol_t proto, u8 cmd);
 int             ionia_rpcbuf_put(ionia_rpcbuf_t *rpcbuf);
 int             ionia_rpcbuf_write_u32(ionia_rpcbuf_t *rpcbuf, u32 val);
 int             ionia_rpcbuf_read_u32(ionia_rpcbuf_t *rpcbuf, u32 *val);
+int             ionia_rpcbuf_read_block(ionia_rpcbuf_t *rpcbuf, void *val, size_t sz);
 
 #endif /* __DUAGON_RPC_H */

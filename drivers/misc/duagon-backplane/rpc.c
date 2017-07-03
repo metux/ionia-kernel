@@ -49,43 +49,54 @@ int ionia_rpcbuf_write_u32(ionia_rpcbuf_t *rpcbuf, u32 val)
 {
 	u32 v = cpu_to_be32(val);
 
-	if (rpcbuf->wptr + sizeof(v) > sizeof(rpcbuf->buf)) {
+	if (rpcbuf->write_ptr + sizeof(v) > sizeof(rpcbuf->buf)) {
 		pr_err("ionia_rpcbuf_write_u32(): buffer overflow\n");
 		return -E2BIG;
 	}
 
-	memcpy(&rpcbuf->buf[rpcbuf->wptr], &v, sizeof(v));
-	rpcbuf->wptr += sizeof(v);
+	memcpy(&rpcbuf->buf[rpcbuf->write_ptr], &v, sizeof(v));
+	rpcbuf->write_ptr += sizeof(v);
+	return 0;
+}
+
+int ionia_rpcbuf_read_block(ionia_rpcbuf_t *rpcbuf, void *buf, size_t sz)
+{
+	if (rpcbuf->read_ptr + sz > sizeof(rpcbuf->buf)) {
+		pr_err("%s): buffer overflow\n", __func__);
+		return -E2BIG;
+	}
+
+	memcpy(buf, &rpcbuf->buf[rpcbuf->read_ptr], sz);
+	rpcbuf->read_ptr += sz;
+
 	return 0;
 }
 
 int ionia_rpcbuf_read_u32(ionia_rpcbuf_t *rpcbuf, u32 *val)
 {
-	u32 v;
+	u32 rv;
+	int ret = ionia_rpcbuf_read_block(rpcbuf, &rv, sizeof(rv));
 
-	if (rpcbuf->wptr + sizeof(v) > sizeof(rpcbuf->buf)) {
-		pr_err("ionia_rpcbuf_write_u32(): buffer overflow\n");
-		return -E2BIG;
+	if (ret) {
+		pr_err("%s: read error: %M\n", __func__, -ret);
+		return ret;
 	}
 
-	memcpy(&v, &rpcbuf->buf[rpcbuf->wptr], sizeof(v));
-	rpcbuf->wptr += sizeof(v);
-	*val = be32_to_cpu(v);
-
+	*val = be32_to_cpu(rv);
 	return 0;
 }
 
 int ionia_rpc_send(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 {
 	int x;
-	int payload_size = rpcbuf->wptr / 4; // 32bit words
+	int payload_size = rpcbuf->write_ptr / 4; // 32bit words
 
 	ionia_uart_putc(rpc->port, rpcbuf->protocol);
 	ionia_uart_putc(rpc->port, rpcbuf->command);
 	ionia_uart_putc(rpc->port, payload_size & 0xFF);
 	ionia_uart_putc(rpc->port, payload_size >> 8);
 
-	for (x=0; x<rpcbuf->wptr; x++)
+	for (x=0; x<rpcbuf->write_ptr; x++)
 		ionia_uart_putc(rpc->port, rpcbuf->buf[x]);
 
 	return 0;
