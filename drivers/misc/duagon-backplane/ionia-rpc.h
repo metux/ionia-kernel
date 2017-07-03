@@ -27,18 +27,29 @@
 
 struct uart_port;
 
-struct ionia_rpc_buf
+typedef struct
 {
 	ionia_protocol_t protocol;
 	u8 command;
 	int wptr;
 	int rptr;
 	char buf[1024];
-};
+} ionia_rpcbuf_t;
 
-struct ionia_rpc_buf *ionia_rpc_buf_get(ionia_protocol_t proto, u8 cmd);
-int ionia_rpc_buf_put(struct ionia_rpc_buf *rpcbuf);
-int ionia_rpc_buf_write_u32(struct ionia_rpc_buf *rpcbuf, u32 val);
-int ionia_rpc_buf_send(struct ionia_rpc_buf *buf, struct uart_port *port);
+typedef struct
+{
+	struct uart_port *port;
+} ionia_rpc_t;
+
+ionia_rpc_t *ionia_rpc_get_uart(struct uart_port *port);
+void         ionia_rpc_put(ionia_rpc_t *rpc);
+int          ionia_rpc_send(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf);
+int          ionia_rpc_recv(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf);
+int          ionia_rpc_call(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf);
+
+ionia_rpcbuf_t *ionia_rpcbuf_get(ionia_protocol_t proto, u8 cmd);
+int             ionia_rpcbuf_put(ionia_rpcbuf_t *rpcbuf);
+int             ionia_rpcbuf_write_u32(ionia_rpcbuf_t *rpcbuf, u32 val);
+int             ionia_rpcbuf_read_u32(ionia_rpcbuf_t *rpcbuf, u32 *val);
 
 #endif /* __DUAGON_RPC_H */

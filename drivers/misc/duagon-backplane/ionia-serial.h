@@ -21,5 +21,6 @@ void ionia_serial_dumpall(struct platform_device *pdev);
 
 int ionia_uart_getc(struct uart_port *port);
 int ionia_uart_putc(struct uart_port *port, char c);
+int ionia_uart_set_loopback(struct uart_port *port, int enable);
 
 #endif /* __DUAGON_IONIA_SERIAL_H */

@@ -18,10 +18,22 @@
 #include "ionia-pdata.h"
 #include "ionia-serial.h"
 #include "ionia-rpc.h"
-#include "ionia-rpc-log.h"
+#include "ionia-log.h"
 
 #define IONIA_DEBUG_CMD_LOOPTEST	666
 #define IONIA_DEBUG_CMD_UART_DUMP	1
+#define IONIA_DEBUG_CMD_UART_LOOPBACK	2
+
+static void set_loopback(struct platform_device *pdev)
+{
+	int x;
+	dev_info(&pdev->dev, "setting devices to loopback\n");
+
+	for (x=0; x<i101_cards_max; x++) {
+		ionia_uart_set_loopback(i101_cards[x].port, 1);
+	}
+	ionia_serial_dumpall(pdev);
+}
 
 static int cmd_write_op(void *data, u64 value)
 {
@@ -36,6 +48,9 @@ static int cmd_write_op(void *data, u64 value)
 		case IONIA_DEBUG_CMD_UART_DUMP:
 			ionia_serial_dumpall(pdev);
 		break;
+		case IONIA_DEBUG_CMD_UART_LOOPBACK:
+			set_loopback(pdev);
+		break;
 		default:
 			dev_info(&pdev->dev, "unhandled debug command: %lld\n", value);
 		break;
@@ -47,9 +62,16 @@ static int cmd_write_op(void *data, u64 value)
 static int test_write_op(void *data, u64 value)
 {
 	struct platform_device *pdev = data;
+	ionia_rpc_t *rpc;
 
 	dev_info(&pdev->dev, "test: %lld\n", value);
-	ionia_log_channel_enable(i101_cards[value].port, 0x0f, 0x0f);
+
+	rpc = ionia_rpc_get_uart(i101_cards[value].port);
+
+	ionia_log_init(rpc);
+	ionia_log_channel_enable(rpc, 0x0f, 0x0f);
+
+	ionia_rpc_put(rpc);
 
 	return 0;
 }

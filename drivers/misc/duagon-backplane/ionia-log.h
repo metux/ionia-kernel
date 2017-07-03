@@ -8,8 +8,10 @@
  * the Free Software Foundation
  */
 
-#ifndef __DUAGON_RPC_LOG_H
-#define __DUAGON_RPC_LOG_H
+#ifndef __DUAGON_LOG_H
+#define __DUAGON_LOG_H
+
+#include "ionia-rpc.h"
 
 enum {
 	IONIA_LOG_CMD_INIT		= 0,	/* Reset modules? Self test ? tbd */
@@ -25,8 +27,7 @@ enum {
 	IONIA_LOG_CMD_SAMPLING_DATA_GET	= 12	/* Get Sensor Data Array */
 };
 
-struct uart_port;
+int ionia_log_init(ionia_rpc_t *rpc);
+int ionia_log_channel_enable(ionia_rpc_t *rpc, int mode, int mask);
 
-int ionia_log_channel_enable(struct uart_port *port, int mode, int mask);
-
-#endif /* __DUAGON_RPC_LOG_H */
+#endif /* __DUAGON_RPC_H */
