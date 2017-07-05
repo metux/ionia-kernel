@@ -41,6 +41,7 @@ struct i101_card i101_cards[] = {
 	CARD_DECL_IO("BP slot 7",    0x0d0),
 	CARD_DECL_IO("BP slot 7",    0x0e0),
 	CARD_DECL_IO("BP slot 8",    0x0f0),
+	CARD_DECL_IO("BP@0x100",     0x100),
 	CARD_DECL_IO("BP slot 8",    0x110),
 	CARD_DECL_IO("BP slot 9",    0x120),
 	CARD_DECL_IO("BP slot 9",    0x130),
@@ -49,6 +50,7 @@ struct i101_card i101_cards[] = {
 	CARD_DECL_IO("BP slot 10",   0x160),
 	CARD_DECL_IO("BP slot 10",   0x170),
 	CARD_DECL_IO("BP slot 10",   0x180),
+	CARD_DECL_IO("BP @190",      0x190),
 };
 
 const int i101_cards_max = ARRAY_SIZE(i101_cards);
