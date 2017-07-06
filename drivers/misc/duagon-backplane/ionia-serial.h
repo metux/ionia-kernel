@@ -11,16 +11,25 @@
 #ifndef __DUAGON_IONIA_SERIAL_H
 #define __DUAGON_IONIA_SERIAL_H
 
+#include <linux/serial_core.h>
+
+#include "ionia-fifo.h"
+
+struct task_struct;
 struct platform_device;
 struct uart_port;
 
-void ionia_uart_dump(struct uart_port *port);
+struct ionia_port {
+	struct uart_port port;
+	int card;
+	struct platform_device *bp_pdev;
+	struct task_struct *kthread;
+	int kthread_running;
+	const char* name;
+	ionia_fifo_t fifo;
+};
 
 int  ionia_serial_init(struct platform_device *pdev);
 void ionia_serial_dumpall(struct platform_device *pdev);
-
-int ionia_uart_getc(struct uart_port *port);
-int ionia_uart_putc(struct uart_port *port, char c);
-int ionia_uart_set_loopback(struct uart_port *port, int enable);
 
 #endif /* __DUAGON_IONIA_SERIAL_H */

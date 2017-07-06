@@ -20,18 +20,6 @@
 #define IONIA_BACKPLANE_DRIVER_NAME	"ionia-backplane"
 #define IONIA_BACKPLANE_DEVICE_NAME	"ionia-backplane"
 
-#define I101_HOST_BASE_CHANNEL_MAX	2
-#define I101_HOST_BASE_CHANNEL_NONE	0x0
-
-/* backplane serial interface registers (2G) */
-#define IONIA_BACKPLANE_SERIAL_REG_READWRITE	0x00	/* read/write */
-#define IONIA_BACKPLANE_SERIAL_REG_READCUR	0x02	/* read current w/o consumption */
-#define IONIA_BACKPLANE_SERIAL_REG_RX_SIZE	0x04
-#define IONIA_BACKPLANE_SERIAL_REG_TX_SIZE	0x06
-#define IONIA_BACKPLANE_SERIAL_REG_CONF		0x08
-#define IONIA_BACKPLANE_SERIAL_REG_LINESTAT	0x0a
-#define IONIA_BACKPLANE_SERIAL_REG_FIFO_SIZE	0x0e
-
 #define IONIA_BACKPLANE_STATUS_DOWN     0
 #define IONIA_BACKPLANE_STATUS_PROBED   1       // loop test went through
 
@@ -49,14 +37,13 @@
 
 struct platform_device;
 struct ionia_port;
-struct uart_port;
 
 struct i101_card
 {
 	/* register base IDs (not byte offsets) of the channels */
 	int base;
 	const char* name;
-	struct uart_port *port;
+	struct ionia_port *port;
 };
 
 extern struct i101_card i101_cards[];

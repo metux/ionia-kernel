@@ -18,6 +18,7 @@
 #include <linux/string.h>
 
 #include "ionia.h"
+#include "ionia-fifo.h"
 
 #define NR_UART			20
 #define IONIA_SERIAL_MAJOR	TTY_MAJOR
@@ -26,17 +27,7 @@
 #define UART_POLL_MIN		100000
 #define UART_POLL_MAX		200000
 
-#define BITMASK_LSR_DR		0x01
-#define BITMASK_LSR_LOOPBACK	0x02
-#define BITMASK_LSR_FLUSHTX	0x04
-
-#define BITMASK_LSR_THRE	0x20
-#define BITMASK_LSR_DEVREADY	0x40
-#define BITMASK_LSR_HOSTREADY	0x80
-
-#define RSR_MULTIPLIER		4
-
-//#define HACK_LOOPBACK
+#define HACK_LOOPBACK
 
 struct ionia_port {
 	struct uart_port port;
@@ -45,120 +36,24 @@ struct ionia_port {
 	struct task_struct *kthread;
 	int kthread_running;
 	const char* name;
+	ionia_fifo_t fifo;
 };
 
 uint16_t ionia_uart_getreg(struct uart_port *port, uint16_t reg)
 {
 	struct ionia_port *pp = container_of(port, struct ionia_port, port);
-	struct ionia_backplane_platform_data *pdata = pp->bp_pdev->dev.platform_data;
-	return readw(pdata->registers + i101_cards[pp->card].base + reg);
+	return ionia_fifo_getreg(&pp->fifo, reg);
 }
 
 void ionia_uart_setreg(struct uart_port *port, uint16_t reg, uint16_t val)
 {
 	struct ionia_port *pp = container_of(port, struct ionia_port, port);
-	struct ionia_backplane_platform_data *pdata = pp->bp_pdev->dev.platform_data;
-	writew(val, pdata->registers + i101_cards[pp->card].base + reg);
+	ionia_fifo_setreg(&pp->fifo, reg, val);
 }
 
 uint16_t ionia_uart_fifo_size(struct uart_port *port)
 {
-	return ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_FIFO_SIZE) << 7;
-}
-
-uint16_t ionia_uart_rx_size(struct uart_port *port)
-{
-	return ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_RX_SIZE);
-}
-
-uint16_t ionia_uart_tx_size(struct uart_port *port)
-{
-	uint16_t rv = ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_TX_SIZE);
-	if (rv == 0xFF)
-		rv = ionia_uart_fifo_size(port);
-	return rv;
-}
-
-int ionia_uart_set_loopback(struct uart_port *port, int enable)
-{
-	uint16_t rv = ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_LINESTAT);
-	if (enable)
-		rv |= BITMASK_LSR_LOOPBACK;
-	else
-		rv &= ~BITMASK_LSR_LOOPBACK;
-	ionia_uart_setreg(port, IONIA_BACKPLANE_SERIAL_REG_LINESTAT, rv);
-	rv = ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_LINESTAT);
-	return 0;
-}
-
-static int ionia_uart_connected(struct uart_port *port)
-{
-	// bits must be 01x000xx
-	return ((ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_LINESTAT) & 0xdc) == 0x40);
-}
-
-int ionia_uart_num_recv(struct uart_port* port)
-{
-	int rxsz;
-	struct ionia_port *pp = container_of(port, struct ionia_port, port);
-
-	// check for data ready flag
-	if ((ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_LINESTAT) & BITMASK_LSR_DR)) {
-		dev_info(port->dev, "[%2d] no rx data ready\n", pp->card);
-		return 0;
-	}
-
-	rxsz = ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_RX_SIZE);
-
-	if (rxsz == 0xFF) {
-		dev_warn(port->dev, "[%2d] rx buffer full\n", pp->card);
-		rxsz = ionia_uart_fifo_size(port);
-	}
-
-	return rxsz * RSR_MULTIPLIER;
-}
-
-void ionia_uart_dump(struct uart_port *port)
-{
-	struct ionia_port *pp = container_of(port, struct ionia_port, port);
-	uint16_t lsr = ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_LINESTAT);
-
-	dev_info(port->dev,
-		"[%2d] @ 0x%03X fifo %d\n lsr 0x%2X %c%c%c%c%c%c %s cf: 0x%02X rx size: %4d tx size: %4d avail: %4d\n",
-		pp->card,
-		i101_cards[pp->card].base,
-		ionia_uart_fifo_size(port),
-		lsr,
-		(lsr & BITMASK_LSR_DR        ? 'R':'_'),
-		(lsr & BITMASK_LSR_LOOPBACK  ? 'L':'_'),
-		(lsr & BITMASK_LSR_FLUSHTX   ? 'F':'_'),
-		(lsr & BITMASK_LSR_THRE      ? 'T':'_'),
-		(lsr & BITMASK_LSR_DEVREADY  ? 'D':'_'),
-		(lsr & BITMASK_LSR_HOSTREADY ? 'H':'_'),
-		(ionia_uart_connected(port) ? "CON" : "dis"),
-		ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_CONF),
-		ionia_uart_rx_size(port),
-		ionia_uart_tx_size(port),
-		ionia_uart_num_recv(port)
-	);
-}
-
-int ionia_uart_putc(struct uart_port *port, char c)
-{
-	dev_info(port->dev, "serial_port_putc() c=%X\n", c);
-	ionia_uart_setreg(port, IONIA_BACKPLANE_SERIAL_REG_READWRITE, c);
-	ionia_backplane_waitreg();
-	return 0;
-}
-
-int ionia_uart_getc(struct uart_port *port)
-{
-	struct ionia_port *pp = container_of(port, struct ionia_port, port);
-	uint16_t ret = ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_READWRITE);
-	uint16_t rxs = ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_RX_SIZE);
-	uint16_t txs = ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_TX_SIZE);
-	dev_info(port->dev, "[%2d] receive char: %04X -- rxs=%4d txs=%4d\n", pp->card, ret, rxs, txs);
-	return (char)ret;
+	return ionia_uart_getreg(port, IONIA_FIFO_REG_FIFO_SIZE) << 7;
 }
 
 static unsigned int ionia_uart_tx_empty(struct uart_port *port)
@@ -174,9 +69,9 @@ static unsigned int ionia_uart_get_mctrl(struct uart_port *port)
 	struct ionia_port *pp = container_of(port, struct ionia_port, port);
 	int ret = TIOCM_DSR | TIOCM_CTS;	// FIXME
 
-	if (ionia_uart_connected(port))
+	if (ionia_fifo_connected(&pp->fifo))
 		ret |= TIOCM_CAR;
-	if (ionia_uart_getreg(port, IONIA_BACKPLANE_SERIAL_REG_LINESTAT) & BITMASK_LSR_LOOPBACK)
+	if (ionia_fifo_get_loopback(&pp->fifo))
 		ret |= TIOCM_LOOP;
 
 	sprint_mctrl(buf, sizeof(buf), ret);
@@ -191,7 +86,7 @@ static void ionia_uart_set_mctrl(struct uart_port *port, unsigned int sigs)
 	char buf[1024];
 	sprint_mctrl(buf, sizeof(buf), sigs);
 	dev_info(port->dev, "[%2d] set_mctrl: sigs=%s\n", pp->card, buf);
-//	ionia_uart_set_loopback(port, sigs & TIOCM_LOOP);
+//	ionia_fifo_set_loopback(&pp->fifo, sigs & TIOCM_LOOP);
 }
 
 static void ionia_uart_stop_tx(struct uart_port *port)
@@ -226,13 +121,13 @@ static void ionia_uart_set_termios(struct uart_port *port,
 static void ionia_uart_rx_chars(struct uart_port *port)
 {
 	struct ionia_port *pp = container_of(port, struct ionia_port, port);
-	uint16_t rx_size = ionia_uart_rx_size(port);
+	uint16_t rx_size = ionia_fifo_rx_size(&pp->fifo);
 
 	if (!rx_size)
 		return; // nothing to do
 
 	while (rx_size) {
-		int ch = ionia_uart_getc(port);
+		int ch = ionia_fifo_getc(&pp->fifo);
 		port->icount.rx++;
 		dev_info(&(pp->bp_pdev->dev), " rx char: %02X => \"%c\"\n", ch, ch);
 		uart_insert_char(port, 0, 0, ch, TTY_NORMAL);
@@ -252,12 +147,12 @@ static void ionia_uart_tx_chars(struct uart_port *port)
 	unsigned int pending, count;
 
 #ifdef HACK_LOOPBACK
-	ionia_uart_set_loopback(port, 1);
+	ionia_fifo_set_loopback(&pp->fifo, 1);
 #endif
 
 	if (port->x_char) {
 		/* Send special char - probably flow control */
-		ionia_uart_putc(port, port->x_char);
+		ionia_fifo_putc(&pp->fifo, port->x_char);
 		port->x_char = 0;
 		port->icount.tx++;
 		return;
@@ -267,16 +162,16 @@ static void ionia_uart_tx_chars(struct uart_port *port)
 	if (pending <= 0)
 		return; // nothing to do
 
-	dev_info(&(pp->bp_pdev->dev), "tx_chars() txsz: %d\n", ionia_uart_tx_size(port));
+	dev_info(&(pp->bp_pdev->dev), "tx_chars() txsz: %d\n", ionia_fifo_tx_size(&pp->fifo));
 
 	if (pending > 0) {
-		count = ionia_uart_tx_size(port);
+		count = ionia_fifo_tx_size(&pp->fifo);
 		if (count > pending)
 			count = pending;
 		if (count > 0) {
 			pending -= count;
 			while (count--) {
-				ionia_uart_putc(port, xmit->buf[xmit->tail]);
+				ionia_fifo_putc(&pp->fifo, xmit->buf[xmit->tail]);
 				xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 				port->icount.tx++;
 			}
@@ -299,7 +194,7 @@ static void ionia_uart_config_port(struct uart_port *port, int flags)
 	port->type = PORT_IONIA_BP;
 }
 
-int ionia_uart_kthread(void *data)
+static int ionia_uart_kthread(void *data)
 {
 	struct uart_port *port = data;
 	struct ionia_port *pp = container_of(port, struct ionia_port, port);
@@ -406,10 +301,11 @@ static const struct uart_ops ionia_uart_ops = {
 	.unthrottle	= ionia_uart_unthrottle,
 };
 
-struct uart_port *ionia_uart_init(struct platform_device *pdev, int card)
+struct ionia_port *ionia_port_init(struct platform_device *pdev, int card)
 {
 	struct ionia_port *port;
 	int ret;
+	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
 
 	dev_info(&pdev->dev, "add uart card %d: %s\n", card, i101_cards[card].name);
 	port = kzalloc(sizeof(struct ionia_port), GFP_KERNEL);
@@ -418,6 +314,14 @@ struct uart_port *ionia_uart_init(struct platform_device *pdev, int card)
 		dev_err(&pdev->dev, "uart_init: failed to allocate port structure\n");
 		return NULL;
 	}
+
+	ionia_fifo_init(
+		&port->fifo,
+		i101_cards[card].base,
+		card,
+		pdata->registers + i101_cards[card].base,
+		i101_cards[card].name,
+		pdev);
 
 	port->card		= card;			// FIXME: isnt port.line enough ?
 	port->name		= i101_cards[card].name;
@@ -438,7 +342,7 @@ struct uart_port *ionia_uart_init(struct platform_device *pdev, int card)
 		return NULL;
 	}
 
-	return &(port->port);
+	return port;
 }
 
 int ionia_serial_init(struct platform_device *pdev)
@@ -447,26 +351,21 @@ int ionia_serial_init(struct platform_device *pdev)
 	ionia_uart_driver.nr = i101_cards_max;
 	ret = uart_register_driver(&ionia_uart_driver);
 	for (card=0; card<i101_cards_max; card++) {
-		i101_cards[card].port = ionia_uart_init(pdev, card);
+		i101_cards[card].port = ionia_port_init(pdev, card);
 		if (i101_cards[card].port) {
 #ifdef HACK_LOOPBACK
-			ionia_uart_set_loopback(i101_cards[card].port, 1);
+			ionia_fifo_set_loopback(&(i101_cards[card].port->fifo), 1);
 #endif
-			ionia_uart_dump(i101_cards[card].port);
+			ionia_fifo_dump(&(i101_cards[card].port->fifo));
 		}
 	}
 	return 0;
-}
-
-void ionia_serial_dump(struct platform_device *pdev, int card)
-{
-	ionia_uart_dump(i101_cards[card].port);
 }
 
 void ionia_serial_dumpall(struct platform_device *pdev)
 {
 	int card;
 	for (card=0; card<i101_cards_max; card++) {
-		ionia_uart_dump(i101_cards[card].port);
+		ionia_fifo_dump(&(i101_cards[card].port->fifo));
 	}
 }

@@ -14,15 +14,13 @@
 #include <linux/errno.h>
 #include <linux/slab.h>
 
-#include "ionia-serial.h"
+#include "ionia-fifo.h"
 #include "ionia-rpc.h"
 
-struct uart_port;
-
-ionia_rpc_t *ionia_rpc_get_uart(struct uart_port *port)
+ionia_rpc_t *ionia_rpc_get_fifo(ionia_fifo_t *fifo)
 {
 	ionia_rpc_t *rpc = kzalloc(GFP_KERNEL, sizeof(ionia_rpc_t));
-	rpc->port = port;
+	rpc->fifo = fifo;
 	return rpc;
 }
 
@@ -91,13 +89,13 @@ int ionia_rpc_send(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 	int x;
 	int payload_size = rpcbuf->write_ptr / 4; // 32bit words
 
-	ionia_uart_putc(rpc->port, rpcbuf->protocol);
-	ionia_uart_putc(rpc->port, rpcbuf->command);
-	ionia_uart_putc(rpc->port, payload_size & 0xFF);
-	ionia_uart_putc(rpc->port, payload_size >> 8);
+	ionia_fifo_putc(rpc->fifo, rpcbuf->protocol);
+	ionia_fifo_putc(rpc->fifo, rpcbuf->command);
+	ionia_fifo_putc(rpc->fifo, payload_size & 0xFF);
+	ionia_fifo_putc(rpc->fifo, payload_size >> 8);
 
 	for (x=0; x<rpcbuf->write_ptr; x++)
-		ionia_uart_putc(rpc->port, rpcbuf->buf[x]);
+		ionia_fifo_putc(rpc->fifo, rpcbuf->buf[x]);
 
 	return 0;
 }

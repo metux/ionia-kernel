@@ -107,7 +107,6 @@ int ionia_log_clear_buffer(ionia_rpc_t *rpc)
 	LOGRPC_END
 }
 
-
 int ionia_log_get_data(ionia_rpc_t *rpc, u32 *data, size_t sz)
 {
 	LOGRPC_BEGIN(IONIA_LOG_CMD_SAMPLING_DATA_GET)

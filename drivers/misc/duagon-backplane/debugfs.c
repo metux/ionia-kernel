@@ -17,6 +17,7 @@
 #include "ionia.h"
 #include "ionia-pdata.h"
 #include "ionia-serial.h"
+#include "ionia-fifo.h"
 #include "ionia-rpc.h"
 #include "ionia-log.h"
 
@@ -30,7 +31,7 @@ static void set_loopback(struct platform_device *pdev)
 	dev_info(&pdev->dev, "setting devices to loopback\n");
 
 	for (x=0; x<i101_cards_max; x++) {
-		ionia_uart_set_loopback(i101_cards[x].port, 1);
+		ionia_fifo_set_loopback(&(i101_cards[x].port->fifo), 1);
 	}
 	ionia_serial_dumpall(pdev);
 }
@@ -66,7 +67,7 @@ static int test_write_op(void *data, u64 value)
 
 	dev_info(&pdev->dev, "test: %lld\n", value);
 
-	rpc = ionia_rpc_get_uart(i101_cards[value].port);
+	rpc = ionia_rpc_get_fifo(&(i101_cards[value].port->fifo));
 
 	ionia_log_init(rpc);
 	ionia_log_channel_enable(rpc, 0x0f, 0x0f);
