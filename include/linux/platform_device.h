@@ -368,4 +368,11 @@ extern int platform_pm_restore(struct device *dev);
 #define USE_PLATFORM_PM_SLEEP_OPS
 #endif
 
+#define pdev_crit(pdev, fmt, args...)	dev_crit(&pdev->dev, fmt, ##args)
+#define pdev_err(pdev, fmt, args...)	dev_err(&pdev->dev, fmt, ##args)
+#define pdev_warn(pdev, fmt, args...)	dev_warn(&pdev->dev, fmt, ##args)
+#define pdev_notice(pdev, fmt, args...)	dev_notice(&pdev->dev, fmt, ##args)
+#define pdev_info(pdev, fmt, args...)	dev_info(&pdev->dev, fmt, ##args)
+#define pdev_debug(pdev, fmt, args...)	dev_debug(&pdev->dev, fmt, ##args)
+
 #endif /* _PLATFORM_DEVICE_H_ */
