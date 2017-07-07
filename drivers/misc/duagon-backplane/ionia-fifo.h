@@ -24,30 +24,31 @@
 
 struct platform_device;
 
-typedef struct {
+struct ionia_fifo {
 	int base;
 	int slot;
 	void * __iomem regs;
 	const char *name;
 	struct platform_device *pdev;
-} ionia_fifo_t;
+};
 
-void ionia_fifo_init(ionia_fifo_t *fifo, int base, int slot, void * __iomem registers, const char *name, struct platform_device *pdev);
-void ionia_fifo_fini(ionia_fifo_t *fifo);
+void ionia_fifo_init(struct ionia_fifo *fifo, int base, int slot, void * __iomem registers, const char *name, struct platform_device *pdev);
+void ionia_fifo_fini(struct ionia_fifo *fifo);
 
-uint16_t ionia_fifo_getreg(ionia_fifo_t *fifo, uint16_t reg);
-void ionia_fifo_setreg(ionia_fifo_t *fifo, uint16_t reg, uint16_t val);
+uint16_t ionia_fifo_getreg(struct ionia_fifo *fifo, uint16_t reg);
+void ionia_fifo_setreg(struct ionia_fifo *fifo, uint16_t reg, uint16_t val);
 
-uint16_t ionia_fifo_size(ionia_fifo_t *fifo);
-uint16_t ionia_fifo_rx_size(ionia_fifo_t *fifo);
-uint16_t ionia_fifo_tx_size(ionia_fifo_t *fifo);
-int ionia_fifo_connected(ionia_fifo_t *fifo);
-int ionia_fifo_set_loopback(ionia_fifo_t *fifo, int enable);
-uint16_t ionia_fifo_linestat(ionia_fifo_t *fifo);
-int ionia_fifo_get_loopback(ionia_fifo_t *fifo);
-int ionia_fifo_putc(ionia_fifo_t *fifo, char c);
-int ionia_fifo_getc(ionia_fifo_t *fifo);
-int ionia_fifo_num_recv(ionia_fifo_t *fifo);
-void ionia_fifo_dump(ionia_fifo_t *fifo);
+uint16_t ionia_fifo_size(struct ionia_fifo *fifo);
+uint16_t ionia_fifo_rx_size(struct ionia_fifo *fifo);
+uint16_t ionia_fifo_tx_size(struct ionia_fifo *fifo);
+int ionia_fifo_connected(struct ionia_fifo *fifo);
+int ionia_fifo_set_loopback(struct ionia_fifo *fifo, int enable);
+uint16_t ionia_fifo_linestat(struct ionia_fifo *fifo);
+int ionia_fifo_get_loopback(struct ionia_fifo *fifo);
+int ionia_fifo_putc(struct ionia_fifo *fifo, char c);
+int ionia_fifo_getc(struct ionia_fifo *fifo);
+int ionia_fifo_num_recv(struct ionia_fifo *fifo);
+void ionia_fifo_dump(struct ionia_fifo *fifo);
+int ionia_fifo_recv(struct ionia_fifo *fifo, void* buf, size_t sz);
 
 #endif /* __DUAGON_IONIA_FIFO_H */

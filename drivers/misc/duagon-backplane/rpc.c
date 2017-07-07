@@ -17,9 +17,14 @@
 #include "ionia-fifo.h"
 #include "ionia-rpc.h"
 
-ionia_rpc_t *ionia_rpc_get_fifo(ionia_fifo_t *fifo)
+ionia_rpc_t *ionia_rpc_get_fifo(struct ionia_fifo *fifo)
 {
-	ionia_rpc_t *rpc = kzalloc(GFP_KERNEL, sizeof(ionia_rpc_t));
+	ionia_rpc_t *rpc = kzalloc(sizeof(ionia_rpc_t), GFP_KERNEL);
+	if (rpc == NULL) {
+		pr_err("rpc_get_fifo(): failed to allocate memory\n");
+		return NULL;
+	}
+
 	rpc->fifo = fifo;
 	return rpc;
 }
@@ -31,7 +36,7 @@ void ionia_rpc_put(ionia_rpc_t *rpc)
 
 ionia_rpcbuf_t *ionia_rpcbuf_get(ionia_protocol_t proto, u8 cmd)
 {
-	ionia_rpcbuf_t *rpcbuf = kzalloc(GFP_KERNEL, sizeof(ionia_rpcbuf_t));
+	ionia_rpcbuf_t *rpcbuf = kzalloc(sizeof(ionia_rpcbuf_t), GFP_KERNEL);
 	rpcbuf->protocol = proto;
 	rpcbuf->command = cmd;
 	return rpcbuf;
@@ -60,7 +65,7 @@ int ionia_rpcbuf_write_u32(ionia_rpcbuf_t *rpcbuf, u32 val)
 int ionia_rpcbuf_read_block(ionia_rpcbuf_t *rpcbuf, void *buf, size_t sz)
 {
 	if (rpcbuf->read_ptr + sz > sizeof(rpcbuf->buf)) {
-		pr_err("%s): buffer overflow\n", __func__);
+		pr_err("%s: buffer overflow\n", __func__);
 		return -E2BIG;
 	}
 
@@ -91,8 +96,8 @@ int ionia_rpc_send(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 
 	ionia_fifo_putc(rpc->fifo, rpcbuf->protocol);
 	ionia_fifo_putc(rpc->fifo, rpcbuf->command);
-	ionia_fifo_putc(rpc->fifo, payload_size & 0xFF);
 	ionia_fifo_putc(rpc->fifo, payload_size >> 8);
+	ionia_fifo_putc(rpc->fifo, payload_size & 0xFF);
 
 	for (x=0; x<rpcbuf->write_ptr; x++)
 		ionia_fifo_putc(rpc->fifo, rpcbuf->buf[x]);
@@ -102,7 +107,31 @@ int ionia_rpc_send(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 
 int ionia_rpc_recv(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 {
-	return -EINVAL;
+	char hdrbuf[4];
+	int ret;
+	size_t payload_size;
+
+	if ((ret = ionia_fifo_recv(rpc->fifo, &hdrbuf, sizeof(hdrbuf)))) {
+		pr_err("%s: error reading header: %M\n", __func__, -ret);
+		return ret;
+	}
+
+	rpcbuf->protocol = hdrbuf[0];
+	rpcbuf->command = hdrbuf[1];
+	payload_size = (hdrbuf[2] << 8) + hdrbuf[3];
+
+	if (payload_size > sizeof(rpcbuf->buf)) {
+		pr_err("%s: recv payload size too big: %d\n", __func__, payload_size);
+		return -E2BIG;
+	}
+
+	if ((ret = ionia_fifo_recv(rpc->fifo, &(rpcbuf->buf), payload_size))) {
+		pr_err("%s: failed to recv payload: %M\n", __func__, -ret);
+		return ret;
+	}
+
+	rpcbuf->write_ptr = payload_size;
+	return 0;
 }
 
 int ionia_rpc_call(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)

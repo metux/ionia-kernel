@@ -339,6 +339,10 @@ struct ionia_port *ionia_port_init(struct platform_device *pdev, int slot)
 	ionia_fifo_putc(&(port->slot->fifo), 0x00);
 	ionia_fifo_putc(&(port->slot->fifo), 0x00);
 	ionia_fifo_putc(&(port->slot->fifo), 0x00);
+	ionia_fifo_putc(&(port->slot->fifo), 0x00);
+	ionia_fifo_putc(&(port->slot->fifo), 0x00);
+	ionia_fifo_putc(&(port->slot->fifo), 0x00);
+	ionia_fifo_putc(&(port->slot->fifo), 0x00);
 #endif
 
 	if (ret) {

@@ -33,7 +33,7 @@ static void set_loopback(struct platform_device *pdev)
 	dev_info(&pdev->dev, "setting devices to loopback\n");
 
 	for (x=0; x<pdata->nr_slots; x++) {
-		ionia_fifo_set_loopback(&(pdata->slots[x].port->fifo), 1);
+		ionia_fifo_set_loopback(&(pdata->slots[x].fifo), 1);
 	}
 	ionia_serial_dumpall(pdev);
 }
@@ -62,7 +62,7 @@ static int cmd_write_op(void *data, u64 value)
 	return 0;
 }
 
-static int test_write_op(void *data, u64 value)
+static int log_init_write_op(void *data, u64 value)
 {
 	struct platform_device *pdev = data;
 	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
@@ -75,7 +75,30 @@ static int test_write_op(void *data, u64 value)
 		return -EINVAL;
 	}
 
-	rpc = ionia_rpc_get_fifo(&(pdata->slots[value].port->fifo));
+	rpc = ionia_rpc_get_fifo(&(pdata->slots[value].fifo));
+
+	ionia_log_init(rpc);
+	ionia_log_channel_enable(rpc, 0x0f, 0x0f);
+
+	ionia_rpc_put(rpc);
+
+	return 0;
+}
+
+static int io_init_write_op(void *data, u64 value)
+{
+	struct platform_device *pdev = data;
+	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
+	ionia_rpc_t *rpc;
+
+	dev_info(&pdev->dev, "test: %lld\n", value);
+
+	if (value > pdata->nr_slots) {
+		dev_warn(&pdev->dev, "slot number too large\n");
+		return -EINVAL;
+	}
+
+	rpc = ionia_rpc_get_fifo(&(pdata->slots[value].fifo));
 
 	ionia_log_init(rpc);
 	ionia_log_channel_enable(rpc, 0x0f, 0x0f);
@@ -86,7 +109,8 @@ static int test_write_op(void *data, u64 value)
 }
 
 DEFINE_SIMPLE_ATTRIBUTE(cmd_fops, NULL, cmd_write_op, "%llu\n");
-DEFINE_SIMPLE_ATTRIBUTE(test_fops, NULL, test_write_op, "%llu\n");
+DEFINE_SIMPLE_ATTRIBUTE(log_init_fops, NULL, log_init_write_op, "%llu\n");
+DEFINE_SIMPLE_ATTRIBUTE(io_init_fops, NULL, io_init_write_op, "%llu\n");
 
 void ionia_backplane_debugfs_init(struct platform_device* pdev)
 {
@@ -94,7 +118,8 @@ void ionia_backplane_debugfs_init(struct platform_device* pdev)
 
 	struct dentry* dbg_dir = debugfs_create_dir(IONIA_BACKPLANE_DRIVER_NAME, NULL);
 	debugfs_create_file("cmd", 0222, dbg_dir, pdev, &cmd_fops);
-	debugfs_create_file("test", 0222, dbg_dir, pdev, &test_fops);
+	debugfs_create_file("log_init", 0222, dbg_dir, pdev, &log_init_fops);
+	debugfs_create_file("io_init", 0222, dbg_dir, pdev, &io_init_fops);
 	debugfs_create_u32("state", 0444, dbg_dir, &(pdata->status));
 	pdata->debugfs_dentry = dbg_dir;
 }

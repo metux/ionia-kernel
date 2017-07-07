@@ -13,7 +13,6 @@
 
 #include <linux/types.h>
 
-#include "ionia-fifo.h"
 #include "ionia-protocol.h"
 
 #define IONIA_RPC_CHANNEL_SERCOM	0x00
@@ -26,23 +25,21 @@
 #define IONIA_RPC_CHANNEL_SVC		get_channel_for_aux(card_index)
 #define IONIA_RPC_CHANNEL_MVB		0x00
 
-struct ionia_port;
-
 typedef struct
 {
 	ionia_protocol_t protocol;
 	u8 command;
-	int write_ptr;
-	int read_ptr;
+	size_t write_ptr;
+	size_t read_ptr;
 	char buf[1024];
 } ionia_rpcbuf_t;
 
 typedef struct
 {
-	ionia_fifo_t *fifo;
+	struct ionia_fifo *fifo;
 } ionia_rpc_t;
 
-ionia_rpc_t *ionia_rpc_get_fifo(ionia_fifo_t *fifo);
+ionia_rpc_t *ionia_rpc_get_fifo(struct ionia_fifo *fifo);
 void         ionia_rpc_put(ionia_rpc_t *rpc);
 int          ionia_rpc_send(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf);
 int          ionia_rpc_recv(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf);

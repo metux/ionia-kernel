@@ -22,7 +22,7 @@ struct ionia_slot
 	int sz;
 	const char* name;
 	struct ionia_port *port;
-	ionia_fifo_t fifo;
+	struct ionia_fifo fifo;
 };
 
 extern struct ionia_slot ionia_slots[];

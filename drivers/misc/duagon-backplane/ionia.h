@@ -36,7 +36,6 @@
 
 
 struct platform_device;
-struct ionia_port;
 
 int  ionia_backplane_looptest(struct platform_device *pdev);
 void ionia_backplane_debugfs_init(struct platform_device *pdev);
