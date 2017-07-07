@@ -16,44 +16,6 @@
 #include "ionia-protocol.h"
 #include "ionia-cards.h"
 
-#define CARD_DECL(n,b) 	\
-	{			\
-		.name = n,	\
-		.base = b,	\
-	}
-
-#define CARD_DECL_IO(n,c0)	CARD_DECL(n,c0)
-
-struct i101_card i101_cards[] = {
-	CARD_DECL_IO("BP channel 0",  0x000),
-	CARD_DECL_IO("BP channel 1x", 0x010),
-	CARD_DECL_IO("BP channel 1",  0x020),
-	CARD_DECL_IO("BP slot 2x",    0x030),
-	CARD_DECL_IO("BP slot 2",    0x040),
-	CARD_DECL_IO("BP slot 3",    0x050),
-	CARD_DECL_IO("BP slot 3",    0x060),
-	CARD_DECL_IO("BP slot 4",    0x070),
-	CARD_DECL_IO("BP slot 4",    0x080),
-	CARD_DECL_IO("BP slot 5",    0x090),
-	CARD_DECL_IO("BP slot 5",    0x0a0),
-	CARD_DECL_IO("BP slot 6",    0x0b0),
-	CARD_DECL_IO("BP slot 6",    0x0c0),
-	CARD_DECL_IO("BP slot 7",    0x0d0),
-	CARD_DECL_IO("BP slot 7",    0x0e0),
-	CARD_DECL_IO("BP slot 8",    0x0f0),
-	CARD_DECL_IO("BP@0x100",     0x100),
-	CARD_DECL_IO("BP slot 8",    0x110),
-	CARD_DECL_IO("BP slot 9",    0x120),
-	CARD_DECL_IO("BP slot 9",    0x130),
-	CARD_DECL_IO("BP slot 10",   0x140),
-	CARD_DECL_IO("BP slot 10",   0x150),
-	CARD_DECL_IO("BP slot 10",   0x160),
-	CARD_DECL_IO("BP slot 10",   0x170),
-	CARD_DECL_IO("BP slot 10",   0x180),
-	CARD_DECL_IO("BP @190",      0x190),
-};
-
-const int i101_cards_max = ARRAY_SIZE(i101_cards);
 
 #define CARD_TYPE_DECL(n,mt,pt)		\
 	{				\

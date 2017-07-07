@@ -26,13 +26,13 @@ struct platform_device;
 
 typedef struct {
 	int base;
-	int card;
+	int slot;
 	void * __iomem regs;
 	const char *name;
 	struct platform_device *pdev;
 } ionia_fifo_t;
 
-void ionia_fifo_init(ionia_fifo_t *fifo, int base, int card, void * __iomem registers, const char *name, struct platform_device *pdev);
+void ionia_fifo_init(ionia_fifo_t *fifo, int base, int slot, void * __iomem registers, const char *name, struct platform_device *pdev);
 void ionia_fifo_fini(ionia_fifo_t *fifo);
 
 uint16_t ionia_fifo_getreg(ionia_fifo_t *fifo, uint16_t reg);

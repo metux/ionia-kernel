@@ -8,27 +8,26 @@
  * the Free Software Foundation
  */
 
-#ifndef __DUAGON_IONIA_SERIAL_H
-#define __DUAGON_IONIA_SERIAL_H
-
-#include <linux/serial_core.h>
+#ifndef __DUAGON_IONIA_SLOTS_H
+#define __DUAGON_IONIA_SLOTS_H
 
 #include "ionia-fifo.h"
 
-struct task_struct;
 struct platform_device;
-struct uart_port;
+struct ionia_port;
 
-struct ionia_port {
-	struct uart_port port;
-	struct platform_device *bp_pdev;
-	struct task_struct *kthread;
-	int kthread_running;
+struct ionia_slot
+{
+	int base;
+	int sz;
 	const char* name;
+	struct ionia_port *port;
 	ionia_fifo_t fifo;
 };
 
-int  ionia_serial_init(struct platform_device *pdev);
-void ionia_serial_dumpall(struct platform_device *pdev);
+extern struct ionia_slot ionia_slots[];
+const extern int ionia_slots_max;
 
-#endif /* __DUAGON_IONIA_SERIAL_H */
+void ionia_init_slots(struct platform_device *pdev);
+
+#endif /* __DUAGON_IONIA_SLOTS_H */

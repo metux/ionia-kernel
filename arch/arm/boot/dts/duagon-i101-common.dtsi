@@ -55,9 +55,115 @@
 	};
 
 	backplane: backplane@018000000 {
-		compatible = "duagon,i101-backplane";
+		compatible = "duagon,ionia-backplane";
 		reg = <0x18000000 4000000>;	// 64 MB - async area
 		// sync area 0x1C000000..0x1FFFFFFF
+
+		slots {
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			slot0: slot0@000 {
+				reg = <0x000 0x08>;
+				label = "bp channel 0";
+			};
+			slot1: slot0@010 {
+				reg = <0x010 0x08>;
+				label = "bp channel 0";
+			};
+			slot2: slot0@020 {
+				reg = <0x020 0x08>;
+				label = "bp channel 2";
+			};
+			slot3: slot0@030 {
+				reg = <0x030 0x08>;
+				label = "bp channel 3";
+			};
+			slot4: slot0@040 {
+				reg = <0x040 0x08>;
+				label = "bp channel 4";
+			};
+			slot5: slot0@050 {
+				reg = <0x050 0x08>;
+				label = "bp channel 5";
+			};
+			slot6: slot0@060 {
+				reg = <0x060 0x08>;
+				label = "bp channel 6";
+			};
+			slot7: slot0@070 {
+				reg = <0x070 0x08>;
+				label = "bp channel 7";
+			};
+			slot8: slot0@080 {
+				reg = <0x080 0x08>;
+				label = "bp channel 8";
+			};
+			slot9: slot0@090 {
+				reg = <0x090 0x08>;
+				label = "bp channel 9";
+			};
+			slot10: slot0@0a0 {
+				reg = <0x0a0 0x08>;
+				label = "bp channel 10";
+			};
+			slot11: slot0@0b0 {
+				reg = <0x0b0 0x08>;
+				label = "bp channel 11";
+			};
+			slot12: slot0@0c0 {
+				reg = <0x0c0 0x08>;
+				label = "bp channel 12";
+			};
+			slot13: slot0@0d0 {
+				reg = <0x0d0 0x08>;
+				label = "bp channel 13";
+			};
+			slot14: slot0@0e0 {
+				reg = <0x0e0 0x08>;
+				label = "bp channel 14";
+			};
+			slot15: slot0@0f0 {
+				reg = <0x0f0 0x08>;
+				label = "bp channel 15";
+			};
+			slot16: slot0@100 {
+				reg = <0x100 0x08>;
+				label = "bp channel 16";
+			};
+			slot17: slot0@110 {
+				reg = <0x110 0x08>;
+				label = "bp channel 17";
+			};
+			slot18: slot0@120 {
+				reg = <0x120 0x08>;
+				label = "bp channel 18";
+			};
+			slot19: slot0@130 {
+				reg = <0x130 0x08>;
+				label = "bp channel 19";
+			};
+			slot20: slot0@140 {
+				reg = <0x140 0x08>;
+				label = "bp channel 20";
+			};
+			slot21: slot0@150 {
+				reg = <0x150 0x08>;
+				label = "bp channel 21";
+			};
+			slot22: slot0@160 {
+				reg = <0x160 0x08>;
+				label = "bp channel 22";
+			};
+			slot23: slot0@180 {
+				reg = <0x180 0x08>;
+				label = "bp channel 23";
+			};
+			slot24: slot0@190 {
+				reg = <0x190 0x08>;
+				label = "bp channel 24";
+			};
+		};
 	};
 };
 

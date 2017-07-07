@@ -38,17 +38,6 @@
 struct platform_device;
 struct ionia_port;
 
-struct i101_card
-{
-	/* register base IDs (not byte offsets) of the channels */
-	int base;
-	const char* name;
-	struct ionia_port *port;
-};
-
-extern struct i101_card i101_cards[];
-const extern int i101_cards_max;
-
 int  ionia_backplane_looptest(struct platform_device *pdev);
 void ionia_backplane_debugfs_init(struct platform_device *pdev);
 void ionia_backplane_debugfs_fini(struct platform_device *pdev);

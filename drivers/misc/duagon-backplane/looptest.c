@@ -41,12 +41,12 @@ int ionia_backplane_looptest(struct platform_device* pdev)
 	int x=0;
 	int fail=0;
 
-	dev_info(&pdev->dev, "running loop test\n");
+	pdev_info(pdev, "running loop test\n");
 	for (x=0; x<0xFFFF; x+=0x7F) {
 		ionia_backplane_setreg(pdev, IONIA_BACKPLANE_REG_LOOPBACK, x);
 		ionia_backplane_waitreg();
 		if (ionia_backplane_getreg(pdev, IONIA_BACKPLANE_REG_LOOPBACK) != x) {
-			dev_err(&pdev->dev, "loop test failed for value %X\n", x);
+			pdev_err(pdev, "loop test failed for value %X\n", x);
 			fail++;
 		}
 	}
@@ -56,8 +56,10 @@ int ionia_backplane_looptest(struct platform_device* pdev)
 		return -ENOENT;
 	}
 
-	dev_info(&pdev->dev, "loop test OKAY\n");
+	pdev_info(pdev, "loop test OKAY\n");
 	pdata->status = IONIA_BACKPLANE_STATUS_PROBED;
 
+	/** ping the cards **/
+	
 	return 0;
 }

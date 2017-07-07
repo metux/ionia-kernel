@@ -14,11 +14,14 @@
 #include <linux/types.h>
 
 struct dentry;
+struct ionia_slot;
 
 struct ionia_backplane_platform_data {
 	uint32_t status;
 	void * __iomem registers;
 	struct dentry *debugfs_dentry;
+	int nr_slots;
+	struct ionia_slot *slots;
 };
 
 #define IONA_PDATA(pdev)	((struct ionia_backplane_platform_data*)(pdev->dev.platform_data))

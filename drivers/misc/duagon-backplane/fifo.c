@@ -7,13 +7,19 @@
 
 #define RSR_MULTIPLIER 4
 
-void ionia_fifo_init(ionia_fifo_t *fifo, int base, int card, void * __iomem regs, const char *name, struct platform_device *pdev)
+#define fifo_info(dev, fmt, args...) \
+	pdev_info(fifo->pdev, "ionia fifo [%2d@%03X] " fmt "\n", fifo->slot, fifo->base, ##args)
+
+#define fifo_warn(dev, fmt, args...) \
+	pdev_warn(fifo->pdev, "ionia fifo [%2d@%03X] " fmt "\n", fifo->slot, fifo->base, ##args)
+
+void ionia_fifo_init(ionia_fifo_t *fifo, int base, int slot, void * __iomem regs, const char *name, struct platform_device *pdev)
 {
 	fifo->base = base;
 	fifo->regs = regs;
 	fifo->name = name;
 	fifo->pdev = pdev;
-	fifo->card = card;
+	fifo->slot = slot;
 }
 
 void ionia_fifo_fini(ionia_fifo_t *fifo)
@@ -78,9 +84,10 @@ int ionia_fifo_get_loopback(ionia_fifo_t *fifo)
 
 int ionia_fifo_putc(ionia_fifo_t *fifo, char c)
 {
-	pr_info("ionia fifo [%2d@0x%03x] putc: %X\n", fifo->card, fifo->base, c);
+	fifo_info(fifo, "putc: %X", (int)c);
 	ionia_fifo_setreg(fifo, IONIA_FIFO_REG_READWRITE, c);
 	ionia_backplane_waitreg();
+	ionia_fifo_dump(fifo);
 	return 0;
 }
 
@@ -89,7 +96,7 @@ int ionia_fifo_getc(ionia_fifo_t *fifo)
 	uint16_t ret = ionia_fifo_getreg(fifo, IONIA_FIFO_REG_READWRITE);
 	uint16_t rxs = ionia_fifo_rx_size(fifo);
 	uint16_t txs = ionia_fifo_getreg(fifo, IONIA_FIFO_REG_TX_SIZE);
-	pr_info("ionia fifo [%2d@0x%03x] receive char: %04X -- rxs=%4d txs=%4d\n", fifo->card, fifo->base, ret, rxs, txs);
+	fifo_info(fifo, "receive char: %04X -- rxs=%4d txs=%4d", ret, rxs, txs);
 	return (char)ret;
 }
 
@@ -99,14 +106,14 @@ int ionia_fifo_num_recv(ionia_fifo_t *fifo)
 
 	// check for data ready flag
 	if ((ionia_fifo_getreg(fifo, IONIA_FIFO_REG_LINESTAT) & IONIA_BITMASK_LSR_DR)) {
-		pr_info("ionia fifo [%2d@0x%03x] no rx data ready\n", fifo->card, fifo->base);
+		fifo_info(fifo, "no rx data ready");
 		return 0;
 	}
 
 	rxsz = ionia_fifo_rx_size(fifo);
 
 	if (rxsz == 0xFF) {
-		pr_warn("ionia fifo [%2d@0x%03x] rx buffer full\n", fifo->card, fifo->base);
+		fifo_warn(fifo, "rx buffer full");
 		rxsz = ionia_fifo_size(fifo);
 	}
 
@@ -117,9 +124,7 @@ void ionia_fifo_dump(ionia_fifo_t *fifo)
 {
 	uint16_t lsr = ionia_fifo_linestat(fifo);
 
-	pr_info("ionia fifo [%2d@0x%03X] sz %d\n lsr 0x%02X %c%c%c%c%c%c %s cf 0x%02X rx  %4d tx %4d avail %4d\n",
-		fifo->card,
-		fifo->base,
+	fifo_info(fifo, "sz %d\n lsr 0x%02X %c%c%c%c%c%c %s cf 0x%02X rx  %4d tx %4d avail %4d",
 		ionia_fifo_size(fifo),
 		lsr,
 		(lsr & IONIA_BITMASK_LSR_DR        ? 'R':'_'),
