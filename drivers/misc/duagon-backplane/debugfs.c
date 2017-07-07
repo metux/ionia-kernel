@@ -45,8 +45,7 @@ static int cmd_write_op(void *data, u64 value)
 	dev_info(&pdev->dev, "debug command: %lld\n", value);
 	switch (value) {
 		case IONIA_DEBUG_CMD_LOOPTEST:
-			ionia_backplane_looptest(pdev);
-			return ionia_serial_init(pdev);
+			return ionia_backplane_start(pdev);
 		break;
 		case IONIA_DEBUG_CMD_UART_DUMP:
 			ionia_serial_dumpall(pdev);

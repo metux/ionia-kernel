@@ -23,9 +23,6 @@
 #define IONIA_BACKPLANE_STATUS_DOWN     0
 #define IONIA_BACKPLANE_STATUS_PROBED   1       // loop test went through
 
-#define IONIA_BACKPLANE_IOMEM_ASYNC             0x18000000
-#define IONIA_BACKPLANE_IOMEM_SYNC              0x1C000000
-
 /* start of the register bank */
 #define IONIA_BACKPLANE_BANK_OFFSET             0x00000800
 
@@ -40,6 +37,7 @@ struct platform_device;
 int  ionia_backplane_looptest(struct platform_device *pdev);
 void ionia_backplane_debugfs_init(struct platform_device *pdev);
 void ionia_backplane_debugfs_fini(struct platform_device *pdev);
+int  ionia_backplane_start(struct platform_device *pdev);
 
 // artificial wait between write and read cycles
 static inline void ionia_backplane_waitreg(void) {

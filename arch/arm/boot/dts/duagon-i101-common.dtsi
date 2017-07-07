@@ -63,105 +63,131 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 
-			slot0: slot0@000 {
+			ionia_slot0: slot0@000 {
 				reg = <0x000 0x08>;
 				label = "bp channel 0";
+				compatible = "duagon,ionia-raw";
 			};
-			slot1: slot0@010 {
+			ionia_slot1: slot0@010 {
 				reg = <0x010 0x08>;
 				label = "bp channel 0";
+				compatible = "duagon,ionia-raw";
 			};
-			slot2: slot0@020 {
+			ionia_slot2: slot0@020 {
 				reg = <0x020 0x08>;
 				label = "bp channel 2";
+				compatible = "duagon,ionia-raw";
 			};
-			slot3: slot0@030 {
+			ionia_slot3: slot0@030 {
 				reg = <0x030 0x08>;
 				label = "bp channel 3";
+				compatible = "duagon,ionia-raw";
 			};
-			slot4: slot0@040 {
+			ionia_slot4: slot0@040 {
 				reg = <0x040 0x08>;
 				label = "bp channel 4";
+				compatible = "duagon,ionia-raw";
 			};
-			slot5: slot0@050 {
+			ionia_slot5: slot0@050 {
 				reg = <0x050 0x08>;
 				label = "bp channel 5";
+				compatible = "duagon,ionia-raw";
 			};
-			slot6: slot0@060 {
+			ionia_slot6: slot0@060 {
 				reg = <0x060 0x08>;
 				label = "bp channel 6";
+				compatible = "duagon,ionia-raw";
 			};
-			slot7: slot0@070 {
+			ionia_slot7: slot0@070 {
 				reg = <0x070 0x08>;
 				label = "bp channel 7";
+				compatible = "duagon,ionia-raw";
 			};
-			slot8: slot0@080 {
+			ionia_slot8: slot0@080 {
 				reg = <0x080 0x08>;
-				label = "bp channel 8";
+				label = "i701 logger / ADC";
+				compatible = "duagon,ionia-i701";
 			};
-			slot9: slot0@090 {
+			ionia_slot9: slot0@090 {
 				reg = <0x090 0x08>;
 				label = "bp channel 9";
+				compatible = "duagon,ionia-raw";
 			};
-			slot10: slot0@0a0 {
+			ionia_slot10: slot0@0a0 {
 				reg = <0x0a0 0x08>;
-				label = "bp channel 10";
+				label = "i202 IO";
+				compatible = "duagon,ionia-i202";
+				gpio-controller;
 			};
-			slot11: slot0@0b0 {
+			ionia_slot11: slot0@0b0 {
 				reg = <0x0b0 0x08>;
 				label = "bp channel 11";
+				compatible = "duagon,ionia-raw";
 			};
-			slot12: slot0@0c0 {
+			ionia_slot12: slot0@0c0 {
 				reg = <0x0c0 0x08>;
 				label = "bp channel 12";
+				compatible = "duagon,ionia-raw";
 			};
-			slot13: slot0@0d0 {
+			ionia_slot13: slot0@0d0 {
 				reg = <0x0d0 0x08>;
 				label = "bp channel 13";
+				compatible = "duagon,ionia-raw";
 			};
-			slot14: slot0@0e0 {
+			ionia_slot14: slot0@0e0 {
 				reg = <0x0e0 0x08>;
 				label = "bp channel 14";
+				compatible = "duagon,ionia-raw";
 			};
-			slot15: slot0@0f0 {
+			ionia_slot15: slot0@0f0 {
 				reg = <0x0f0 0x08>;
 				label = "bp channel 15";
+				compatible = "duagon,ionia-raw";
 			};
-			slot16: slot0@100 {
+			ionia_slot16: slot0@100 {
 				reg = <0x100 0x08>;
 				label = "bp channel 16";
+				compatible = "duagon,ionia-raw";
 			};
-			slot17: slot0@110 {
+			ionia_slot17: slot0@110 {
 				reg = <0x110 0x08>;
 				label = "bp channel 17";
+				compatible = "duagon,ionia-raw";
 			};
-			slot18: slot0@120 {
+			ionia_slot18: slot0@120 {
 				reg = <0x120 0x08>;
 				label = "bp channel 18";
+				compatible = "duagon,ionia-raw";
 			};
-			slot19: slot0@130 {
+			ionia_slot19: slot0@130 {
 				reg = <0x130 0x08>;
 				label = "bp channel 19";
+				compatible = "duagon,ionia-raw";
 			};
-			slot20: slot0@140 {
+			ionia_slot20: slot0@140 {
 				reg = <0x140 0x08>;
 				label = "bp channel 20";
+				compatible = "duagon,ionia-raw";
 			};
-			slot21: slot0@150 {
+			ionia_slot21: slot0@150 {
 				reg = <0x150 0x08>;
 				label = "bp channel 21";
+				compatible = "duagon,ionia-raw";
 			};
-			slot22: slot0@160 {
+			ionia_slot22: slot0@160 {
 				reg = <0x160 0x08>;
 				label = "bp channel 22";
+				compatible = "duagon,ionia-raw";
 			};
-			slot23: slot0@180 {
+			ionia_slot23: slot0@180 {
 				reg = <0x180 0x08>;
 				label = "bp channel 23";
+				compatible = "duagon,ionia-raw";
 			};
-			slot24: slot0@190 {
+			ionia_slot24: slot0@190 {
 				reg = <0x190 0x08>;
 				label = "bp channel 24";
+				compatible = "duagon,ionia-raw";
 			};
 		};
 	};
@@ -408,6 +434,7 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&nandflash_pins_s0>;
+	gpmc,num-cs = <1>;
 #if 0
 	ranges = <0 0 0x08000000 0x1000000	/* CS0: 16MB for NAND */
 		  2 0 0x18000000 0x4000000	/* CS2: 64MB for FPGA async */
@@ -503,7 +530,7 @@
 
 #if 0
 	backplane: backplane@018000000 {
-		compatible = "duagon,i101-backplane";
+		compatible = "duagon,ionia-backplane";
 		// FIXME
 		reg = <2 0 4>; /* CS2, offset 0, IO size 4 */
 

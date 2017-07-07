@@ -29,6 +29,7 @@
 #include "ionia.h"
 #include "ionia-pdata.h"
 #include "ionia-slots.h"
+#include "ionia-serial.h"
 
 
 static struct of_device_id backplane_of_match[] = {
@@ -36,20 +37,6 @@ static struct of_device_id backplane_of_match[] = {
 	{}
 };
 MODULE_DEVICE_TABLE(of, backplane_of_match);
-
-struct ionia_backplane_platform_data bp_pdata = {
-	.status = 0,
-	.nr_slots = 0,
-	.slots = NULL,
-};
-
-struct platform_device ionia_backplane_device = {
-	.name = IONIA_BACKPLANE_DEVICE_NAME,
-	.dev = {
-		.platform_data = &bp_pdata,
-	},
-	.id = -1,
-};
 
 static int probe_slots(struct platform_device *pdev)
 {
@@ -93,6 +80,7 @@ static int probe_slots(struct platform_device *pdev)
 		struct ionia_slot *slot = &(pdata->slots[cnt_slots]);
 
 		slot->name = of_get_property(pp, "label", NULL);
+		slot->devnode = pp;
 
 		if (!reg) {
 			dev_warn(&pdev->dev, "   missing reg property in slot %d\n", cnt_slots);
@@ -159,8 +147,14 @@ static int backplane_probe(struct platform_device* pdev)
 
 	ionia_backplane_debugfs_init(pdev);
 
-	probe_slots(pdev);
+	return 0;
+}
 
+int ionia_backplane_start(struct platform_device *pdev)
+{
+	probe_slots(pdev);
+	ionia_backplane_looptest(pdev);
+	ionia_serial_init(pdev);
 	return 0;
 }
 

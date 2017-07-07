@@ -20,6 +20,7 @@
 #include "ionia.h"
 #include "ionia-fifo.h"
 #include "ionia-slots.h"
+#include "ionia-serial.h"
 
 #define NR_UART			20
 #define IONIA_SERIAL_MAJOR	TTY_MAJOR

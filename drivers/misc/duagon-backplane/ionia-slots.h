@@ -13,8 +13,8 @@
 
 #include "ionia-fifo.h"
 
-struct platform_device;
 struct ionia_port;
+struct device_node;
 
 struct ionia_slot
 {
@@ -22,12 +22,8 @@ struct ionia_slot
 	int sz;
 	const char* name;
 	struct ionia_port *port;
+	struct device_node *devnode;
 	struct ionia_fifo fifo;
 };
-
-extern struct ionia_slot ionia_slots[];
-const extern int ionia_slots_max;
-
-void ionia_init_slots(struct platform_device *pdev);
 
 #endif /* __DUAGON_IONIA_SLOTS_H */
