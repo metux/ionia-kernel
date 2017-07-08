@@ -434,11 +434,11 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&nandflash_pins_s0>;
-	gpmc,num-cs = <1>;
-#if 0
+/*	gpmc,num-cs = <1>; */
+#if 1
 	ranges = <0 0 0x08000000 0x1000000	/* CS0: 16MB for NAND */
 		  2 0 0x18000000 0x4000000	/* CS2: 64MB for FPGA async */
-		  3 0 0x1C000000 0x4000000>;	/* CS3: 64MB for FPGA sync */*
+		  3 0 0x1C000000 0x4000000>;	/* CS3: 64MB for FPGA sync */
 #else
 	ranges = <0 0 0x08000000 0x1000000>;	/* CS0: 16MB for NAND */
 #endif
@@ -528,64 +528,41 @@
 		};
 	};
 
-#if 0
-	backplane: backplane@018000000 {
-		compatible = "duagon,ionia-backplane";
+	fpga: fpga {
+		// compatible = "duagon,ionia-backplane";
 		// FIXME
 		reg = <2 0 4>; /* CS2, offset 0, IO size 4 */
+		bank-width = <2>;
 
-		/* config1 */
-		gpmc,burst-length	= <4>;
-		gpmc,device-width	= <2>;
-		gpmc,mux-add-data	= <2>;
-		gpmc,wait-pin		= <0>;
-		// gpmc clock 	= 1/2 fclk (GPMCFCLKDIVIDER=1)
-
-		/* config2 */
-		gpmc,cs-wr-off-ns	= <44>;	// FIXME: 7 fclk cylces
-		gpmc,cs-rd-off-ns	= <44>;	// FIXME: 11 fclk cycles
-		gpmc,cs-on-ns		= <0>;
-		// CSEXTRADELAY		= 0
-
-		/* config3 */
-		gpmc,adv-rd-off-ns	= <34>;	// FIXME: 3 fclk cycles
-		gpmc,adv-wr-off-ns	= <44>;	// FIXME: 3 fclk cycles
-		gpmc,adv-on-ns		= <6>;	// FIXME: 1 fclk cycles
-
-		/* config4 */
-		gpmc,we-off-ns		= <40>;	// FIXME: 7 fclk cycles
-		gpmc,we-on-ns		= <0>;	// FIXME: 3 fclk cycles
-		gpmc,oe-off-ns		= <54>;	// FIXME: 11 fclk cycles
-		gpmc,oe-on-ns		= <0>;	// FIXME: 3 fclk cycles
-		// WEEXTRADELAY		= 0
-		// OEAADMUXOFFTIME	= 3
-		// OEEXTRADELAY		= 0
-		// OEAADMUXONTIME	= 1
-
-		/* config5 */
-		// PAGEBURSTACCESSTIME=1
-		gpmc,rd-cycle-ns		= <82>;	// FIXME: 8 fclk cycles
-		gpmc,wr-cycle-ns		= <82>;	// FIXME: 8 fclk cycles
-		gpmc,access-ns			= <64>;	// FIXME: 10 fclk cycles
-
-		/* config6 */
-		gpmc,wr-access-ns		= <40>;	// FIXME: 4 fclk cycles
-		gpmc,bus-turnaround-ns		= <0>;	// FIXME: 1 fclk cycles
-		gpmc,cycle2cycle-delay-ns	= <0>;	// FIXME: 1 fclk cycles
-		// WRACCESSTIME = 4
-		// WRDATAONADMUXBUS = 3
-
-		/* config7 */
-		// MASKADDRESS = 12 (64mbytes)
-		// CSVALID = 1 -> CSn enabled
-		// BASEADDRESS = 0x18 (<<24)
-		gpmc,clk-activation-ns = <0>;	// ??
-
-		gpmc,wr-data-mux-bus-ns		= <0>;	// FIXME: 3 fclk cylces
-		#address-cells = <1>;
-		#size-cells = <1>;
+		gpmc,mux-add-data = <2>;
+		gpmc,device-width = <2>;
+		gpmc,wait-pin = <0>;
+		gpmc,cs-on-ns = <0>;			/* 0 ns - 0 ns; 0 ticks */
+		gpmc,cs-rd-off-ns = <110>;		/* 101 ns - 110 ns; 11 ticks */
+		gpmc,cs-wr-off-ns = <70>;		/* 61 ns - 70 ns; 7 ticks */
+		gpmc,adv-on-ns = <10>;			/* 1 ns - 10 ns; 1 ticks */
+		gpmc,adv-rd-off-ns = <30>;		/* 21 ns - 30 ns; 3 ticks */
+		gpmc,adv-wr-off-ns = <30>;		/* 21 ns - 30 ns; 3 ticks */
+		gpmc,adv-aad-mux-on-ns = <0>;		/* 0 ns - 0 ns; 0 ticks */
+		gpmc,adv-aad-mux-rd-off-ns = <0>;	/* 0 ns - 0 ns; 0 ticks */
+		gpmc,adv-aad-mux-wr-off-ns = <0>;	/* 0 ns - 0 ns; 0 ticks */
+		gpmc,oe-on-ns = <30>;			/* 21 ns - 30 ns; 3 ticks */
+		gpmc,oe-off-ns = <110>;			/* 101 ns - 110 ns; 11 ticks */
+		gpmc,oe-aad-mux-on-ns = <10>;		/* 1 ns - 10 ns; 1 ticks */
+		gpmc,oe-aad-mux-off-ns = <30>;		/* 21 ns - 30 ns; 3 ticks */
+		gpmc,we-on-ns = <30>;			/* 21 ns - 30 ns; 3 ticks */
+		gpmc,we-off-ns = <70>;			/* 61 ns - 70 ns; 7 ticks */
+		gpmc,rd-cycle-ns = <120>;		/* 111 ns - 120 ns; 12 ticks */
+		gpmc,wr-cycle-ns = <80>;		/* 71 ns - 80 ns; 8 ticks */
+		gpmc,access-ns = <100>;			/* 91 ns - 100 ns; 10 ticks */
+		gpmc,page-burst-access-ns = <10>;	/* 1 ns - 10 ns; 1 ticks */
+		gpmc,bus-turnaround-ns = <10>;		/* 1 ns - 10 ns; 1 ticks */
+		gpmc,cycle2cycle-delay-ns = <10>;	/* 1 ns - 10 ns; 1 ticks */
+		gpmc,wait-monitoring-ns = <0>;		/* 0 ns - 0 ns; 0 ticks */
+		gpmc,clk-activation-ns = <0>;		/* 0 ns - 0 ns; 0 ticks */
+		gpmc,wr-data-mux-bus-ns = <30>;		/* 21 ns - 30 ns; 3 ticks */
+		gpmc,wr-access-ns = <40>;		/* 31 ns - 40 ns; 4 ticks */
 	};
-#endif
 };
 
 #include "tps65910.dtsi"
@@ -731,9 +708,6 @@
 		compatible = "micron,n25q064", "jedec,spi-nor";
 		reg = <0x0>;
 		spi-max-frequency = <24000000>;
-#if 0
-		m25p,fast-read;
-#endif
 		status = "okay";
 
 		partition@0 {

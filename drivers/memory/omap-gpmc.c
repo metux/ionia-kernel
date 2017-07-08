@@ -30,6 +30,7 @@
 #include <linux/of_platform.h>
 #include <linux/omap-gpmc.h>
 #include <linux/pm_runtime.h>
+#include <linux/debugfs.h>
 
 #include <linux/platform_data/mtd-nand-omap2.h>
 #include <linux/platform_data/mtd-onenand-omap2.h>
@@ -288,6 +289,7 @@ static unsigned long gpmc_get_fclk_period(void)
 	rate /= 1000;
 	rate = 1000000000 / rate;	/* In picoseconds */
 
+//	pr_info("gpmc: fclk period: %ld\n", rate);
 	return rate;
 }
 
@@ -985,6 +987,8 @@ int gpmc_cs_request(int cs, unsigned long size, unsigned long *base)
 	struct gpmc_cs_data *gpmc = &gpmc_cs[cs];
 	struct resource *res = &gpmc->mem;
 	int r = -1;
+
+	pr_info("%s: cs: %d\n", __func__, cs);
 
 	if (cs > gpmc_cs_num) {
 		pr_err("%s: requested chip-select is disabled\n", __func__);
@@ -1730,6 +1734,8 @@ int gpmc_cs_program_settings(int cs, struct gpmc_settings *p)
 {
 	u32 config1;
 
+	pr_info("%s: cs %d\n", __func__, cs);
+
 	if ((!p->device_width) || (p->device_width > GPMC_DEVWIDTH_16BIT)) {
 		pr_err("%s: invalid width %d!", __func__, p->device_width);
 		return -EINVAL;
@@ -1996,8 +2002,10 @@ static int gpmc_probe_generic_child(struct platform_device *pdev,
 	 * timings.
 	 */
 	name = gpmc_cs_get_name(cs);
-	if (name && child->name && of_node_cmp(child->name, name) == 0)
+	if (name && child->name && of_node_cmp(child->name, name) == 0) {
+		dev_info(&pdev->dev, "CS already initialized by another device\n");
 			goto no_timings;
+	}
 
 	ret = gpmc_cs_request(cs, resource_size(&res), &base);
 	if (ret < 0) {
@@ -2083,8 +2091,10 @@ static int gpmc_probe_generic_child(struct platform_device *pdev,
 	} else {
 		ret = of_property_read_u32(child, "bank-width",
 					   &gpmc_s.device_width);
-		if (ret < 0)
+		if (ret < 0) {
+			dev_err(&pdev->dev, "missing property bank-width\n");
 			goto err;
+		}
 	}
 
 	/* Reserve wait pin if it is required and valid */
@@ -2103,8 +2113,10 @@ static int gpmc_probe_generic_child(struct platform_device *pdev,
 	gpmc_cs_show_timings(cs, "before gpmc_cs_program_settings");
 
 	ret = gpmc_cs_program_settings(cs, &gpmc_s);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(&pdev->dev, "failed to program settings\n");
 		goto err_cs;
+	}
 
 	ret = gpmc_cs_set_timings(cs, &gpmc_t, &gpmc_s);
 	if (ret) {
@@ -2124,14 +2136,20 @@ static int gpmc_probe_generic_child(struct platform_device *pdev,
 no_timings:
 
 	/* create platform device, NULL on error or when disabled */
-	if (!of_platform_device_create(child, NULL, &pdev->dev))
+	if (!of_platform_device_create(child, NULL, &pdev->dev)) {
+		dev_err(&pdev->dev, "failed to create platform_device\n");
 		goto err_child_fail;
+	}
 
 	/* is child a common bus? */
-	if (of_match_node(of_default_bus_match_table, child))
+	if (of_match_node(of_default_bus_match_table, child)) {
+		dev_info(&pdev->dev, "child is a common bus\n");
 		/* create children and other common bus children */
-		if (of_platform_default_populate(child, NULL, &pdev->dev))
+		if (of_platform_default_populate(child, NULL, &pdev->dev)) {
+			dev_err(&pdev->dev, "failed to populate children\n");
 			goto err_child_fail;
+		}
+	}
 
 	return 0;
 
@@ -2190,6 +2208,8 @@ static void gpmc_probe_dt_children(struct platform_device *pdev)
 
 		if (!child->name)
 			continue;
+
+		dev_info(&pdev->dev, "probing child: %s\n", child->name);
 
 		if (of_node_cmp(child->name, "onenand") == 0)
 			ret = gpmc_probe_onenand_child(pdev, child);
@@ -2268,6 +2288,21 @@ static int gpmc_gpio_init(struct gpmc_device *gpmc)
 	}
 
 	return 0;
+}
+
+static int dump_write_op(void *data, u64 value)
+{
+//	struct platform_device *pdev;
+	gpmc_cs_show_timings((int)value, "dump");
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(dump_fops, NULL, dump_write_op, "%llu\n");
+
+static void gpmc_init_debugfs(struct platform_device *pdev)
+{
+	struct dentry *dbg_dir = debugfs_create_dir("gpmc", NULL);
+	debugfs_create_file("dump", 0222, dbg_dir, pdev, &dump_fops);
 }
 
 static int gpmc_probe(struct platform_device *pdev)
@@ -2361,6 +2396,7 @@ static int gpmc_probe(struct platform_device *pdev)
 
 	gpmc_probe_dt_children(pdev);
 
+	gpmc_init_debugfs(pdev);
 	return 0;
 
 gpio_init_failed:
