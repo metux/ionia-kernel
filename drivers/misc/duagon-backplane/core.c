@@ -47,13 +47,18 @@ static int probe_slots(struct platform_device *pdev)
 	int nr_slots = 0;
 	int cnt_slots = 0;
 
+	if (pdata->nr_slots) {
+		pdev_info(pdev, "slots already probed\n");
+		return 0;
+	}
+
 	if (!(backplane_node = pdev->dev.of_node)) {
-		dev_err(&pdev->dev, "failed to get of node\n");
+		pdev_err(pdev, "failed to get of node\n");
 		return -ENOENT;
 	}
 
 	if (!(slots_node = of_get_child_by_name(backplane_node, "slots"))) {
-		dev_err(&pdev->dev, "no slots node\n");
+		pdev_err(pdev, "no slots node\n");
 		return -ENOENT;
 	}
 
@@ -62,12 +67,12 @@ static int probe_slots(struct platform_device *pdev)
 	}
 
 	if (!nr_slots) {
-		dev_err(&pdev->dev, "no slots");
+		pdev_err(pdev, "no slots");
 		return -ENOENT;
 	}
 
 	if (!(pdata->slots = devm_kzalloc(&pdev->dev, sizeof(struct ionia_slot)*nr_slots, GFP_KERNEL))) {
-		dev_err(&pdev->dev, "kzalloc() failed\n");
+		pdev_err(pdev, "kzalloc() failed\n");
 		return -ENOMEM;
 	}
 
@@ -83,13 +88,13 @@ static int probe_slots(struct platform_device *pdev)
 		slot->devnode = pp;
 
 		if (!reg) {
-			dev_warn(&pdev->dev, "   missing reg property in slot %d\n", cnt_slots);
+			pdev_warn(pdev, "   missing reg property in slot %d\n", cnt_slots);
 			nr_slots--;
 			continue;
 		}
 
 		if (len / 4 != a_cells + s_cells) {
-			dev_warn(&pdev->dev, "   reg property size mismatch in slot %d\n", cnt_slots);
+			pdev_warn(pdev, "   reg property size mismatch in slot %d\n", cnt_slots);
 			nr_slots--;
 			continue;
 		}
@@ -104,7 +109,7 @@ static int probe_slots(struct platform_device *pdev)
 				slot->name,
 				pdev);
 
-		dev_info(&pdev->dev, "slot %2d at 0x%04X:%02X: %s\n",
+		pdev_info(pdev, "slot %2d at 0x%04X:%02X: %s\n",
 			 cnt_slots,
 			 slot->base,
 			 slot->sz,
@@ -126,24 +131,24 @@ static int backplane_probe(struct platform_device* pdev)
 
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
 	if (!pdata) {
-		dev_err(&pdev->dev, "failed to allocate memory\n");
+		pdev_err(pdev, "failed to allocate memory\n");
 		return -ENOMEM;
 	}
 
 	rc = of_address_to_resource(pdev->dev.of_node, 0, &res);
 	if (rc) {
-		dev_err(&pdev->dev, "fetching resource address failed: %d\n", rc);
+		pdev_err(pdev, "fetching resource address failed: %d\n", rc);
 		return rc;
 	}
 
 	pdata->registers = devm_ioremap_resource(&pdev->dev, &res);
 	if (!pdata->registers) {
-		dev_err(&pdev->dev, "ioremap resource failed\n");
+		pdev_err(pdev, "ioremap resource failed\n");
 		return -EINVAL;
 	}
 
 	pdev->dev.platform_data = pdata;
-	dev_info(&pdev->dev, "probe succeed: phys 0x%pK mem at 0x%pK\n", (void*)res.start, pdata->registers);
+	pdev_info(pdev, "probe succeed: phys 0x%pK mem at 0x%pK\n", (void*)res.start, pdata->registers);
 
 	ionia_backplane_debugfs_init(pdev);
 	ionia_backplane_start(pdev);

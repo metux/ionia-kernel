@@ -32,6 +32,8 @@
 //#define HACK_LOOPBACK
 #define HACK_INIT_PING
 
+int driver_registered = 0;
+
 struct ionia_port {
 	struct uart_port port;
 	struct platform_device *bp_pdev;
@@ -353,7 +355,57 @@ struct ionia_port *ionia_port_init(struct platform_device *pdev, int slot)
 		return NULL;
 	}
 
+	pdev_info(pdev, "ionia_port_init() done\n");
 	return port;
+}
+
+static int register_drv(struct platform_device *pdev)
+{
+	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
+	int ret;
+
+	if (driver_registered) {
+		pdev_info(pdev, "uart driver already registered\n");
+		return 0;
+	}
+
+	ionia_uart_driver.nr = pdata->nr_slots;
+	ret = uart_register_driver(&ionia_uart_driver);
+
+	if (ret) {
+		pdev_err(pdev, "failed to register uart driver: %M\n", -ret);
+		return ret;
+	}
+
+	driver_registered = 1;
+	pdev_info(pdev, "registered uart driver\n");
+	return 0;
+}
+
+static int register_port(struct platform_device *pdev, int slot)
+{
+	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
+	struct ionia_port *p;
+
+	if (pdata->slots[slot].port != NULL) {
+		pdev_info(pdev, "uart port for slot %d already registered\n", slot);
+		return 0;
+	}
+
+	p = ionia_port_init(pdev, slot);
+	if (p == NULL) {
+		pdev_warn(pdev, "register_port: failed for slot %d\n", slot);
+		return -ENOENT;
+	}
+
+	pdata->slots[slot].port = p;
+	pdev_info(pdev, "register_port: initialized port for slot %d\n", slot);
+
+#ifdef HACK_LOOPBACK
+	ionia_fifo_set_loopback(&(pdata->slots[slot].fifo), 1);
+#endif
+	ionia_fifo_dump(&(pdata->slots[slot].fifo));
+	return 0;
 }
 
 int ionia_serial_init(struct platform_device *pdev)
@@ -361,16 +413,12 @@ int ionia_serial_init(struct platform_device *pdev)
 	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
 	int slot, ret;
 
-	ionia_uart_driver.nr = pdata->nr_slots;
-	ret = uart_register_driver(&ionia_uart_driver);
-	pdev_info(pdev, "number of slots: %d\n", pdata->nr_slots);
-	for (slot=0; slot<pdata->nr_slots; slot++) {
-		pdata->slots[slot].port = ionia_port_init(pdev, slot);
-#ifdef HACK_LOOPBACK
-		ionia_fifo_set_loopback(&(pdata->slots[slot].fifo), 1);
-#endif
-		ionia_fifo_dump(&(pdata->slots[slot].fifo));
-	}
+	if ((ret = register_drv(pdev)))
+		return ret;
+
+	for (slot=0; slot<pdata->nr_slots; slot++)
+		register_port(pdev, slot);
+
 	return 0;
 }
 
@@ -378,7 +426,6 @@ void ionia_serial_dumpall(struct platform_device *pdev)
 {
 	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
 	int slot;
-	for (slot=0; slot<pdata->nr_slots; slot++) {
+	for (slot=0; slot<pdata->nr_slots; slot++)
 		ionia_fifo_dump(&(pdata->slots[slot].fifo));
-	}
 }
