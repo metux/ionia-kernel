@@ -24,6 +24,4 @@ struct ionia_backplane_platform_data {
 	struct ionia_slot *slots;
 };
 
-#define IONA_PDATA(pdev)	((struct ionia_backplane_platform_data*)(pdev->dev.platform_data))
-
 #endif /* __LINUX_DUAGON_IONIA_PDATA_H */

@@ -15,15 +15,18 @@
 
 struct ionia_port;
 struct device_node;
+struct platform_device;
 
 struct ionia_slot
 {
 	int base;
 	int sz;
+	int id;
 	const char* name;
 	struct ionia_port *port;
 	struct device_node *devnode;
 	struct ionia_fifo fifo;
+	struct platform_device *pdev;
 };
 
 #endif /* __DUAGON_IONIA_SLOTS_H */

@@ -1,5 +1,5 @@
 /*
- *  Duagon Ionia i701 driver
+ *  Duagon Ionia i012 driver
  *
  *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
  *
@@ -21,19 +21,19 @@
 #include "ionia-rpc.h"
 
 
-struct ionia_i701_platform_data {
+struct ionia_i012_platform_data {
 	ionia_rpc_t *rpc;
 };
 
-static struct of_device_id i701_of_match[] = {
-	{ .compatible = "duagon,ionia-i701", },
+static struct of_device_id i012_of_match[] = {
+	{ .compatible = "duagon,ionia-i012", },
 	{}
 };
-MODULE_DEVICE_TABLE(of, i701_of_match);
+MODULE_DEVICE_TABLE(of, i012_of_match);
 
-static int i701_probe(struct platform_device* pdev)
+static int i012_probe(struct platform_device* pdev)
 {
-	struct ionia_i701_platform_data *pdata;
+	struct ionia_i012_platform_data *pdata;
 
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
 	if (!pdata) {
@@ -50,39 +50,39 @@ static int i701_probe(struct platform_device* pdev)
 
 	pdev->dev.platform_data = pdata;
 
-	pdev_info(pdev, "i701 device initialized\n");
+	pdev_info(pdev, "i012 device initialized\n");
 
 	return 0;
 }
 
-static int i701_remove(struct platform_device* pdev)
+static int i012_remove(struct platform_device* pdev)
 {
 	return 0;
 }
 
-struct platform_driver i701_driver = {
-	.probe = i701_probe,
-	.remove = i701_remove,
+struct platform_driver i012_driver = {
+	.probe = i012_probe,
+	.remove = i012_remove,
 	.driver = {
-		.name = "ionia-i701",
+		.name = "ionia-i012",
 		.owner = THIS_MODULE,
-		.of_match_table = i701_of_match,
+		.of_match_table = i012_of_match,
 	},
 };
 
-static int __init i701_init(void)
+static int __init i012_init(void)
 {
-	return platform_driver_register(&i701_driver);
+	return platform_driver_register(&i012_driver);
 }
 
-static void __exit i701_exit(void)
+static void __exit i012_exit(void)
 {
-	return platform_driver_unregister(&i701_driver);
+	return platform_driver_unregister(&i012_driver);
 }
 
-module_init(i701_init);
-module_exit(i701_exit);
+module_init(i012_init);
+module_exit(i012_exit);
 
 MODULE_AUTHOR("Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>");
-MODULE_DESCRIPTION("Ionia i701 driver");
+MODULE_DESCRIPTION("Ionia i012 driver");
 MODULE_LICENSE("GPLv3");

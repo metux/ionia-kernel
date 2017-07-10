@@ -15,6 +15,7 @@
 #include <linux/delay.h>
 
 #include "ionia-pdata.h"
+#include "ionia-rpc.h"
 
 #define IONIA_BACKPLANE_DRIVER_VERSION	"0.1.2"
 #define IONIA_BACKPLANE_DRIVER_NAME	"ionia-backplane"
@@ -43,5 +44,15 @@ int  ionia_backplane_start(struct platform_device *pdev);
 static inline void ionia_backplane_waitreg(void) {
 	udelay(1); //10
 }
+
+struct ionia_slot;
+
+struct ionia_slot *ionia_backplane_slot_for_device(struct platform_device *pdev);
+int ionia_backplane_devname_for_slot(char *buf, size_t sz, int slot);
+int ionia_backplane_slot_for_devname(const char* name);
+int ionia_backplane_probe_card(struct platform_device *pdev, struct ionia_slot *slot);
+int ionia_backplane_probe_cards(struct platform_device *pdev);
+ionia_rpc_t *ionia_backplane_rpc_for_device(struct platform_device *pdev);
+int ionia_backplane_probe_slots(struct platform_device *pdev);
 
 #endif /* __DUAGON_IONIA_H */
