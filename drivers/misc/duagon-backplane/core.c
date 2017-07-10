@@ -146,6 +146,7 @@ static int backplane_probe(struct platform_device* pdev)
 	dev_info(&pdev->dev, "probe succeed: phys 0x%pK mem at 0x%pK\n", (void*)res.start, pdata->registers);
 
 	ionia_backplane_debugfs_init(pdev);
+	ionia_backplane_start(pdev);
 
 	return 0;
 }
