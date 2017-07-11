@@ -1,7 +1,7 @@
 /*
- *  Duagon Ionia i202 driver
+ * Duagon Ionia i701 driver
  *
- *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
+ * Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as published by
@@ -21,19 +21,19 @@
 #include "ionia-rpc.h"
 
 
-struct ionia_i202_platform_data {
+struct ionia_i701_platform_data {
 	ionia_rpc_t *rpc;
 };
 
-static struct of_device_id i202_of_match[] = {
-	{ .compatible = "duagon,ionia-i202", },
+static struct of_device_id i701_of_match[] = {
+	{ .compatible = "duagon,ionia-i701", },
 	{}
 };
-MODULE_DEVICE_TABLE(of, i202_of_match);
+MODULE_DEVICE_TABLE(of, i701_of_match);
 
-static int i202_probe(struct platform_device* pdev)
+static int i701_probe(struct platform_device* pdev)
 {
-	struct ionia_i202_platform_data *pdata;
+	struct ionia_i701_platform_data *pdata;
 
 	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
 	if (!pdata) {
@@ -50,39 +50,39 @@ static int i202_probe(struct platform_device* pdev)
 
 	pdev->dev.platform_data = pdata;
 
-	pdev_info(pdev, "i202 device initialized\n");
+	pdev_info(pdev, "i701 device initialized\n");
 
 	return 0;
 }
 
-static int i202_remove(struct platform_device* pdev)
+static int i701_remove(struct platform_device* pdev)
 {
 	return 0;
 }
 
-struct platform_driver i202_driver = {
-	.probe = i202_probe,
-	.remove = i202_remove,
+struct platform_driver i701_driver = {
+	.probe = i701_probe,
+	.remove = i701_remove,
 	.driver = {
-		.name = "ionia-i202",
+		.name = "ionia-i701",
 		.owner = THIS_MODULE,
-		.of_match_table = i202_of_match,
+		.of_match_table = i701_of_match,
 	},
 };
 
-static int __init i202_init(void)
+static int __init i701_init(void)
 {
-	return platform_driver_register(&i202_driver);
+	return platform_driver_register(&i701_driver);
 }
 
-static void __exit i202_exit(void)
+static void __exit i701_exit(void)
 {
-	return platform_driver_unregister(&i202_driver);
+	return platform_driver_unregister(&i701_driver);
 }
 
-module_init(i202_init);
-module_exit(i202_exit);
+module_init(i701_init);
+module_exit(i701_exit);
 
 MODULE_AUTHOR("Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>");
-MODULE_DESCRIPTION("Ionia i202 driver");
+MODULE_DESCRIPTION("Ionia i701 driver");
 MODULE_LICENSE("GPLv3");

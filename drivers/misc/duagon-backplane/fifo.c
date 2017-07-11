@@ -8,14 +8,6 @@
 #define RSR_MULTIPLIER		4
 #define RECV_TIMEOUT_JIFFIES	(3*HZ)
 
-#if 0
-#define fifo_info(dev, fmt, args...) \
-	pdev_info(fifo->pdev, "ionia fifo [%2d@%03X] " fmt "\n", fifo->slot, fifo->base, ##args)
-
-#define fifo_warn(dev, fmt, args...) \
-	pdev_warn(fifo->pdev, "ionia fifo [%2d@%03X] " fmt "\n", fifo->slot, fifo->base, ##args)
-#endif
-
 #define fifo_info(dev, fmt, args...) \
 	pr_info("ionia fifo [%2d@%03X] " fmt "\n", fifo->slot, fifo->base, ##args)
 

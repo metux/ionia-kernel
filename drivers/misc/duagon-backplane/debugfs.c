@@ -1,7 +1,7 @@
 /*
- *  Duagon Ionia backplane core Linux support
+ * Duagon Ionia backplane core Linux support
  *
- *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
+ * Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as published by
@@ -19,7 +19,7 @@
 #include "ionia-serial.h"
 #include "ionia-fifo.h"
 #include "ionia-rpc.h"
-#include "ionia-log.h"
+#include "ionia-proto-log.h"
 #include "ionia-slots.h"
 
 #define IONIA_DEBUG_CMD_LOOPTEST	666

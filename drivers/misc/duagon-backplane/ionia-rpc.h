@@ -1,7 +1,7 @@
 /*
- *  Duagon Ionia backplane core Linux support
+ * Duagon Ionia backplane core Linux support
  *
- *  Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
+ * Copyright (c) 2017 Enrico Weigelt, metux IT consult <enrico.weigelt@gr13.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as published by
@@ -50,5 +50,44 @@ int             ionia_rpcbuf_put(ionia_rpcbuf_t *rpcbuf);
 int             ionia_rpcbuf_write_u32(ionia_rpcbuf_t *rpcbuf, u32 val);
 int             ionia_rpcbuf_read_u32(ionia_rpcbuf_t *rpcbuf, u32 *val);
 int             ionia_rpcbuf_read_block(ionia_rpcbuf_t *rpcbuf, void *val, size_t sz);
+
+/* helpers for RPC proto implementation */
+
+#define IONIA_RPC_BEGIN(proto,cmd)				\
+	int ret;						\
+	u32 rpc_errno;						\
+	ionia_rpcbuf_t *rpcbuf = ionia_rpcbuf_get(proto, cmd);
+
+#define IONIA_RPC_END						\
+	goto out;						\
+err:								\
+	pr_err("%s: error: %M\n", __func__, -ret);		\
+out:								\
+	ionia_rpcbuf_put(rpcbuf);				\
+	return ret;
+
+#define IONIA_RPC_END_OKVAL(v)					\
+	ret = v;						\
+	IONIA_RPC_END
+
+#define IONIA_RPC_PAR_U32(v)					\
+	if ((ret = ionia_rpcbuf_write_u32(rpcbuf, v)))		\
+		goto out;
+
+#define IONIA_RPC_CALL						\
+	if ((ret = ionia_rpc_call(rpc, rpcbuf)))		\
+		goto out;
+
+#define IONIA_RPC_RET_ERR					\
+	if ((ret = ionia_rpcbuf_read_u32(rpcbuf, &rpc_errno)))	\
+		goto err;
+
+#define IONIA_RPC_RET_U32(rv)					\
+	if ((ret = ionia_rpcbuf_read_u32(rpcbuf, rv)))		\
+		goto err;
+
+#define IONIA_RPC_RET_BLOCK(rv,sz)				\
+	if ((ret = ionia_rpcbuf_read_block(rpcbuf, rv, sz)))	\
+		goto err;
 
 #endif /* __DUAGON_RPC_H */
