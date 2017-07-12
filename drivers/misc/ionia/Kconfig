@@ -1,0 +1,54 @@
+
+config IONIA_PLATFORM
+	tristate "Duagon Ionia platform"
+	select IONIA_BACKPLANE
+	default n
+	help
+	  Support for Duagon Ionia machines
+
+if IONIA_PLATFORM
+
+config IONIA_BACKPLANE
+	tristate "Ionia backplane"
+	select SPRINT_MCTRL
+	select TTY
+	default n
+	help
+	  Duagon Ionia backplane
+
+	  Driver for the backplane interfaces found on Duagon Ionia machines.
+
+config IONIA_BACKPLANE_TTY
+	tristate "TTY driver for backplane FIFOs"
+	select IONIA_BACKPLANE
+	select SPRINT_MCTRL
+	select TTY
+	default y
+
+config IONIA_RPC
+	tristate "Ionia RPC layer"
+	select IONIA_BACKPLANE
+
+config IONIA_PROTO_DIO
+	tristate "IO card protocol"
+	select IONIA_RPC
+
+config IONIA_PROTO_LOG
+	tristate "Logger (DAQ) card protocol"
+	select IONIA_RPC
+
+config IONIA_CARD_I701
+	tristate "i701 logger / ADC card"
+	select IONIA_PROTO_LOG
+	select IONIA_RPC
+
+config IONIA_CARD_I202
+	tristate "i202 digital IO card"
+	select IONIA_PROTO_DIO
+	select IONIA_RPC
+
+config IONIA_CARD_I012
+	tristate "i012 power supply card"
+	select IONIA_RPC
+
+endif
