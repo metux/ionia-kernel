@@ -42,23 +42,6 @@ struct ionia_port {
 	struct ionia_slot *slot;
 };
 
-uint16_t ionia_uart_getreg(struct uart_port *port, uint16_t reg)
-{
-	struct ionia_port *pp = container_of(port, struct ionia_port, port);
-	return ionia_fifo_getreg(&pp->slot->fifo, reg);
-}
-
-void ionia_uart_setreg(struct uart_port *port, uint16_t reg, uint16_t val)
-{
-	struct ionia_port *pp = container_of(port, struct ionia_port, port);
-	ionia_fifo_setreg(&pp->slot->fifo, reg, val);
-}
-
-uint16_t ionia_uart_fifo_size(struct uart_port *port)
-{
-	return ionia_uart_getreg(port, IONIA_FIFO_REG_FIFO_SIZE) << 7;
-}
-
 static unsigned int ionia_uart_tx_empty(struct uart_port *port)
 {
 	struct ionia_port *pp = container_of(port, struct ionia_port, port);

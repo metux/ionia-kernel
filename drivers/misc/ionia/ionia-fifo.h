@@ -30,13 +30,16 @@ struct ionia_fifo {
 	void * __iomem regs;
 	const char *name;
 	struct platform_device *pdev;
+	u32 buf;
+	u8 bufcnt;
 };
 
 void ionia_fifo_init(struct ionia_fifo *fifo, int base, int slot, void * __iomem registers, const char *name, struct platform_device *pdev);
 void ionia_fifo_fini(struct ionia_fifo *fifo);
 
 uint16_t ionia_fifo_getreg(struct ionia_fifo *fifo, uint16_t reg);
-void ionia_fifo_setreg(struct ionia_fifo *fifo, uint16_t reg, uint16_t val);
+void ionia_fifo_setreg16(struct ionia_fifo *fifo, uint16_t reg, uint16_t val);
+void ionia_fifo_setreg32(struct ionia_fifo *fifo, uint16_t reg, uint32_t val);
 
 uint16_t ionia_fifo_size(struct ionia_fifo *fifo);
 uint16_t ionia_fifo_rx_size(struct ionia_fifo *fifo);
