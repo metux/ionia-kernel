@@ -98,17 +98,18 @@ int ionia_fifo_get_loopback(struct ionia_fifo *fifo)
 
 int ionia_fifo_putc(struct ionia_fifo *fifo, char c)
 {
-	fifo_info(fifo, "putc: %X", c);
+	fifo->buf = ((fifo->buf << 8) | c);
 
-	fifo->buf = ((fifo->buf << 8) || c);
 	if ((++fifo->bufcnt) < 4)
 		return 0;
 
+	fifo_info(fifo, "send: %08x", fifo->buf);
 	ionia_fifo_setreg32(fifo, IONIA_FIFO_REG_READWRITE, fifo->buf);
 	fifo->bufcnt = 0;
+	fifo->buf = 0;
 
 	ionia_backplane_waitreg();
-	ionia_fifo_dump(fifo);
+//	ionia_fifo_dump(fifo);
 
 	return 0;
 }
@@ -167,7 +168,7 @@ int ionia_fifo_recv(struct ionia_fifo *fifo, void* buf, size_t sz)
 	unsigned long to = jiffies + RECV_TIMEOUT_JIFFIES;
 
 	if ((sz<4) || (sz & 3)) {
-		fifo_warn(fifo, "ionia_fifo_recv() invalid size %d\n", sz);
+		fifo_warn(fifo, "ionia_fifo_recv() invalid size %d", sz);
 		return -EINVAL;
 	}
 
@@ -181,7 +182,7 @@ int ionia_fifo_recv(struct ionia_fifo *fifo, void* buf, size_t sz)
 
 			while (rx_size) {
 				((uint32_t*)buf)[0] = ionia_fifo_getreg32(fifo, IONIA_FIFO_REG_READWRITE);
-				fifo_info(fifo, "ionia_fifo_recv() %08lX\n", ((uint32_t*)buf)[0]);
+				fifo_info(fifo, "recv: %08x", ((uint32_t*)buf)[0]);
 				buf+=4;
 				rx_size-=4;
 				sz-=4;
@@ -191,6 +192,6 @@ int ionia_fifo_recv(struct ionia_fifo *fifo, void* buf, size_t sz)
 			return 0;
 	}
 
-	fifo_warn(fifo, "ionia_fifo_recv() timed out\n");
+	fifo_warn(fifo, "ionia_fifo_recv() timed out");
 	return -ETIMEDOUT;
 }
