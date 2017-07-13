@@ -20,6 +20,7 @@
 #include "ionia-fifo.h"
 #include "ionia-rpc.h"
 #include "ionia-proto-log.h"
+#include "ionia-proto-io.h"
 #include "ionia-slots.h"
 
 #define IONIA_DEBUG_CMD_LOOPTEST	666
@@ -99,8 +100,8 @@ static int io_init_write_op(void *data, u64 value)
 
 	rpc = ionia_rpc_get_fifo(&(pdata->slots[value].fifo));
 
-	ionia_log_init(rpc);
-	ionia_log_channel_enable(rpc, 0x0f, 0x0f);
+	ionia_io_init(rpc);
+//	ionia_log_channel_enable(rpc, 0x0f, 0x0f);
 
 	ionia_rpc_put(rpc);
 
