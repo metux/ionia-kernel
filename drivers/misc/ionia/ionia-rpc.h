@@ -32,6 +32,7 @@ typedef struct
 	size_t write_ptr;
 	size_t read_ptr;
 	char buf[1024];
+	u32 errno;
 } ionia_rpcbuf_t;
 
 typedef struct
@@ -41,9 +42,8 @@ typedef struct
 
 ionia_rpc_t *ionia_rpc_get_fifo(struct ionia_fifo *fifo);
 void         ionia_rpc_put(ionia_rpc_t *rpc);
-int          ionia_rpc_send(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf);
-int          ionia_rpc_recv(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf);
 int          ionia_rpc_call(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf);
+int          ionia_rpc_call_errno(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf);
 
 ionia_rpcbuf_t *ionia_rpcbuf_get(ionia_protocol_t proto, u8 cmd);
 int             ionia_rpcbuf_put(ionia_rpcbuf_t *rpcbuf);
@@ -74,13 +74,11 @@ out:								\
 	if ((ret = ionia_rpcbuf_write_u32(rpcbuf, v)))		\
 		goto out;
 
-#define IONIA_RPC_CALL						\
-	if ((ret = ionia_rpc_call(rpc, rpcbuf)))		\
-		goto out;
-
-#define IONIA_RPC_RET_ERR					\
-	if ((ret = ionia_rpcbuf_read_u32(rpcbuf, &rpc_errno)))	\
-		goto err;
+#define IONIA_RPC_CALL_ERRNO					\
+	if ((ret = ionia_rpc_call_errno(rpc, rpcbuf)))		\
+		goto out;					\
+	rpc_errno = rpcbuf->errno;				\
+	pr_info("%s: errno: %d 0x%x\n", __func__, rpc_errno, rpc_errno);
 
 #define IONIA_RPC_RET_U32(rv)					\
 	if ((ret = ionia_rpcbuf_read_u32(rpcbuf, rv)))		\

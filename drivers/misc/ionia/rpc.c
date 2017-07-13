@@ -18,16 +18,18 @@
 #include "ionia-rpc.h"
 
 #define rpc_info(rpc,fmt,args...) \
-	pr_info("ionia rpc: %s: \n" fmt, __func__, ##args)
+	pr_info("ionia rpc: %s: " fmt "\n", __func__, ##args)
 
 #define rpc_err(rpc,fmt,args...) \
-	pr_info("ionia rpc: %s: \n" fmt, __func__, ##args)
+	pr_info("ionia rpc: %s: " fmt "\n", __func__, ##args)
 
 #define rpcbuf_info(rpcbuf,fmt,args...) \
-	pr_info("ionia rpc: %s: \n" fmt, __func__, ##args)
+	pr_info("ionia rpc: %s: " fmt "\n", __func__, ##args)
 
 #define rpcbuf_err(rpcbuf,fmt,args...) \
-	pr_info("ionia rpc: %s: \n" fmt, __func__, ##args)
+	pr_info("ionia rpc: %s: " fmt "\n", __func__, ##args)
+
+#define WORD_SIZE	4
 
 ionia_rpc_t *ionia_rpc_get_fifo(struct ionia_fifo *fifo)
 {
@@ -99,12 +101,12 @@ int ionia_rpcbuf_read_u32(ionia_rpcbuf_t *rpcbuf, u32 *val)
 	return 0;
 }
 
-int ionia_rpc_send(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
+int ionia_rpc_xmit(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 {
 	int x;
-	int payload_size = rpcbuf->write_ptr / 4; // 32bit words
+	int payload_size = rpcbuf->write_ptr / WORD_SIZE; // 32bit words
 
-	rpc_info(rpc, "send: cmd=%2d proto=%2d words=%2d",
+	rpc_info(rpc, "send: proto=%2d cmd=%2d words=%2d",
 		rpcbuf->protocol,
 		rpcbuf->command,
 		payload_size);
@@ -122,7 +124,7 @@ int ionia_rpc_send(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 
 int ionia_rpc_recv(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 {
-	char hdrbuf[4];
+	char hdrbuf[WORD_SIZE];
 	int ret;
 	size_t payload_size;
 
@@ -131,17 +133,13 @@ int ionia_rpc_recv(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 		return ret;
 	}
 
-//	payload_size = (hdrbuf[0] << 8) + hdrbuf[1];
-//	rpcbuf->command = hdrbuf[2];
-//	rpcbuf->protocol = hdrbuf[3];
-
-	payload_size = ((hdrbuf[3] << 8) + hdrbuf[2]) * 4;
+	payload_size = ((hdrbuf[3] << 8) + hdrbuf[2]) * WORD_SIZE;
 	rpcbuf->protocol = hdrbuf[1];
 	rpcbuf->command = hdrbuf[0];
 
-	rpc_info(rpc, "recv: cmd=%2d proto=%d words=%d\n",
+	rpc_info(rpc, "recv: proto=%2d cmd=%2d words=%d",
 		rpcbuf->protocol, rpcbuf->command,
-		payload_size / 4);
+		payload_size / WORD_SIZE);
 
 	if (payload_size > sizeof(rpcbuf->buf)) {
 		rpc_err(rpc, "recv payload size too big: %d", payload_size);
@@ -160,7 +158,7 @@ int ionia_rpc_recv(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 int ionia_rpc_call(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 {
 	int ret;
-	if ((ret = ionia_rpc_send(rpc, rpcbuf))) {
+	if ((ret = ionia_rpc_xmit(rpc, rpcbuf))) {
 		rpc_err(rpc, "send failed: %M", -ret);
 		return ret;
 	}
@@ -171,4 +169,24 @@ int ionia_rpc_call(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 	}
 
 	return ret;
+}
+
+int ionia_rpc_call_errno(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
+{
+	u32 *ptr;
+	int ret = ionia_rpc_call(rpc, rpcbuf);
+	if (ret)
+		return ret;
+
+	if (rpcbuf->write_ptr < WORD_SIZE) {
+		rpc_err(rpc, "receive frame size too small: %d", rpcbuf->write_ptr);
+		return -ENODATA;
+	}
+
+	rpc_info(rpc,"received payload size: %d", rpcbuf->write_ptr);
+	ptr = (u32*)(&(rpcbuf->buf[rpcbuf->write_ptr-WORD_SIZE]));
+	rpcbuf->errno = *ptr;
+	rpc_info(rpc, "errno: %u -- %X", rpcbuf->errno, rpcbuf->errno);
+	rpcbuf->write_ptr -= WORD_SIZE;
+	return 0;
 }

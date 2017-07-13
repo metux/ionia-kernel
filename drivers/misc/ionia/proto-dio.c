@@ -30,11 +30,10 @@ int ionia_io_init(ionia_rpc_t *rpc)
 
 	IONIA_RPC_BEGIN_IO(IONIA_IO_CMD_INIT);
 	IONIA_RPC_PAR_U32(IO_DRIVER_VERSION);
-	IONIA_RPC_CALL
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_RET_U32(&version)
-	IONIA_RPC_RET_ERR
 
-	pr_info("%s: version=%08X errno=%08X\n", __func__, version, rpc_errno);
+	pr_info("%s: version=%08X\n", __func__, version);
 
 	IONIA_RPC_END
 
@@ -63,8 +62,7 @@ int ionia_io_out_set(ionia_rpc_t *rpc, u16 state, u16 mask)
 	}
 
 	IONIA_RPC_PAR_U32(io_mask + (io_state << 16));
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 
 	pr_info("%s: io_state=%08X io_mask=%08X errno=%08X\n", __func__, io_state, io_mask, rpc_errno);
 
@@ -94,9 +92,8 @@ int ionia_io_in_get(ionia_rpc_t *rpc, int io_type, u16* io_state)
 			break;
 	}
 
-	IONIA_RPC_CALL
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_RET_U32(&state);
-	IONIA_RPC_RET_ERR
 
 	// FIXME: check rpc_errno
 
@@ -127,8 +124,7 @@ int ionia_io_pwm_enable(ionia_rpc_t *rpc, u16 state, u16 mask)
 	}
 
 	IONIA_RPC_PAR_U32(package);
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 	return 0;
 }
@@ -149,8 +145,7 @@ int ionia_io_pwm_freq_set(ionia_rpc_t *rpc, u8 group, u16 freq)
 	}
 
 	IONIA_RPC_PAR_U32((group + ((1000 * 1000/freq) << 16)));
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 }
 
@@ -181,8 +176,7 @@ int ionia_io_pwm_dutycycle_set(ionia_rpc_t *rpc, u8 chan, u16 duty_cycle, u16 fr
 	}
 
 	IONIA_RPC_PAR_U32(map[chan] + (((1000 * 1000/freq) * duty_cycle/100) << 16));
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 
 	return 0;
@@ -192,8 +186,7 @@ static int __pwm_pulse_width_set(ionia_rpc_t *rpc, u8 chan, u16 width_us, u16 fr
 {
 	IONIA_RPC_BEGIN_IO(IONIA_IO_CMD_PWM_PULS_WIDTH_SET);
 	IONIA_RPC_PAR_U32(chan + (width_us << 16));
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 	return 0;
 }
@@ -225,8 +218,7 @@ int ionia_io_led_config(ionia_rpc_t *rpc, u8 is_user)
 {
 	IONIA_RPC_BEGIN_IO(IONIA_IO_CMD_LED_CONFIG);
 	IONIA_RPC_PAR_U32((is_user ? 1 : 0));
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 	return 0;
 }
@@ -235,8 +227,7 @@ int ionia_io_led_set(ionia_rpc_t *rpc, u16 state, u16 mask)
 {
 	IONIA_RPC_BEGIN_IO(IONIA_IO_CMD_LED_SET);
 	IONIA_RPC_PAR_U32(mask + (state << 16));
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 	return 0;
 }
@@ -245,8 +236,7 @@ int ionia_io_hci_enable(ionia_rpc_t *rpc, u16 state, u16 mask)
 {
 	IONIA_RPC_BEGIN_IO(IONIA_IO_CMD_HCI_ENABLE);
 	IONIA_RPC_PAR_U32(mask + (state << 16));
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 	return 0;
 }
@@ -255,8 +245,7 @@ static int __freq_counter_gate_set(ionia_rpc_t *rpc, u8 gate, u8 resolution)
 {
 	IONIA_RPC_BEGIN_IO(IONIA_IO_CMD_FREQ_CNT_GATE_SET);
 	IONIA_RPC_PAR_U32((gate+1) + (resolution < 16));
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 	return 0;
 }
@@ -335,9 +324,8 @@ int ionia_io_freq_get(ionia_rpc_t *rpc, u8 chan, int io_map, u8 resolution, u32 
 	}
 
 	IONIA_RPC_PAR_U32(input_nr);
-	IONIA_RPC_CALL
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_RET_U32(freq);
-	IONIA_RPC_RET_ERR
 	IONIA_RPC_END
 	return 0;
 }
@@ -374,9 +362,8 @@ int ionia_io_freq_count_get(ionia_rpc_t *rpc, u8 chan, int io_map, u32 *count)
 		return -EINVAL;
 
 	IONIA_RPC_PAR_U32(input_nr);
-	IONIA_RPC_CALL
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_RET_U32(count);
-	IONIA_RPC_RET_ERR
 	IONIA_RPC_END
 	return 0;
 }
@@ -384,7 +371,7 @@ int ionia_io_freq_count_get(ionia_rpc_t *rpc, u8 chan, int io_map, u32 *count)
 static int __period_cnt_get_all(ionia_rpc_t *rpc, u32* channels, u8 num_chan)
 {
 	IONIA_RPC_BEGIN_IO(IONIA_IO_CMD_PERIOD_CNT_GET_ALL);
-	IONIA_RPC_CALL
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_RET_U32(&channels[0]);
 	IONIA_RPC_RET_U32(&channels[1]);
 	IONIA_RPC_RET_U32(&channels[2]);
@@ -393,7 +380,6 @@ static int __period_cnt_get_all(ionia_rpc_t *rpc, u32* channels, u8 num_chan)
 	IONIA_RPC_RET_U32(&channels[5]);
 	IONIA_RPC_RET_U32(&channels[6]);
 	IONIA_RPC_RET_U32(&channels[7]);
-	IONIA_RPC_RET_ERR
 	IONIA_RPC_END
 	return 0;
 }
@@ -413,8 +399,7 @@ int ionia_io_cnt_timeout_set(ionia_rpc_t *rpc, u8 group, u32 timeout)
 {
 	IONIA_RPC_BEGIN_IO(IONIA_IO_CMD_PERIOD_CNT_TIMEOUT_SET);
 	IONIA_RPC_PAR_U32(timeout & 0x0FFFFFF);
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 	return 0;
 }

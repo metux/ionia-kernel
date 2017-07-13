@@ -103,13 +103,12 @@ int ionia_fifo_putc(struct ionia_fifo *fifo, char c)
 	if ((++fifo->bufcnt) < 4)
 		return 0;
 
-	fifo_info(fifo, "send: %08x", fifo->buf);
+	fifo_info(fifo, "xmit: %08x", fifo->buf);
 	ionia_fifo_setreg32(fifo, IONIA_FIFO_REG_READWRITE, fifo->buf);
 	fifo->bufcnt = 0;
 	fifo->buf = 0;
 
 	ionia_backplane_waitreg();
-//	ionia_fifo_dump(fifo);
 
 	return 0;
 }

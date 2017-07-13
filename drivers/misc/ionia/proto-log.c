@@ -27,11 +27,10 @@ int ionia_log_init(ionia_rpc_t *rpc)
 
 	IONIA_RPC_BEGIN_LOG(IONIA_LOG_CMD_INIT)
 	IONIA_RPC_PAR_U32(LOG_DRIVER_VERSION)
-	IONIA_RPC_CALL
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_RET_U32(&version)
-	IONIA_RPC_RET_ERR
 
-	pr_info("ionia_log_init: version=%08X errno=%08X\n", version, rpc_errno);
+	pr_info(": version=%08X\n", version);
 
 	IONIA_RPC_END
 }
@@ -40,8 +39,7 @@ int ionia_log_channel_enable(ionia_rpc_t *rpc, int mode, int mask)
 {
 	IONIA_RPC_BEGIN_LOG(IONIA_LOG_CMD_CHANNEL_ENABLE)
 	IONIA_RPC_PAR_U32(mode + (mask << 16))
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 }
 
@@ -49,8 +47,7 @@ int ionia_log_set_samplerate(ionia_rpc_t *rpc, int rate)
 {
 	IONIA_RPC_BEGIN_LOG(IONIA_LOG_CMD_SAMPLING_RATE)
 	IONIA_RPC_PAR_U32(rate)
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 }
 
@@ -58,8 +55,7 @@ int ionia_log_pattern_gen_enable(ionia_rpc_t *rpc, int enable)
 {
 	IONIA_RPC_BEGIN_LOG(IONIA_LOG_CMD_PATTERN_GEN);
 	IONIA_RPC_PAR_U32(0)
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 }
 
@@ -67,8 +63,7 @@ int ionia_log_clear_buffer(ionia_rpc_t *rpc)
 {
 	IONIA_RPC_BEGIN_LOG(IONIA_LOG_CMD_BUFFER_CLEAR);
 	IONIA_RPC_PAR_U32(0x01);
-	IONIA_RPC_CALL
-	IONIA_RPC_RET_ERR
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_END
 }
 
@@ -79,7 +74,7 @@ int ionia_log_get_data(ionia_rpc_t *rpc, u32 *data, size_t sz)
 		pr_err("%s: sample buffer %d too small\n", __func__, sz);
 		return -EINVAL;
 	}
+	IONIA_RPC_CALL_ERRNO
 	IONIA_RPC_RET_BLOCK(data, LOG_SENSOR_DATA_WORD_SIZE)
-	IONIA_RPC_RET_ERR
 	IONIA_RPC_END_OKVAL(LOG_SENSOR_DATA_WORD_SIZE)
 }
