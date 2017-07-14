@@ -113,8 +113,8 @@ int ionia_rpc_xmit(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 
 	ionia_fifo_putc(rpc->fifo, payload_size >> 8);
 	ionia_fifo_putc(rpc->fifo, payload_size & 0xFF);
-	ionia_fifo_putc(rpc->fifo, rpcbuf->command);
 	ionia_fifo_putc(rpc->fifo, rpcbuf->protocol);
+	ionia_fifo_putc(rpc->fifo, rpcbuf->command);
 
 	for (x=0; x<rpcbuf->write_ptr; x++)
 		ionia_fifo_putc(rpc->fifo, rpcbuf->buf[x]);
