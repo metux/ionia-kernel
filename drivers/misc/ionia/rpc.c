@@ -76,7 +76,7 @@ int ionia_rpcbuf_write_u32(ionia_rpcbuf_t *rpcbuf, u32 val)
 
 int ionia_rpcbuf_read_block(ionia_rpcbuf_t *rpcbuf, void *buf, size_t sz)
 {
-	if (rpcbuf->read_ptr + sz > sizeof(rpcbuf->buf)) {
+	if (rpcbuf->read_ptr + sz > rpcbuf->write_ptr) {
 		rpcbuf_err(rpcbuf, "buffer overflow");
 		return -E2BIG;
 	}
