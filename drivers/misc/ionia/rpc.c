@@ -111,10 +111,14 @@ int ionia_rpc_xmit(ionia_rpc_t *rpc, ionia_rpcbuf_t *rpcbuf)
 		rpcbuf->command,
 		payload_size);
 
+	u32 frame = (payload_size<<16) | (rpcbuf->command<<8) | rpcbuf->protocol;
+
+	rpc_info(rpc, "xmit: frame: %08X\n", frame);
+
 	ionia_fifo_putc(rpc->fifo, payload_size >> 8);
 	ionia_fifo_putc(rpc->fifo, payload_size & 0xFF);
-	ionia_fifo_putc(rpc->fifo, rpcbuf->protocol);
 	ionia_fifo_putc(rpc->fifo, rpcbuf->command);
+	ionia_fifo_putc(rpc->fifo, rpcbuf->protocol);
 
 	for (x=0; x<rpcbuf->write_ptr; x++)
 		ionia_fifo_putc(rpc->fifo, rpcbuf->buf[x]);

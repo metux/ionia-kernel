@@ -25,6 +25,8 @@
 #define IONIA_RPC_CHANNEL_SVC		get_channel_for_aux(card_index)
 #define IONIA_RPC_CHANNEL_MVB		0x00
 
+#define IONIA_RPC_PROTOCOL_ERROR	0x255
+
 typedef struct
 {
 	ionia_protocol_t protocol;
@@ -77,7 +79,12 @@ out:								\
 #define IONIA_RPC_CALL_ERRNO					\
 	if ((ret = ionia_rpc_call_errno(rpc, rpcbuf)))		\
 		goto out;					\
-	rpc_errno = rpcbuf->errno;				\
+	if (rpcbuf->errno = IONIA_RPC_PROTOCOL_ERROR) {				\
+		pr_err("%s: protocol error\n", __func__);			\
+		ret = -EPROTO;							\
+		goto out;							\
+	}									\
+	rpc_errno = rpcbuf->errno;						\
 	pr_info("%s: errno: %d 0x%x\n", __func__, rpc_errno, rpc_errno);
 
 #define IONIA_RPC_RET_U32(rv)					\
