@@ -63,8 +63,10 @@ int             ionia_rpcbuf_read_block(ionia_rpcbuf_t *rpcbuf, void *val, size_
 #define IONIA_RPC_END						\
 	goto out;						\
 err:								\
+	__attribute__((unused));				\
 	pr_err("%s: error: %M\n", __func__, -ret);		\
 out:								\
+	__attribute__((unused));				\
 	ionia_rpcbuf_put(rpcbuf);				\
 	return ret;
 
@@ -79,12 +81,12 @@ out:								\
 #define IONIA_RPC_CALL_ERRNO					\
 	if ((ret = ionia_rpc_call_errno(rpc, rpcbuf)))		\
 		goto out;					\
-	if (rpcbuf->errno = IONIA_RPC_PROTOCOL_ERROR) {				\
-		pr_err("%s: protocol error\n", __func__);			\
-		ret = -EPROTO;							\
-		goto out;							\
-	}									\
-	rpc_errno = rpcbuf->errno;						\
+	if (rpcbuf->errno == IONIA_RPC_PROTOCOL_ERROR) {	\
+		pr_err("%s: protocol error\n", __func__);	\
+		ret = -EPROTO;					\
+		goto out;					\
+	}							\
+	rpc_errno = rpcbuf->errno;				\
 	pr_info("%s: errno: %d 0x%x\n", __func__, rpc_errno, rpc_errno);
 
 #define IONIA_RPC_RET_U32(rv)					\

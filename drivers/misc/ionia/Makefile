@@ -1,4 +1,4 @@
-obj-$(CONFIG_IONIA_BACKPLANE)	+= core.o looptest.o debugfs.o cards.o serial.o rpc.o fifo.o backplane.o
+obj-$(CONFIG_IONIA_BACKPLANE)	+= core.o looptest.o debugfs.o cards.o serial.o rpc.o fifo.o backplane.o proto-ctrl.o
 
 # protocols
 obj-$(CONFIG_IONIA_PROTO_LOG)	+= proto-log.o

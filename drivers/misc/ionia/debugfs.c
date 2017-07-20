@@ -21,6 +21,7 @@
 #include "ionia-rpc.h"
 #include "ionia-proto-log.h"
 #include "ionia-proto-io.h"
+#include "ionia-proto-ctrl.h"
 #include "ionia-slots.h"
 
 #define IONIA_DEBUG_CMD_LOOPTEST	666
@@ -90,6 +91,7 @@ static int io_init_write_op(void *data, u64 value)
 	struct platform_device *pdev = data;
 	struct ionia_backplane_platform_data *pdata = pdev->dev.platform_data;
 	ionia_rpc_t *rpc;
+	u32 ver = 0;
 
 	dev_info(&pdev->dev, "test: %lld\n", value);
 
@@ -99,6 +101,10 @@ static int io_init_write_op(void *data, u64 value)
 	}
 
 	rpc = ionia_rpc_get_fifo(&(pdata->slots[value].fifo));
+
+	dev_info(&pdev->dev, "checking version\n");
+	ionia_ctrl_version(rpc, &ver);
+	dev_info(&pdev->dev, "res: %04X\n", ver);
 
 	ionia_io_init(rpc);
 //	ionia_log_channel_enable(rpc, 0x0f, 0x0f);
