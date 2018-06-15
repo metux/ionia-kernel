@@ -162,7 +162,6 @@ struct evm_dev_cfg {
 * specify DEV_ON_BASEBOARD
 */
 #define DEV_ON_BASEBOARD	0
-#define DEV_ON_DGHTR_BRD	1
 	u32 device_on;
 
 	u32 profile;	/* Profiles (0-7) in which the module is present */
@@ -354,21 +353,6 @@ static struct pinmux_config mii1_pin_mux[] = {
 	{NULL, 0},
 };
 
-/* Module pin mux for rmii1 */
-static struct pinmux_config rmii1_pin_mux[] = {
-	{"mii1_crs.rmii1_crs_dv",		OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"mii1_rxerr.mii1_rxerr",		OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"mii1_txen.mii1_txen",			OMAP_MUX_MODE1 | AM33XX_PIN_OUTPUT},
-	{"mii1_txd1.mii1_txd1",			OMAP_MUX_MODE1 | AM33XX_PIN_OUTPUT},
-	{"mii1_txd0.mii1_txd0",			OMAP_MUX_MODE1 | AM33XX_PIN_OUTPUT},
-	{"mii1_rxd1.mii1_rxd1",			OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"mii1_rxd0.mii1_rxd0",			OMAP_MUX_MODE1 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"rmii1_refclk.rmii1_refclk",		OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLDOWN},
-	{"mdio_data.mdio_data",			OMAP_MUX_MODE0 | AM33XX_PIN_INPUT_PULLUP},
-	{"mdio_clk.mdio_clk",			OMAP_MUX_MODE0 | AM33XX_PIN_OUTPUT_PULLUP},
-	{NULL, 0},
-};
-
 static struct pinmux_config i2c2_pin_mux[] = {
 	{"uart1_ctsn.i2c2_sda",			OMAP_MUX_MODE3 | AM33XX_SLEWCTRL_SLOW
 							       | AM33XX_PULL_UP
@@ -397,30 +381,6 @@ static void setup_pin_mux(struct pinmux_config *pin_mux)
 	for (i = 0; pin_mux->string_name != NULL; pin_mux++)
 		omap_mux_init_signal(pin_mux->string_name, pin_mux->val);
 }
-
-/* Keys mapping */
-static const uint32_t am335x_evm_matrix_keys[] = {
-	KEY(0, 0, KEY_MENU),
-	KEY(1, 0, KEY_BACK),
-	KEY(2, 0, KEY_LEFT),
-
-	KEY(0, 1, KEY_RIGHT),
-	KEY(1, 1, KEY_ENTER),
-	KEY(2, 1, KEY_DOWN),
-};
-
-const struct matrix_keymap_data am335x_evm_keymap_data = {
-	.keymap		= am335x_evm_matrix_keys,
-	.keymap_size	= ARRAY_SIZE(am335x_evm_matrix_keys),
-};
-
-static const unsigned int am335x_evm_keypad_row_gpios[] = {
-	GPIO_TO_PIN(1, 25), GPIO_TO_PIN(1, 26), GPIO_TO_PIN(1, 27)
-};
-
-static const unsigned int am335x_evm_keypad_col_gpios[] = {
-	GPIO_TO_PIN(1, 21), GPIO_TO_PIN(1, 22)
-};
 
 /*
 * @evm_id - evm id which needs to be configured
@@ -514,13 +474,6 @@ static void mii1_init(int evm_id, int profile)
 {
 	printk ("Ethernet 1: MII pin muxing active\n");
 	setup_pin_mux(mii1_pin_mux);
-	return;
-}
-
-static void rmii1_init(int evm_id, int profile)
-{
-	printk ("Ethernet 1: RMII pin muxing active\n");
-	setup_pin_mux(rmii1_pin_mux);
 	return;
 }
 

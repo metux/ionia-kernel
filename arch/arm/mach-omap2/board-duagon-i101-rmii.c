@@ -404,30 +404,6 @@ static void setup_pin_mux(struct pinmux_config *pin_mux)
 		omap_mux_init_signal(pin_mux->string_name, pin_mux->val);
 }
 
-/* Keys mapping */
-static const uint32_t am335x_evm_matrix_keys[] = {
-	KEY(0, 0, KEY_MENU),
-	KEY(1, 0, KEY_BACK),
-	KEY(2, 0, KEY_LEFT),
-
-	KEY(0, 1, KEY_RIGHT),
-	KEY(1, 1, KEY_ENTER),
-	KEY(2, 1, KEY_DOWN),
-};
-
-const struct matrix_keymap_data am335x_evm_keymap_data = {
-	.keymap		= am335x_evm_matrix_keys,
-	.keymap_size	= ARRAY_SIZE(am335x_evm_matrix_keys),
-};
-
-static const unsigned int am335x_evm_keypad_row_gpios[] = {
-	GPIO_TO_PIN(1, 25), GPIO_TO_PIN(1, 26), GPIO_TO_PIN(1, 27)
-};
-
-static const unsigned int am335x_evm_keypad_col_gpios[] = {
-	GPIO_TO_PIN(1, 21), GPIO_TO_PIN(1, 22)
-};
-
 /*
 * @evm_id - evm id which needs to be configured
 * @dev_cfg - single evm structure which includes
